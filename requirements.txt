@@ -1,0 +1,6 @@
+# run this file with: 
+# conda install --file requirements.txt
+numpy
+tensorflow
+tensorflow-gpu
+pylint
