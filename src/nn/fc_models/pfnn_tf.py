@@ -6,8 +6,34 @@ import numpy as np
 import sys, os, datetime
 
 class PFNN(FCNetwork):
+	"""
+
+	Implementation of phase-functioned neural networks using tensorflow backend. 
+
+	This class is a realization of FCNetwork. 
+
+	Please consider using the from_file function, which loads a numpy datastructure containing training pairs and constructs and trains a network. 
+
+	@author: Janis
+	"""
+
 
 	def __init__(self, input_size, output_size, hidden_size, norm):
+		"""
+
+		Implementation of phase-functioned neural networks using tensorflow backend. 
+
+		This class is a realization of FCNetwork. 
+
+		Please consider using the from_file function, which loads a numpy datastructure containing training pairs and constructs and trains a network. 
+
+		Arguments:
+			input_size {int} -- size of the input vector
+			output_size {int} -- size of the output vector
+			hidden_size {int} -- size of the hidden layers
+			norm {map} -- map, containing the normalization information: Xmean, Ymean, Xstd, Ystd. 
+		"""
+
 		super().__init__(input_size, output_size, hidden_size, norm)
 
 		self.batch_size = 32
@@ -29,14 +55,20 @@ class PFNN(FCNetwork):
 
 	
 	def build_tf_graph(self, params):
+		"""
+		Builds the network graph for tensorflow. This should not be called directly, but is used in the training function. 
+		
+		Arguments:
+			params {list} -- Unused.
+		"""
 		p = self.x[:, -1]
 		net_in = self.x[:, :-1]
 		dropout_prob = tf.constant(self.dropout, tf.float32)
 
-		params = [p, net_in]
+		params = [net_in, p]
 		print("input shape: ", net_in.shape)
 		params = super().build_tf_graph(params)
-		output = params[1]
+		output = params[0]
 		print("output shape: ", output.shape)
 
 		tf.global_variables_initializer()
@@ -55,6 +87,16 @@ class PFNN(FCNetwork):
 		self.train_step = opt.minimize(self.cost_function, var_list=var_list)
 
 	def train(self, X, Y, epochs, target_path):
+		"""
+
+		Trains the neural network. The tensorflow graph is build within this function, so no further requirements are necessary. 
+		
+		Arguments:
+			X {np.array} -- Numpy array containing the input data (n_frames, x_dim)
+			Y {np.array} -- Numpy array containing the output data (n_frames, y_dim)
+			epochs {int} -- Training duration in epochs
+			target_path {string} -- Path to a folder, where the network iterations should be stored. 
+		"""
 		self.build_tf_graph([])
 
 		config = tf.ConfigProto()
@@ -101,6 +143,19 @@ class PFNN(FCNetwork):
 
 
 	def from_file(dataset, target_path, epochs):
+		"""
+		This constant function loads a *.npz numpy stored dataset, builds the network and trains it. 
+
+		The data is assumed to be stored as 
+			* "Xun": network input, 
+			* "Yun": network output and 
+			* "Pun": phase information
+		
+		Arguments:
+			dataset {string} -- path to *.npz stored dataset
+			target_path {string} -- path to target folder, in which networks should be stored. 
+			epochs {int} -- Training duration in epochs
+		"""
 			data = np.load(dataset)
 			X = data["Xun"]
 			Y = data["Yun"]

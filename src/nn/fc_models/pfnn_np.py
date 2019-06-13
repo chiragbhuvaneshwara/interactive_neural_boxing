@@ -4,8 +4,30 @@ import json
 import numpy as np
 
 class PFNN(FCNetwork):
+	"""
+		Implementation of phase-functioned neural networks using numpy backend. 
 
+		This class is a realization of FCNetwork and only implements the forward pass. 
+
+		Please consider the constant load function, to generate a network model from a json file. 
+
+		@author: Janis
+	"""
 	def __init__(self, input_size, output_size, hidden_size, norm):
+		"""
+
+		Implementation of phase-functioned neural networks using numpy backend. 
+
+		This class is a realization of FCNetwork and only implements the forward pass. 
+
+		Please consider the constant load function, to generate a network model from a json file. 
+
+		Arguments:
+			input_size {int} -- size of the input vector
+			output_size {int} -- size of the output vector
+			hidden_size {int} -- size of the hidden layers
+			norm {map} -- map, containing the normalization information: Xmean, Ymean, Xstd, Ystd. 
+		"""
 		super().__init__(input_size, output_size, hidden_size, norm)
 
 		def elu(a):
@@ -21,6 +43,12 @@ class PFNN(FCNetwork):
 		self.add_layer(l2)
 
 	def load(target_file):
+		"""
+		Loads the network specification from a *.json file. 
+		
+		Arguments:
+			target_file {string} -- path to *.json file. 
+		"""
 		def elu(a):
 			return np.maximum(a, 0) + np.exp(np.minimum(a, 0)) - 1
 
