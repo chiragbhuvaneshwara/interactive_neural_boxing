@@ -4,3 +4,4 @@ numpy
 tensorflow
 tensorflow-gpu
 pylint
+thrift
