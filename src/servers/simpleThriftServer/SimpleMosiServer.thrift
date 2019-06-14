@@ -5,8 +5,9 @@ namespace py SimpleMosiServer
 struct TPosture
 {
 	1: required list<TBone> bones;
-	2: required TVector3 location;
-	3: required double rotation;
+	2: required map<string,i32> bone_map;
+	3: required TVector3 location;
+	4: required double rotation;
 }
 
 // Data field for a single bone

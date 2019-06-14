@@ -56,7 +56,7 @@ def read_BVH(file):
 			if tb.parent != "":
 				pid = mapping[tb.parent]
 				bonelinst[pid].children.append(tb.name)
-	return TPosture(bonelinst, TVector3(0,0,0), 0.0)
+	return TPosture(bonelinst, mapping, TVector3(0,0,0), 0.0)
 	
 def TVector3_2np(x):
 	return np.array([x.X, x.Y, x.Z])
@@ -75,7 +75,9 @@ class MotionServer:
 		return self.zero_posture
 
 	def fetchFrame(self, time : float, currentPosture : TPosture, direction : TVector3, gait : TGait):
-		self.controller.pre_render(TVector3_2np(direction), self.controller.lastphase)
+		newphase = self.controller.lastphase + self.controller.output.getdDPhase()
+		print("generating new frame for: ", time, newphase)
+		self.controller.pre_render(TVector3_2np(direction), newphase)
 		posture = self.__char2TPosture()
 		self.controller.post_render()
 		return posture

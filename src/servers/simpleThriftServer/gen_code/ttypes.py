@@ -38,14 +38,16 @@ class TPosture(object):
     """
     Attributes:
      - bones
+     - bone_map
      - location
      - rotation
 
     """
 
 
-    def __init__(self, bones=None, location=None, rotation=None,):
+    def __init__(self, bones=None, bone_map=None, location=None, rotation=None,):
         self.bones = bones
+        self.bone_map = bone_map
         self.location = location
         self.rotation = rotation
 
@@ -70,12 +72,23 @@ class TPosture(object):
                 else:
                     iprot.skip(ftype)
             elif fid == 2:
+                if ftype == TType.MAP:
+                    self.bone_map = {}
+                    (_ktype7, _vtype8, _size6) = iprot.readMapBegin()
+                    for _i10 in range(_size6):
+                        _key11 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _val12 = iprot.readI32()
+                        self.bone_map[_key11] = _val12
+                    iprot.readMapEnd()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 3:
                 if ftype == TType.STRUCT:
                     self.location = TVector3()
                     self.location.read(iprot)
                 else:
                     iprot.skip(ftype)
-            elif fid == 3:
+            elif fid == 4:
                 if ftype == TType.DOUBLE:
                     self.rotation = iprot.readDouble()
                 else:
@@ -93,16 +106,24 @@ class TPosture(object):
         if self.bones is not None:
             oprot.writeFieldBegin('bones', TType.LIST, 1)
             oprot.writeListBegin(TType.STRUCT, len(self.bones))
-            for iter6 in self.bones:
-                iter6.write(oprot)
+            for iter13 in self.bones:
+                iter13.write(oprot)
             oprot.writeListEnd()
             oprot.writeFieldEnd()
+        if self.bone_map is not None:
+            oprot.writeFieldBegin('bone_map', TType.MAP, 2)
+            oprot.writeMapBegin(TType.STRING, TType.I32, len(self.bone_map))
+            for kiter14, viter15 in self.bone_map.items():
+                oprot.writeString(kiter14.encode('utf-8') if sys.version_info[0] == 2 else kiter14)
+                oprot.writeI32(viter15)
+            oprot.writeMapEnd()
+            oprot.writeFieldEnd()
         if self.location is not None:
-            oprot.writeFieldBegin('location', TType.STRUCT, 2)
+            oprot.writeFieldBegin('location', TType.STRUCT, 3)
             self.location.write(oprot)
             oprot.writeFieldEnd()
         if self.rotation is not None:
-            oprot.writeFieldBegin('rotation', TType.DOUBLE, 3)
+            oprot.writeFieldBegin('rotation', TType.DOUBLE, 4)
             oprot.writeDouble(self.rotation)
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
@@ -111,6 +132,8 @@ class TPosture(object):
     def validate(self):
         if self.bones is None:
             raise TProtocolException(message='Required field bones is unset!')
+        if self.bone_map is None:
+            raise TProtocolException(message='Required field bone_map is unset!')
         if self.location is None:
             raise TProtocolException(message='Required field location is unset!')
         if self.rotation is None:
@@ -169,10 +192,10 @@ class TBone(object):
             elif fid == 3:
                 if ftype == TType.LIST:
                     self.children = []
-                    (_etype10, _size7) = iprot.readListBegin()
-                    for _i11 in range(_size7):
-                        _elem12 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                        self.children.append(_elem12)
+                    (_etype19, _size16) = iprot.readListBegin()
+                    for _i20 in range(_size16):
+                        _elem21 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        self.children.append(_elem21)
                     iprot.readListEnd()
                 else:
                     iprot.skip(ftype)
@@ -202,8 +225,8 @@ class TBone(object):
         if self.children is not None:
             oprot.writeFieldBegin('children', TType.LIST, 3)
             oprot.writeListBegin(TType.STRING, len(self.children))
-            for iter13 in self.children:
-                oprot.writeString(iter13.encode('utf-8') if sys.version_info[0] == 2 else iter13)
+            for iter22 in self.children:
+                oprot.writeString(iter22.encode('utf-8') if sys.version_info[0] == 2 else iter22)
             oprot.writeListEnd()
             oprot.writeFieldEnd()
         if self.parent is not None:
@@ -319,8 +342,9 @@ all_structs.append(TPosture)
 TPosture.thrift_spec = (
     None,  # 0
     (1, TType.LIST, 'bones', (TType.STRUCT, [TBone, None], False), None, ),  # 1
-    (2, TType.STRUCT, 'location', [TVector3, None], None, ),  # 2
-    (3, TType.DOUBLE, 'rotation', None, None, ),  # 3
+    (2, TType.MAP, 'bone_map', (TType.STRING, 'UTF8', TType.I32, None, False), None, ),  # 2
+    (3, TType.STRUCT, 'location', [TVector3, None], None, ),  # 3
+    (4, TType.DOUBLE, 'rotation', None, None, ),  # 4
 )
 all_structs.append(TBone)
 TBone.thrift_spec = (
