@@ -444,6 +444,7 @@ class Controller:
 		self.lastphase = phase
 		self.get_root_transform()
 		self.get_new_pose()
+		return phase
 
 	def post_render(self):
 		stand_amount = self.traj.step_forward(self.output.getRotVel())
