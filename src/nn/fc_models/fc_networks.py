@@ -118,6 +118,7 @@ class FCNetwork:
 		with open(target_file, "w") as f:
 			json.dump(store, f)
 
+	@staticmethod
 	def load(target_file):
 		"""
 

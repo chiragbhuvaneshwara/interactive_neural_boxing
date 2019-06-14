@@ -90,7 +90,8 @@ class NP_PFNN_Layer(Interpolating_Layer):
 			return dw
 
 		super().__init__(dshape, weight, bias, elu_operator, NP_FCLayer, interpolation_function)
-		
+	
+	@staticmethod
 	def load(params):
 		"""
 		This constant function loads the network from a map store. 
