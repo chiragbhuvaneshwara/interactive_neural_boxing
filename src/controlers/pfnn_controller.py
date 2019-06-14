@@ -336,8 +336,8 @@ class Controller:
 		#self.network = n
 		
 		#if self.initial or True:
-		self.output.data = self.network.norm["Ymean"] * self.network.norm["Ystd"] + self.network.norm["Ymean"]
-		self.input.data = self.network.norm["Xmean"] * self.network.norm["Xstd"] + self.network.norm["Xmean"]
+		self.output.data = self.network.norm["Ymean"]# * self.network.norm["Ystd"] + self.network.norm["Ymean"]
+		self.input.data = self.network.norm["Xmean"]#* self.network.norm["Xstd"] + self.network.norm["Xmean"]
 
 		joint_positions = self.output.getJointPos()
 		joint_velocities = self.output.getJointVel()
@@ -440,7 +440,7 @@ class Controller:
 		self.set_trajectory()
 		self.set_previous_pose()
 
-		[self.output.data, phase] = self.network.forward_pass([self.input.data, phase])
+		[self.output.data, phase] = self.network.forward_pass([self.input.data, round(phase,2)])
 		self.lastphase = phase
 		self.get_root_transform()
 		self.get_new_pose()
