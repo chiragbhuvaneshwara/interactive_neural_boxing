@@ -78,6 +78,7 @@ class PFNN(FCNetwork):
 							tf.reduce_mean(tf.abs(self.layers[1].weight)) + 
 							tf.reduce_mean(tf.abs(self.layers[2].weight))
 							)
+		self.accuracy = tf.reduce_mean((self.y - output) ** 2)
 		
 		opt = tf.train.AdamOptimizer(learning_rate = 0.0001)
 		var_list = []
@@ -116,7 +117,8 @@ class PFNN(FCNetwork):
 				input,output = X[I], Y[I]
 				
 				start_time = datetime.datetime.now()
-				acc = np.array([])
+				accuracies = []
+				losses = []
 
 				batchind = np.arange(len(input) // self.batch_size)  # start batches from these indices.
 				np.random.shuffle(batchind)
@@ -128,14 +130,21 @@ class PFNN(FCNetwork):
 					x = input[i:(i + self.batch_size), :]
 					y = output[i:i + self.batch_size]
 					#y = y_data.reshape(self.batch_size, self.output_shape)
-					_, loss_value = sess.run([self.train_step, self.cost_function], feed_dict={self.x: x, self.y: y})
+					_, loss_value, acc = sess.run([self.train_step, self.cost_function, self.accuracy], feed_dict={self.x: x, self.y: y})
 					
 					step_counter += 1
 					if i > 0 and (i % 20) == 0:
 						sys.stdout.write(
-							'\r[Epoch %3i] % 3.1f%% est. remaining time: %i min, %.5f acc' % (
-						e, 100 * i / len(input), ((datetime.datetime.now() - start_time).total_seconds() / i * (len(input) - i)) / 60, loss_value))
+							'\r[Epoch %3i] % 3.1f%% est. remaining time: %i min, %.5f loss, %.5f acc' % (
+						e, 100 * i / len(input), ((datetime.datetime.now() - start_time).total_seconds() / i * (len(input) - i)) / 60, loss_value, acc))
 						sys.stdout.flush()
+					accuracies.append(acc)
+					losses.append(loss_value)
+				print("end of epoch: ")
+				print("duration: ",  (datetime.datetime.now() - start_time).total_seconds() / 60, "min")
+				print("average loss: ", np.mean(losses))
+				print("average accuracy: ", np.mean(accuracies))
+				print("")
 				
 				# save epoch: 
 				#os.makedirs(target_path + "/epoch_%d"%e, exist_ok=True)
@@ -156,35 +165,72 @@ class PFNN(FCNetwork):
 			target_path {string} -- path to target folder, in which networks should be stored. 
 			epochs {int} -- Training duration in epochs
 		"""
-			data = np.load(dataset)
-			X = data["Xun"]
-			Y = data["Yun"]
-			P = data["Pun"]
+		data = np.load(dataset)
+		X = data["Xun"]
+		Y = data["Yun"]
+		P = data["Pun"]
 
-			Xmean = np.mean(X, axis=0)
-			Ymean = np.mean(Y, axis=0)
-			Xstd = np.std(X, axis=0)
-			Ystd = np.std(Y, axis=0)
-			Xstd[Xstd == 0] = 1.0
-			Ystd[Ystd == 0] = 1.0
-			X = (X - Xmean) / Xstd
-			Y = (Y - Ymean) / Ystd
-			
-			#np.savez("%s/Ymean"%target_path, Ymean)
-			#np.savez("%s/Xmean"%target_path, Xmean)
-			#np.savez("%s/Ystd"%target_path, Ystd)
-			#np.savez("%s/Xstd"%target_path, Xstd)
-			norm = {"Xmean": Xmean.tolist(), 
-					"Ymean":Ymean.tolist(), 
-					"Xstd":Xstd.tolist(), 
-					"Ystd":Ystd.tolist()}
+		Xmean = np.mean(X, axis=0)
+		Ymean = np.mean(Y, axis=0)
+		Xstd = np.std(X, axis=0)
+		Ystd = np.std(Y, axis=0)
 
-			input_dim = X.shape[1]
-			output_dim = Y.shape[1]
+		w = (60 * 2) // 10
+		j = 31
+		gaits = 5
 
-			print("in-out: ", input_dim, output_dim)
-			X = np.concatenate([X, P[:, np.newaxis]], axis=-1)
+		joint_weights = np.array([
+			1,
+			1e-10, 1, 1, 1, 1,
+			1e-10, 1, 1, 1, 1,
+			1e-10, 1, 1,
+			1e-10, 1, 1,
+			1e-10, 1, 1, 1, 1, 1e-10, 1e-10,
+			1e-10, 1, 1, 1, 1, 1e-10, 1e-10])
+
+		Xstd[w * 0:w * 1] = Xstd[w * 0:w * 1].mean()  # Trajectory Past Positions
+		Xstd[w * 1:w * 2] = Xstd[w * 1:w * 2].mean()  # Trajectory Future Positions
+		Xstd[w * 2:w * 3] = Xstd[w * 2:w * 3].mean()  # Trajectory Past Directions
+		Xstd[w * 3:w * 4] = Xstd[w * 3:w * 4].mean()  # Trajectory Future Directions
+		Xstd[w * 4:w * 4 + w * gaits] = Xstd[w * 4:w * 4 + w * gaits].mean()
+		start = 4 + gaits
+
+		Xstd[w * start + j * 3 * 0:w * start + j * 3 * 1] = Xstd[w * start + j * 3 * 0:w * start + j * 3 * 1].mean() / (joint_weights.repeat(3) * 0.1)  # Pos
+		Xstd[w * start + j * 3 * 1:w * start + j * 3 * 2] = Xstd[w * start + j * 3 * 1:w * start + j * 3 * 2].mean() / (joint_weights.repeat(3) * 0.1)  # Vel
+		#Xstd[w * start + j * 3 * 2:w * start + j * (3 * 2) + (j)] = Xstd[w * start + j * 3 * 2:w * start + j * (3 * 2) + (j)].mean() / (joint_weights * 0.1)  # twists
+		start = start + w * 2 + j * 3 * 2
+		Xstd[start:] = Xstd[start:].mean()
+
+		Ystd[0:2] = Ystd[0:2].mean()  # Translational Velocity
+		Ystd[2:3] = Ystd[2:3].mean()  # Rotational Velocity
+		Ystd[3:4] = Ystd[3:4].mean()  # Change in Phase
+		Ystd[5:8] = Ystd[5:8].mean() # foot contacts
+		start = 8
+		Ystd[start + w * 0:start + w * 1] = Ystd[start + w * 0:start + w * 1].mean()  # Trajectory Future Positions
+		Ystd[start + w * 1:start + w * 2] = Ystd[start + w * 1:start + w * 2].mean()  # Trajectory Future Directions
+		Ystd[start + w * 2 + j * 3 * 0:start + w * 2 + j * 3 * 1] = Ystd[start + w * 2 + j * 3 * 0:start + w * 2 + j * 3 * 1].mean()  # Pos
+		Ystd[start + w * 2 + j * 3 * 1:start + w * 2 + j * 3 * 2] = Ystd[start + w * 2 + j * 3 * 1:start + w * 2 + j * 3 * 2].mean()  # Vel
+
+		#Xstd[Xstd == 0] = 1.0
+		#Ystd[Ystd == 0] = 1.0
+		X = (X - Xmean) / Xstd
+		Y = (Y - Ymean) / Ystd
+		
+		#np.savez("%s/Ymean"%target_path, Ymean)
+		#np.savez("%s/Xmean"%target_path, Xmean)
+		#np.savez("%s/Ystd"%target_path, Ystd)
+		#np.savez("%s/Xstd"%target_path, Xstd)
+		norm = {"Xmean": Xmean.tolist(), 
+				"Ymean":Ymean.tolist(), 
+				"Xstd":Xstd.tolist(), 
+				"Ystd":Ystd.tolist()}
+
+		input_dim = X.shape[1]
+		output_dim = Y.shape[1]
+
+		print("in-out: ", input_dim, output_dim)
+		X = np.concatenate([X, P[:, np.newaxis]], axis=-1)
 
 
-			pfnn = PFNN(input_dim, output_dim, 512, norm)
-			pfnn.train(X, Y, epochs, target_path)
+		pfnn = PFNN(input_dim, output_dim, 512, norm)
+		pfnn.train(X, Y, epochs, target_path)

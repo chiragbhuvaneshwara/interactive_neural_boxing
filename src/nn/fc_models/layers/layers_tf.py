@@ -95,10 +95,14 @@ class TF_PFNN_Layer(Interpolating_Layer):
 			p2 = (p1 + 1) % 4
 			p3 = (p1 + 2) % 4
 
-			y0 = tf.nn.embedding_lookup(w, p0)
-			y1 = tf.nn.embedding_lookup(w, p1)
-			y2 = tf.nn.embedding_lookup(w, p2)
-			y3 = tf.nn.embedding_lookup(w, p3)
+			# y0 = tf.nn.embedding_lookup(w, p0)
+			# y1 = tf.nn.embedding_lookup(w, p1)
+			# y2 = tf.nn.embedding_lookup(w, p2)
+			# y3 = tf.nn.embedding_lookup(w, p3)
+			y0 = tf.gather(w, p0)
+			y1 = tf.gather(w, p1)
+			y2 = tf.gather(w, p2)
+			y3 = tf.gather(w, p3)
 
 			# pamount has to be rescaled appropriately, depending on weights (3 dimensions) and biases (2 dimensions)
 			if len(y0.shape) == 3:

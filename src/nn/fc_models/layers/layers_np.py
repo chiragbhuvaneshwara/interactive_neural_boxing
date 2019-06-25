@@ -44,7 +44,7 @@ class NP_FCLayer(FCLayer):
 			np.array -- layer output string
 		"""
 		input_string = params
-		print("params: ", input_string.shape, self.weight.shape, self.bias.shape)
+		#print("params: ", input_string.shape, self.weight.shape, self.bias.shape)
 		d = np.matmul(self.weight, input_string) + self.bias
 		if self.elu_operator is not None:
 			d = self.elu_operator(d)
