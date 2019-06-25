@@ -87,10 +87,8 @@ class MotionServer:
 			position = np.array([float(bone[position_str][0]), float(bone[position_str][1]), float(bone[position_str][2])])
 			if "local" in position_str:
 				position = position / 100
-				print("position /= 100")
 			else:
 				position = position
-				print(position)
 			position = np_2TVector3(position)
 			
 			rotation = TQuaternion(float(bone["local_rotation"][0]), float(bone["local_rotation"][1]), float(bone["local_rotation"][2]), float(bone["local_rotation"][3]))
@@ -103,7 +101,6 @@ class MotionServer:
 
 	def fetchFrame(self, time : float, currentPosture : TPosture, direction : TVector3, gait : TGait):
 		newphase = self.controller.lastphase + self.controller.output.getdDPhase()
-		print("generating new frame for: ", time, newphase)
 		self.controller.pre_render(TVector3_2np(direction), newphase)
 		posture = self.__char2TPosture()
 		#posture = self.zero_posutre2
@@ -115,7 +112,6 @@ class MotionServer:
 		char = self.controller.char
 		for i in range(len(char.joint_positions)):
 			posture.bones[i].position = np_2TVector3(char.joint_positions[i] - char.joint_positions[0])
-			print(posture.bones[i].name, posture.bones[i].position)
 		posture.location = np_2TVector3(char.root_position)
 		posture.rotation = char.root_rotation
 		return posture
