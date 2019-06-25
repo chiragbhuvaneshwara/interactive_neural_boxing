@@ -156,16 +156,18 @@ class TBone(object):
     """
     Attributes:
      - name
-     - Position
+     - position
+     - rotation
      - children
      - parent
 
     """
 
 
-    def __init__(self, name=None, Position=None, children=None, parent=None,):
+    def __init__(self, name=None, position=None, rotation=None, children=None, parent=None,):
         self.name = name
-        self.Position = Position
+        self.position = position
+        self.rotation = rotation
         self.children = children
         self.parent = parent
 
@@ -185,11 +187,17 @@ class TBone(object):
                     iprot.skip(ftype)
             elif fid == 2:
                 if ftype == TType.STRUCT:
-                    self.Position = TVector3()
-                    self.Position.read(iprot)
+                    self.position = TVector3()
+                    self.position.read(iprot)
                 else:
                     iprot.skip(ftype)
             elif fid == 3:
+                if ftype == TType.STRUCT:
+                    self.rotation = TQuaternion()
+                    self.rotation.read(iprot)
+                else:
+                    iprot.skip(ftype)
+            elif fid == 4:
                 if ftype == TType.LIST:
                     self.children = []
                     (_etype19, _size16) = iprot.readListBegin()
@@ -199,7 +207,7 @@ class TBone(object):
                     iprot.readListEnd()
                 else:
                     iprot.skip(ftype)
-            elif fid == 4:
+            elif fid == 5:
                 if ftype == TType.STRING:
                     self.parent = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
                 else:
@@ -218,19 +226,23 @@ class TBone(object):
             oprot.writeFieldBegin('name', TType.STRING, 1)
             oprot.writeString(self.name.encode('utf-8') if sys.version_info[0] == 2 else self.name)
             oprot.writeFieldEnd()
-        if self.Position is not None:
-            oprot.writeFieldBegin('Position', TType.STRUCT, 2)
-            self.Position.write(oprot)
+        if self.position is not None:
+            oprot.writeFieldBegin('position', TType.STRUCT, 2)
+            self.position.write(oprot)
+            oprot.writeFieldEnd()
+        if self.rotation is not None:
+            oprot.writeFieldBegin('rotation', TType.STRUCT, 3)
+            self.rotation.write(oprot)
             oprot.writeFieldEnd()
         if self.children is not None:
-            oprot.writeFieldBegin('children', TType.LIST, 3)
+            oprot.writeFieldBegin('children', TType.LIST, 4)
             oprot.writeListBegin(TType.STRING, len(self.children))
             for iter22 in self.children:
                 oprot.writeString(iter22.encode('utf-8') if sys.version_info[0] == 2 else iter22)
             oprot.writeListEnd()
             oprot.writeFieldEnd()
         if self.parent is not None:
-            oprot.writeFieldBegin('parent', TType.STRING, 4)
+            oprot.writeFieldBegin('parent', TType.STRING, 5)
             oprot.writeString(self.parent.encode('utf-8') if sys.version_info[0] == 2 else self.parent)
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
@@ -239,8 +251,10 @@ class TBone(object):
     def validate(self):
         if self.name is None:
             raise TProtocolException(message='Required field name is unset!')
-        if self.Position is None:
-            raise TProtocolException(message='Required field Position is unset!')
+        if self.position is None:
+            raise TProtocolException(message='Required field position is unset!')
+        if self.rotation is None:
+            raise TProtocolException(message='Required field rotation is unset!')
         return
 
     def __repr__(self):
@@ -258,17 +272,17 @@ class TBone(object):
 class TVector3(object):
     """
     Attributes:
-     - X
-     - Y
-     - Z
+     - x
+     - y
+     - z
 
     """
 
 
-    def __init__(self, X=None, Y=None, Z=None,):
-        self.X = X
-        self.Y = Y
-        self.Z = Z
+    def __init__(self, x=None, y=None, z=None,):
+        self.x = x
+        self.y = y
+        self.z = z
 
     def read(self, iprot):
         if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
@@ -281,17 +295,17 @@ class TVector3(object):
                 break
             if fid == 1:
                 if ftype == TType.DOUBLE:
-                    self.X = iprot.readDouble()
+                    self.x = iprot.readDouble()
                 else:
                     iprot.skip(ftype)
             elif fid == 2:
                 if ftype == TType.DOUBLE:
-                    self.Y = iprot.readDouble()
+                    self.y = iprot.readDouble()
                 else:
                     iprot.skip(ftype)
             elif fid == 3:
                 if ftype == TType.DOUBLE:
-                    self.Z = iprot.readDouble()
+                    self.z = iprot.readDouble()
                 else:
                     iprot.skip(ftype)
             else:
@@ -304,28 +318,126 @@ class TVector3(object):
             oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
             return
         oprot.writeStructBegin('TVector3')
-        if self.X is not None:
-            oprot.writeFieldBegin('X', TType.DOUBLE, 1)
-            oprot.writeDouble(self.X)
+        if self.x is not None:
+            oprot.writeFieldBegin('x', TType.DOUBLE, 1)
+            oprot.writeDouble(self.x)
             oprot.writeFieldEnd()
-        if self.Y is not None:
-            oprot.writeFieldBegin('Y', TType.DOUBLE, 2)
-            oprot.writeDouble(self.Y)
+        if self.y is not None:
+            oprot.writeFieldBegin('y', TType.DOUBLE, 2)
+            oprot.writeDouble(self.y)
             oprot.writeFieldEnd()
-        if self.Z is not None:
-            oprot.writeFieldBegin('Z', TType.DOUBLE, 3)
-            oprot.writeDouble(self.Z)
+        if self.z is not None:
+            oprot.writeFieldBegin('z', TType.DOUBLE, 3)
+            oprot.writeDouble(self.z)
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
         oprot.writeStructEnd()
 
     def validate(self):
-        if self.X is None:
-            raise TProtocolException(message='Required field X is unset!')
-        if self.Y is None:
-            raise TProtocolException(message='Required field Y is unset!')
-        if self.Z is None:
-            raise TProtocolException(message='Required field Z is unset!')
+        if self.x is None:
+            raise TProtocolException(message='Required field x is unset!')
+        if self.y is None:
+            raise TProtocolException(message='Required field y is unset!')
+        if self.z is None:
+            raise TProtocolException(message='Required field z is unset!')
+        return
+
+    def __repr__(self):
+        L = ['%s=%r' % (key, value)
+             for key, value in self.__dict__.items()]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not (self == other)
+
+
+class TQuaternion(object):
+    """
+    Attributes:
+     - w
+     - x
+     - y
+     - z
+
+    """
+
+
+    def __init__(self, w=None, x=None, y=None, z=None,):
+        self.w = w
+        self.x = x
+        self.y = y
+        self.z = z
+
+    def read(self, iprot):
+        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 1:
+                if ftype == TType.DOUBLE:
+                    self.w = iprot.readDouble()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 2:
+                if ftype == TType.DOUBLE:
+                    self.x = iprot.readDouble()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 3:
+                if ftype == TType.DOUBLE:
+                    self.y = iprot.readDouble()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 4:
+                if ftype == TType.DOUBLE:
+                    self.z = iprot.readDouble()
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin('TQuaternion')
+        if self.w is not None:
+            oprot.writeFieldBegin('w', TType.DOUBLE, 1)
+            oprot.writeDouble(self.w)
+            oprot.writeFieldEnd()
+        if self.x is not None:
+            oprot.writeFieldBegin('x', TType.DOUBLE, 2)
+            oprot.writeDouble(self.x)
+            oprot.writeFieldEnd()
+        if self.y is not None:
+            oprot.writeFieldBegin('y', TType.DOUBLE, 3)
+            oprot.writeDouble(self.y)
+            oprot.writeFieldEnd()
+        if self.z is not None:
+            oprot.writeFieldBegin('z', TType.DOUBLE, 4)
+            oprot.writeDouble(self.z)
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        if self.w is None:
+            raise TProtocolException(message='Required field w is unset!')
+        if self.x is None:
+            raise TProtocolException(message='Required field x is unset!')
+        if self.y is None:
+            raise TProtocolException(message='Required field y is unset!')
+        if self.z is None:
+            raise TProtocolException(message='Required field z is unset!')
         return
 
     def __repr__(self):
@@ -350,16 +462,25 @@ all_structs.append(TBone)
 TBone.thrift_spec = (
     None,  # 0
     (1, TType.STRING, 'name', 'UTF8', None, ),  # 1
-    (2, TType.STRUCT, 'Position', [TVector3, None], None, ),  # 2
-    (3, TType.LIST, 'children', (TType.STRING, 'UTF8', False), None, ),  # 3
-    (4, TType.STRING, 'parent', 'UTF8', None, ),  # 4
+    (2, TType.STRUCT, 'position', [TVector3, None], None, ),  # 2
+    (3, TType.STRUCT, 'rotation', [TQuaternion, None], None, ),  # 3
+    (4, TType.LIST, 'children', (TType.STRING, 'UTF8', False), None, ),  # 4
+    (5, TType.STRING, 'parent', 'UTF8', None, ),  # 5
 )
 all_structs.append(TVector3)
 TVector3.thrift_spec = (
     None,  # 0
-    (1, TType.DOUBLE, 'X', None, None, ),  # 1
-    (2, TType.DOUBLE, 'Y', None, None, ),  # 2
-    (3, TType.DOUBLE, 'Z', None, None, ),  # 3
+    (1, TType.DOUBLE, 'x', None, None, ),  # 1
+    (2, TType.DOUBLE, 'y', None, None, ),  # 2
+    (3, TType.DOUBLE, 'z', None, None, ),  # 3
+)
+all_structs.append(TQuaternion)
+TQuaternion.thrift_spec = (
+    None,  # 0
+    (1, TType.DOUBLE, 'w', None, None, ),  # 1
+    (2, TType.DOUBLE, 'x', None, None, ),  # 2
+    (3, TType.DOUBLE, 'y', None, None, ),  # 3
+    (4, TType.DOUBLE, 'z', None, None, ),  # 4
 )
 fix_spec(all_structs)
 del all_structs
