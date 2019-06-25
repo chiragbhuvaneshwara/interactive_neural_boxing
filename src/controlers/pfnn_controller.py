@@ -182,6 +182,8 @@ class Character:
 		self.joints = config_store["numJoints"] + self.endJoints# 59
 		self.joint_positions = np.array([[0.0, 0.0, 0.0]] * self.joints)
 		self.joint_velocities = np.array([[0.0, 0.0, 0.0]] * self.joints)
+
+		self.local_joint_positions = np.array(self.joint_positions)
 		#self.joint_rotations = np.array([np.array([0.0, 0.0, 0.0, 1.0])] * self.joints)
 		self.joint_rotations = np.array([0.0] * self.joints)
 		#self.end_joint_rotations = np.array([[0.0, 0.0, 0.0, 0.1]] * self.endJoints)
@@ -208,9 +210,10 @@ class Character:
 			vel = utils.rot_around_z_3d(local_rot,self.root_rotation)
 
 			self.joint_positions[j] = utils.glm_mix(self.joint_positions[j] + vel, pos,0.5)  # mix positions and velocities.
+			self.local_joint_positions[j] = utils.rot_around_z_3d(self.joint_positions[j] - self.root_position, self.root_rotation, inverse = True)
 			self.joint_velocities[j] = vel
 		# prediction is finished and post processed. Pose can be rendered!
-
+		return
 
 class PFNNInput(object):
 	def __init__(self, data, joints, n_gaits, endJoints):
@@ -267,8 +270,8 @@ class PFNNOutput(object):
 		self.joints = joints
 		self.out_root_base = 0
 		self.out_dphase_base = self.out_root_base + 3
-		# self.out_contacts_base = self.out_dphase_base + 1
-		self.out_next_traj_base = self.out_dphase_base + 1
+		self.out_contacts_base = self.out_dphase_base + 1
+		self.out_next_traj_base = self.out_contacts_base + 4
 		self.out_joint_pos_base = self.out_next_traj_base + 2 * 2 * 6
 		self.out_joint_vel_base = self.out_joint_pos_base + self.joints * 3
 		self.out_joint_rot_base = self.out_joint_vel_base + self.joints * 3
@@ -314,6 +317,8 @@ class Controller:
 		self.n_joints = config_store["numJoints"] + self.endJoints
 		self.n_gaits = config_store["n_gaits"]
 		self.use_rotations = config_store["use_rotations"]
+		self.use_foot_contacts = config_store["use_footcontacts"]
+		self.zero_posture = config_store["zero_posture"]
 
 		input_data = np.array([0.0] * self.xdim)
 		out_data = np.array([0.0] * self.ydim)
@@ -362,7 +367,7 @@ class Controller:
 
 	def update_target_dir(self, direction):
 		# Compute target direction from
-		target_vel_speed = 0.5  # 0.05												# target velocity factor, has to be adapted to dataset!
+		target_vel_speed = 2.5  # 0.05												# target velocity factor, has to be adapted to dataset!
 		self.target_vel = utils.glm_mix(self.target_vel, target_vel_speed * direction,
 							  0.9)  # 3d velocity mixed with old velocity
 
@@ -373,7 +378,7 @@ class Controller:
 
 	def update_target_dir_simple(self, direction):
 		# Compute target direction from
-		target_vel_speed = 0.5  # 0.05												# target velocity factor, has to be adapted to dataset!
+		target_vel_speed = 2.5  # 0.05												# target velocity factor, has to be adapted to dataset!
 		self.target_vel = direction * target_vel_speed
 		self.target_dir = self.target_vel
 
