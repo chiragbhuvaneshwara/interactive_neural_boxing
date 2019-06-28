@@ -7,6 +7,8 @@ from ..nn.fc_models.fc_networks import FCNetwork
 from .. import utils
 
 DEBUG = False
+np.set_printoptions(precision=3)
+np.set_printoptions(suppress=True)
 
 class Trajectory:
 	def __init__(self):
@@ -16,7 +18,7 @@ class Trajectory:
 		self.traj_directions = np.array([[0.0, 0.0, 1.0]] * self.n_frames)
 		self.traj_rotations = np.array([0.0] * self.n_frames)
 
-		self.traj_gait_stand = np.array([0.0] * self.n_frames)
+		self.traj_gait_stand = np.array([1.0] * self.n_frames)
 		self.traj_gait_walk = np.array([0.0] * self.n_frames)
 		self.traj_gait_jog = np.array([0.0] * self.n_frames)
 		self.traj_gait_back = np.array([0.0] * self.n_frames)
@@ -27,9 +29,9 @@ class Trajectory:
 		self.traj_directions = np.array([[0.0, 0.0, 1.0]] * self.n_frames)
 		self.traj_rotations = np.array([0.0] * self.n_frames)
 		for idx in range(self.median_idx+1):
-			self.traj_positions[idx] = start_location
-			self.traj_rotations[self.median_idx] = start_orientation
-			self.traj_directions[self.median_idx] = start_direction
+			self.traj_positions[idx] = np.array(start_location)
+			self.traj_rotations[self.median_idx] = np.array(start_orientation)
+			self.traj_directions[self.median_idx] = np.array(start_direction)
 
 		self.traj_gait_stand = np.array([0.0] * self.n_frames)
 		for idx in range(self.median_idx + 1):
@@ -45,7 +47,7 @@ class Trajectory:
 		if DEBUG:
 			print("")
 			print("char movement: ", root_position, math.degrees(root_rotation),
-				  self.traj_directions[self.median_idx])
+				  self.traj_directions[self.median_idx], "")
 			print("")
 
 		#frames_tmp_past = []
@@ -96,12 +98,16 @@ class Trajectory:
 			self.traj_gait_stand[i] = self.traj_gait_stand[self.median_idx]
 			self.traj_gait_walk[i] = self.traj_gait_walk[self.median_idx]
 			self.traj_gait_jog[i] = self.traj_gait_jog[self.median_idx]
+		
 		for i in range(len(trajectory_positions_blend) // 2 + 1, len(trajectory_positions_blend)):
 			self.traj_positions[i] = trajectory_positions_blend[i]
 
 		# compute trajectory rotations
 		for i in range(0, self.n_frames):
 			self.traj_rotations[i] = utils.z_angle(self.traj_directions[i])
+		if DEBUG:
+			print("updated traj pos: ", self.traj_positions[::10], "")
+			print("updated traj dir: ", self.traj_directions[::10], "")
 
 	def compute_gait_vector(self, target_vel, running):
 		# setting up gait vector
@@ -143,12 +149,12 @@ class Trajectory:
 		trajectory_update = utils.rot_around_z_3d(np.array([rot_vel[0], 0.0, rot_vel[1]]),
 											self.traj_rotations[self.median_idx])
 		if DEBUG:
-			print("trajectory update: ", rot_vel[0], rot_vel[1], -stand_amount * rot_vel[2])
+			print("trajectory update: ", stand_amount, stand_amount * trajectory_update, - stand_amount * rot_vel[2], "")
 
 		self.traj_positions[self.median_idx] = self.traj_positions[self.median_idx] + stand_amount * trajectory_update
 		self.traj_directions[self.median_idx] = utils.rot_around_z_3d(self.traj_directions[self.median_idx], -stand_amount * rot_vel[2])
 		if DEBUG:
-			print(" new root_direction: ", self.traj_directions[self.median_idx])
+			print(" new root_direction: ", self.traj_directions[self.median_idx], utils.z_angle(self.traj_directions[self.median_idx]), "")
 		self.traj_rotations[self.median_idx] = utils.z_angle(self.traj_directions[self.median_idx])
 		return stand_amount
 
@@ -157,12 +163,12 @@ class Trajectory:
 		root_pos = self.traj_positions[self.median_idx]
 		if DEBUG:
 			print("       root movement", self.traj_positions[self.median_idx],
-				  self.traj_directions[self.median_idx], root_rotation)
+				  self.traj_directions[self.median_idx], root_rotation, "")
 
 		# update future trajectory based on prediction. Future trajectory will solely depend on prediction and will be smoothed with the control signal by the next pre_render
 		for i in range(self.median_idx + 1, self.n_frames):
 			w = self.median_idx // 10
-			m = (i - self.n_frames / 2) / 10.0 % 1.0
+			m = ((i - self.n_frames / 2) / 10.0) % 1.0
 			# The following is only relevant to smooth between 0 / 10 and 1 / 10 steps, if 120 points are used
 
 			self.traj_positions[i][0] = (1 - m) * prediction[w * 0 + (i // 10 - w)] + m * prediction[w * 0 + (i // 10 - w) + (1 if i < 109 else 0)]
@@ -170,7 +176,7 @@ class Trajectory:
 			self.traj_positions[i] = utils.rot_around_z_3d(self.traj_positions[i], root_rotation) + root_pos
 			self.traj_directions[i][0] = (1 - m) * prediction[w * 2 + (i // 10 - w)] + m * prediction[w * 2 + (i // 10 - w) + (1 if i < 109 else 0)]
 			self.traj_directions[i][2] = (1 - m) * prediction[w * 3 + (i // 10 - w)] + m * prediction[w * 3 + (i // 10 - w) + (1 if i < 109 else 0)]
-			self.traj_directions[i] = utils.normalize(utils.rot_around_z_3d(self.traj_directions[i], root_rotation))
+			self.traj_directions[i] = (utils.rot_around_z_3d(utils.normalize(self.traj_directions[i]), root_rotation))
 
 			self.traj_rotations[i] = utils.z_angle(self.traj_directions[i])
 
@@ -206,11 +212,11 @@ class Character:
 		for j in range(0, self.joints):
 			local_pos = np.array([joint_positions[j * 3 + 0], joint_positions[j * 3 + 1], joint_positions[j * 3 + 2]]).reshape(3, )
 			pos = utils.rot_around_z_3d(local_pos, self.root_rotation) + self.root_position
-			local_rot = np.array([joint_velocities[j * 3 + 0], joint_velocities[j * 3 + 1], joint_velocities[j * 3 + 2]]).reshape(3, )
-			vel = utils.rot_around_z_3d(local_rot,self.root_rotation)
+			local_vel = np.array([joint_velocities[j * 3 + 0], joint_velocities[j * 3 + 1], joint_velocities[j * 3 + 2]]).reshape(3, )
+			vel = utils.rot_around_z_3d(local_vel,self.root_rotation)
 
-			self.joint_positions[j] = utils.glm_mix(self.joint_positions[j] + vel, pos,0.5)  # mix positions and velocities.
-			self.local_joint_positions[j] = utils.rot_around_z_3d(self.joint_positions[j] - self.root_position, self.root_rotation, inverse = True)
+			self.joint_positions[j] = utils.glm_mix(self.joint_positions[j] + vel, pos, 0.5)  # mix positions and velocities.
+			#self.local_joint_positions[j] = utils.rot_around_z_3d(self.joint_positions[j] - self.root_position, self.root_rotation, inverse = True)
 			self.joint_velocities[j] = vel
 		# prediction is finished and post processed. Pose can be rendered!
 		return
@@ -235,19 +241,19 @@ class PFNNInput(object):
 			self.joints - self.endJoints, ])
 
 	def setTrajPos(self, pos):
-		self.data[self.in_traj_pos_base:self.in_traj_pos_base + 2 * 12] = pos #np.reshape(pos, [24])
+		self.data[self.in_traj_pos_base:self.in_traj_pos_base + 2 * 12] = pos[:] #np.reshape(pos, [24])
 
 	def getInputTrajPos(self):
 		return self.data[self.in_traj_pos_base:self.in_traj_pos_base + 2 * 12]
 
 	def setTrajDir(self, dirs):
-		self.data[self.in_traj_dir_base:self.in_traj_dir_base + 2 * 12] = dirs #np.reshape(dirs, [24])
+		self.data[self.in_traj_dir_base:self.in_traj_dir_base + 2 * 12] = dirs[:] #np.reshape(dirs, [24])
 
 	def setTrajGait(self, gaits):
-		self.data[self.in_traj_gait_base:self.in_traj_gait_base + self.n_gaits * 12] = gaits #np.reshape(gaits,[gaits.size])
+		self.data[self.in_traj_gait_base:self.in_traj_gait_base + self.n_gaits * 12] = gaits[:] #np.reshape(gaits,[gaits.size])
 
 	def setJointPos(self, pos):
-		self.data[self.in_joint_pos:self.in_joint_pos + 3 * self.joints] = pos #np.reshape(pos, [pos.size, 1])
+		self.data[self.in_joint_pos:self.in_joint_pos + 3 * self.joints] = pos[:] #np.reshape(pos, [pos.size, 1])
 
 	def setJointVel(self, vel):
 		self.data[self.in_joint_vel:self.in_joint_vel + 3 * self.joints] = vel #np.reshape(vel, [vel.size, 1])
@@ -271,7 +277,7 @@ class PFNNOutput(object):
 		self.out_root_base = 0
 		self.out_dphase_base = self.out_root_base + 3
 		self.out_contacts_base = self.out_dphase_base + 1
-		self.out_next_traj_base = self.out_contacts_base + 4
+		self.out_next_traj_base = self.out_contacts_base# + 4
 		self.out_joint_pos_base = self.out_next_traj_base + 2 * 2 * 6
 		self.out_joint_vel_base = self.out_joint_pos_base + self.joints * 3
 		self.out_joint_rot_base = self.out_joint_vel_base + self.joints * 3
@@ -341,9 +347,12 @@ class Controller:
 		#self.network = n
 		
 		#if self.initial or True:
-		self.output.data = self.network.norm["Ymean"]# * self.network.norm["Ystd"] + self.network.norm["Ymean"]
-		self.input.data = self.network.norm["Xmean"]#* self.network.norm["Xstd"] + self.network.norm["Xmean"]
+		self.output.data = np.array(self.network.norm["Ymean"])# * self.network.norm["Ystd"] + self.network.norm["Ymean"]
+		self.input.data = np.array(self.network.norm["Xmean"])#* self.network.norm["Xstd"] + self.network.norm["Xmean"]
 
+
+		[od, phase] = self.network.forward_pass([self.input.data, 0.0])
+		
 		joint_positions = self.output.getJointPos()
 		joint_velocities = self.output.getJointVel()
 		
@@ -359,6 +368,7 @@ class Controller:
 				self.char.joint_rotations[j] = joint_rotations[j]
 		
 		self.set_previous_pose()
+		self.post_render()
 
 			#self.initial = False
 
@@ -367,7 +377,7 @@ class Controller:
 
 	def update_target_dir(self, direction):
 		# Compute target direction from
-		target_vel_speed = 2.5  # 0.05												# target velocity factor, has to be adapted to dataset!
+		target_vel_speed = 2.5 + 2.5 * np.linalg.norm(direction)  # 0.05												# target velocity factor, has to be adapted to dataset!
 		self.target_vel = utils.glm_mix(self.target_vel, target_vel_speed * direction,
 							  0.9)  # 3d velocity mixed with old velocity
 
@@ -375,16 +385,16 @@ class Controller:
 											< 1e-05 else utils.normalize(
 			self.target_vel)  # get target direction, old direction if speed is too low
 		self.target_dir = utils.mix_directions(self.target_dir, target_vel_dir, 0.9)  # mix with old target dir.
+		
 
 	def update_target_dir_simple(self, direction):
 		# Compute target direction from
-		target_vel_speed = 2.5  # 0.05												# target velocity factor, has to be adapted to dataset!
+		target_vel_speed = 0.5 # 0.05												# target velocity factor, has to be adapted to dataset!
 		self.target_vel = direction * target_vel_speed
 		self.target_dir = self.target_vel
 
 	def get_root_transform(self):
 		# compute root transform
-		#print("update root",self.char.root_position , self.traj.traj_positions[self.traj.median_idx])
 		self.char.root_position = np.array(self.traj.traj_positions[self.traj.median_idx])
 		self.char.root_position[1] = 0.0
 		self.char.root_rotation = self.traj.traj_rotations[self.traj.median_idx]
@@ -435,11 +445,12 @@ class Controller:
 	def pre_render(self, direction, phase):
 		# direction = normalize(direction)
 		if DEBUG:
-			print("input dir: ", direction)
-		self.update_target_dir_simple(direction)
+			print("input dir: ", direction, "")
+		self.update_target_dir(direction)
 		self.traj.compute_gait_vector(self.target_vel, self.char.running)
 		self.traj.compute_future_trajectory(self.target_dir, self.target_vel)
-
+		
+		self.get_root_transform()
 
 		# set input
 		self.set_trajectory()
@@ -447,7 +458,8 @@ class Controller:
 
 		[self.output.data, phase] = self.network.forward_pass([self.input.data, round(phase,2)])
 		self.lastphase = phase
-		self.get_root_transform()
+		
+		#self.get_root_transform()
 		self.get_new_pose()
 		return phase
 
@@ -455,7 +467,7 @@ class Controller:
 		stand_amount = self.traj.step_forward(self.output.getRotVel())
 		self.traj.update_from_predict(self.output.getNextTraj())
 		if DEBUG:
-			print("phase computation: ", stand_amount, self.output.getdDPhase(), self.lastphase)
+			print("phase computation: ", stand_amount, self.output.getdDPhase(), self.lastphase, "")
 
 
 		# update phase

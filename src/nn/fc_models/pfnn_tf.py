@@ -214,7 +214,6 @@ class PFNN(FCNetwork):
 		out = self.sess.run([self.network_output], feed_dict={self.x: [params[0]], self.p: [params[1]]})
 		out = np.array(out[0][0])
 		out = (out * self.norm["Ystd"]) + self.norm["Ymean"]
-		print("out shape", out.shape)
 		return [out, params[1]]
 
 	def from_file(dataset, target_path, epochs, config_store):
@@ -303,7 +302,6 @@ class PFNN(FCNetwork):
 		input_dim = X.shape[1]
 		output_dim = Y.shape[1]
 
-		print("in-out: ", input_dim, output_dim)
 		X = np.concatenate([X, P[:, np.newaxis]], axis=-1)
 
 

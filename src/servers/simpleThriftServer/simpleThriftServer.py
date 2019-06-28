@@ -8,6 +8,8 @@ from thrift.transport import TSocket, TTransport
 from thrift.protocol import TBinaryProtocol
 from thrift.server import TServer
 
+from ...utils import global_to_local_pos
+
 import threading
 import numpy as np
 import copy
@@ -100,8 +102,8 @@ class MotionServer:
 		return self.zero_posture
 
 	def fetchFrame(self, time : float, currentPosture : TPosture, direction : TVector3, gait : TGait):
-		newphase = self.controller.lastphase + self.controller.output.getdDPhase()
-		self.controller.pre_render(TVector3_2np(direction), newphase)
+		#newphase = self.controller.lastphase + self.controller.output.getdDPhase()
+		self.controller.pre_render(TVector3_2np(direction), self.controller.lastphase)
 		posture = self.__char2TPosture()
 		#posture = self.zero_posutre2
 		self.controller.post_render()
@@ -111,7 +113,8 @@ class MotionServer:
 		posture = copy.deepcopy(self.zero_posutre2)
 		char = self.controller.char
 		for i in range(len(char.joint_positions)):
-			posture.bones[i].position = np_2TVector3(char.joint_positions[i] - char.joint_positions[0])
+			pos = global_to_local_pos(char.joint_positions[i], char.root_position, char.root_rotation)
+			posture.bones[i].position = np_2TVector3(pos)
 		posture.location = np_2TVector3(char.root_position)
 		posture.rotation = char.root_rotation
 		return posture
