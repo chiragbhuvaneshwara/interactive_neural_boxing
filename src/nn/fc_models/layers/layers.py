@@ -135,6 +135,7 @@ class Interpolating_Layer(Layer):
 		Arguments:
 			params {list} -- List of parameters. params[0] contains the variable for layer input, 
 							params[1] the placeholder for phase interpolation
+							params[2] contains the dropout variable
 		
 		Returns:
 			params{list} -- updated parameters. 
@@ -142,7 +143,8 @@ class Interpolating_Layer(Layer):
 		input_string = params[0]
 		interpolation_factor = params[1]
 		layer = self.__construct__layer(interpolation_factor, dynamic=False)
-		return [layer.build_tf_graph(input_string), params[1]]
+		params[0] = layer.build_tf_graph(params)
+		return params
 
 	def store(self):
 		"""
