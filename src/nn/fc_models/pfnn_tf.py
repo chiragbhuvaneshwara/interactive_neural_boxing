@@ -265,8 +265,9 @@ class PFNN(FCNetwork):
 		#Xstd[w * start + j * 3 * 2:w * start + j * (3 * 2) + (j)] = Xstd[w * start + j * 3 * 2:w * start + j * (3 * 2) + (j)].mean() / (joint_weights * 0.1)  # twists
 		#start = start + j * 3 * 2
 		#Xstd[start:] = Xstd[start:].mean()
-
-		Ystd[0:2] = Ystd[0:2].mean()  # Translational Velocity
+		print("mean and std. dev of translation vel: ", Ymean[0:3], Ystd[0:3])
+		Ystd[0:1] = Ystd[0:1].mean()
+		Ystd[1:2] = Ystd[1:2].mean()  # Translational Velocity
 		Ystd[2:3] = Ystd[2:3].mean()  # Rotational Velocity
 		Ystd[3:4] = Ystd[3:4].mean()  # Change in Phase
 		if config_store["use_footcontacts"]:
