@@ -7,7 +7,7 @@ import json
 
 from src import utils
 
-target_file = ("trained_models/epoch_29.json")
+target_file = ("trained_models/epoch_49.json")
 
 pfnn = PFNN.load(target_file)
 #pfnn = PFNNTF.load(target_file)
@@ -15,7 +15,7 @@ pfnn = PFNN.load(target_file)
 
 dataset_config_file = "data/dataset.json"
 with open(dataset_config_file, "r") as f:
-	config_store = json.load(f)
+	config_store = json.load(f) 
 
 # config_store = {"endJoints": 0,
 # 		"numJoints":31,

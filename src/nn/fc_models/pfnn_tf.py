@@ -270,6 +270,7 @@ class PFNN(FCNetwork):
 		Ystd[2:3] = Ystd[2:3].mean()  # Rotational Velocity
 		Ystd[3:4] = Ystd[3:4].mean()  # Change in Phase
 		if config_store["use_footcontacts"]:
+			print("using Footcontacts")
 			Ystd[4:8] = Ystd[4:8].mean() # foot contacts
 			start = 8
 		else:

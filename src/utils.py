@@ -33,8 +33,9 @@ def glm_mix(v1, v2, a):
 
 
 def z_angle(v1):
-	v1 = normalize(v1)
-	return math.atan2(v1[0], v1[-1])
+	v = np.array([v1[0],0.0, v1[2]])
+	v = normalize(v)
+	return math.atan2(v[0], v[-1])
 
 def mix_directions(v1, v2, a):
 	if v1.all(0) and v2.all(0):
@@ -56,7 +57,8 @@ def rot_around_z_3d(vector, angle, inverse = False):
 		[-math.sin(angle), 0, math.cos(angle)]
 	])
 	if inverse:
-		mat = mat.transpose()
+		mat = np.linalg.inv(mat)
+		#mat = mat.transpose()
 	return np.matmul(mat, vector)
 
 def quat_to_mat(q):
