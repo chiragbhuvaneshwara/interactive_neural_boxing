@@ -14,55 +14,55 @@ import threading
 import numpy as np
 import copy
 
-def read_BVH(file):
-	lines = []
-	with open(file) as f:
-		line = f.readline()
-		while ("MOTION" not in line):
-			if not line.strip() == "":
-				lines.append(line.strip())
-			line = f.readline()
-		bonelinst = []
-		bid = 0
-		mapping = {}
-		current_bone_name = ""
-		current_offset = np.array([0.0,0.0,0.0])
-		last_bone_name = ""
-		i = 0
-		while(i < len(lines)):
-			# if "HIERARCHY" in lines[i] or "CHANNELS" in lines[i] or "{" in lines[i]:
-			# 	continue
-			if "End Site" in lines[i]:
-				i+= 4
-				continue
-			elif "}" in lines[i]:
-				last_bone_name = bonelinst[mapping[last_bone_name]].parent
+# def read_BVH(file):
+# 	lines = []
+# 	with open(file) as f:
+# 		line = f.readline()
+# 		while ("MOTION" not in line):
+# 			if not line.strip() == "":
+# 				lines.append(line.strip())
+# 			line = f.readline()
+# 		bonelinst = []
+# 		bid = 0
+# 		mapping = {}
+# 		current_bone_name = ""
+# 		current_offset = np.array([0.0,0.0,0.0])
+# 		last_bone_name = ""
+# 		i = 0
+# 		while(i < len(lines)):
+# 			# if "HIERARCHY" in lines[i] or "CHANNELS" in lines[i] or "{" in lines[i]:
+# 			# 	continue
+# 			if "End Site" in lines[i]:
+# 				i+= 4
+# 				continue
+# 			elif "}" in lines[i]:
+# 				last_bone_name = bonelinst[mapping[last_bone_name]].parent
 
-			elif "JOINT" in lines[i] or "ROOT" in lines[i]:
-				params = lines[i].split()
-				current_bone_name = params[1].strip()
+# 			elif "JOINT" in lines[i] or "ROOT" in lines[i]:
+# 				params = lines[i].split()
+# 				current_bone_name = params[1].strip()
 
-			elif "OFFSET" in lines[i]:
-				if current_bone_name != "":
-					params = lines[i].split()
-					parent_offset = np.array([0,0,0])
-					if last_bone_name != "":
-						parent_offset = TVector3_2np(bonelinst[mapping[last_bone_name]].Position)
-					offset = np.array([float(params[1]), -float(params[2]), float(params[3])]) * 5.333
-					current_offset = np_2TVector3(parent_offset + offset)#TVector3(float(params[1]), float(params[2]), float(params[3]))
-					tb = TBone(current_bone_name, current_offset, children=[], parent=last_bone_name)
-					bonelinst.append(tb)
-					mapping[current_bone_name] = bid
-					bid += 1
-					last_bone_name = current_bone_name
-					current_bone_name = ""
-			i += 1
+# 			elif "OFFSET" in lines[i]:
+# 				if current_bone_name != "":
+# 					params = lines[i].split()
+# 					parent_offset = np.array([0,0,0])
+# 					if last_bone_name != "":
+# 						parent_offset = TVector3_2np(bonelinst[mapping[last_bone_name]].Position)
+# 					offset = np.array([float(params[1]), -float(params[2]), float(params[3])]) * 5.333
+# 					current_offset = np_2TVector3(parent_offset + offset)#TVector3(float(params[1]), float(params[2]), float(params[3]))
+# 					tb = TBone(current_bone_name, current_offset, children=[], parent=last_bone_name)
+# 					bonelinst.append(tb)
+# 					mapping[current_bone_name] = bid
+# 					bid += 1
+# 					last_bone_name = current_bone_name
+# 					current_bone_name = ""
+# 			i += 1
 		
-		for tb in bonelinst:
-			if tb.parent != "":
-				pid = mapping[tb.parent]
-				bonelinst[pid].children.append(tb.name)
-	return TPosture(bonelinst, mapping, TVector3(0,0,0), 0.0)
+# 		for tb in bonelinst:
+# 			if tb.parent != "":
+# 				pid = mapping[tb.parent]
+# 				bonelinst[pid].children.append(tb.name)
+# 	return TPosture(bonelinst, mapping, TVector3(0,0,0), 0.0)
 	
 def TVector3_2np(x):
 	return np.array([x.x, x.y, x.z])
@@ -70,10 +70,9 @@ def np_2TVector3(x):
 	return TVector3(x[0], x[1], x[2])
 
 class MotionServer:
-	def __init__(self, controller: Controller, bvh_path):
+	def __init__(self, controller: Controller):
 		self.log = {}
 		self.controller = controller
-		self.bvh_path = ""
 		self.zero_posture = self.build_zero_posture("local_position")#read_BVH(bvh_path)
 		self.zero_posutre2 = self.build_zero_posture()
 
@@ -120,8 +119,8 @@ class MotionServer:
 		return posture
 
 
-def CREATE_MOTION_SERVER(controller, bvh_path):
-	handler = MotionServer(controller, bvh_path)
+def CREATE_MOTION_SERVER(controller):
+	handler = MotionServer(controller)
 	processor = T_simple_directional_motion_server.Processor(handler)
 	transport = TSocket.TServerSocket(host="127.0.0.1", port=9999)
 	tfactory = TTransport.TBufferedTransportFactory()
