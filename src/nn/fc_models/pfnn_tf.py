@@ -35,6 +35,7 @@ class PFNN(FCNetwork):
 		"""
 
 		super().__init__(input_size, output_size, hidden_size, norm)
+		print("Init PFNN TF")
 
 		self.batch_size = batch_size
 		self.dropout = dropout
@@ -42,6 +43,9 @@ class PFNN(FCNetwork):
 		self.x = tf.placeholder(tf.float32, shape=[self.batch_size, self.input_size], name="InputString")
 		self.y = tf.placeholder(tf.float32, shape=[self.batch_size, self.output_size], name="OutputString")
 		self.p = tf.placeholder(tf.float32, shape=[self.batch_size], name = "Phase")
+		
+		self.counter = tf.placeholder(tf.int32, name="step_counter")
+
 
 		if len(layers) != 3:
 			l0 = TF_PFNN_Layer((hidden_size, input_size), elu_operator = tf.nn.elu, name="Layer0")
@@ -57,6 +61,7 @@ class PFNN(FCNetwork):
 
 		self.train_step = None
 		self.cost_function = None
+		self.first_decay_steps = 0
 
 	def load(target_file):
 		with open(target_file, "r") as f:
@@ -79,7 +84,7 @@ class PFNN(FCNetwork):
 						TF_PFNN_Layer.load([store["layer_1"], tf.nn.elu]),
 						TF_PFNN_Layer.load([store["layer_2"], None])]
 			pfnn = PFNN(input_size, output_size, hidden_size, norm, batch_size = 1, layers=layers, dropout = 0.999)
-
+			pfnn.store = store
 			return pfnn
 		
 		# for l in range(len(self.layers)):
@@ -107,6 +112,7 @@ class PFNN(FCNetwork):
 		output = self.network_output
 		print("output shape: ", output.shape)
 
+
 		tf.global_variables_initializer()
 
 		with tf.name_scope("costAcc") as scope:
@@ -119,8 +125,10 @@ class PFNN(FCNetwork):
 
 		tf.summary.scalar("cost_function", self.cost_function)
 		tf.summary.scalar("training accuracy", self.accuracy)
-		
-		opt = tf.train.AdamOptimizer(learning_rate = 0.0001)
+
+		self.lr_decayed = tf.train.cosine_decay_restarts(0.0001, self.counter, self.first_decay_steps)
+
+		opt = tf.train.AdamOptimizer(self.lr_decayed) # learning_rate = 0.0001
 		var_list = []
 		for l in self.layers:
 			var_list.append(l.weight)
@@ -139,6 +147,10 @@ class PFNN(FCNetwork):
 			epochs {int} -- Training duration in epochs
 			target_path {string} -- Path to a folder, where the network iterations should be stored. 
 		"""
+		self.n_frames = len(X)
+		self.first_decay_steps = self.n_frames // self.batch_size * 10
+
+
 		self.build_tf_graph([])
 
 		config = tf.ConfigProto()
@@ -147,12 +159,13 @@ class PFNN(FCNetwork):
 		with tf.Session(config=config) as sess:
 			sess.run(tf.global_variables_initializer())
 
-			self.summary_writer = tf.summary.FileWriter("../logs/", sess.graph)
+			self.summary_writer = tf.summary.FileWriter(target_path, sess.graph)
 			for l in self.layers:
 				l.sess = sess
 
 			I = np.arange(len(X))
 			print("processing input: ", X[I].shape)
+			counter = np.array([0], dtype=np.int32)
 			for e in range(epochs):
 				print("starting epoch %d"%e)
 				# randomize network input
@@ -167,6 +180,7 @@ class PFNN(FCNetwork):
 				np.random.shuffle(batchind)
 				
 				step_counter = 0
+
 				for i in range(0, len(input), self.batch_size):
 					if (i + self.batch_size) >= len(input):
 						break
@@ -175,13 +189,15 @@ class PFNN(FCNetwork):
 					x = x[:,:-1]
 					y = output[i:i + self.batch_size]
 					#y = y_data.reshape(self.batch_size, self.output_shape)
-					merged, _, loss_value, acc = sess.run([self.merged, self.train_step, self.cost_function, self.accuracy], feed_dict={self.x: x, self.y: y, self.p: p})
+					merged, _, loss_value, acc = sess.run([self.merged, self.train_step, self.cost_function, self.accuracy], feed_dict={self.x: x, self.y: y, self.p: p, self.counter: counter[0]})
+					#sess.run(self.counter.assign_add(1))
 					self.summary_writer.add_summary(merged, i + e * len(input))
 					step_counter += 1
+					counter[0] += 1
 					if i > 0 and (i % 20) == 0:
 						sys.stdout.write(
-							'\r[Epoch %3i] % 3.1f%% est. remaining time: %i min, %.5f loss, %.5f acc' % (
-						e, 100 * i / len(input), ((datetime.datetime.now() - start_time).total_seconds() / i * (len(input) - i)) / 60, loss_value, acc))
+							'\r[Epoch %3i] % 3.1f%% est. remaining time: %i min, %.5f loss, %.5f acc, lr * 1000 %.6f, c: %i' % (
+						e, 100 * i / len(input), ((datetime.datetime.now() - start_time).total_seconds() / i * (len(input) - i)) / 60, loss_value, acc, sess.run(self.lr_decayed, feed_dict={self.counter: counter[0]}) * 1000, counter[0]))
 						sys.stdout.flush()
 					accuracies.append(acc)
 					losses.append(loss_value)
@@ -266,16 +282,17 @@ class PFNN(FCNetwork):
 		#start = start + j * 3 * 2
 		#Xstd[start:] = Xstd[start:].mean()
 		print("mean and std. dev of translation vel: ", Ymean[0:3], Ystd[0:3])
-		Ystd[0:1] = Ystd[0:1].mean()
-		Ystd[1:2] = Ystd[1:2].mean()  # Translational Velocity
-		Ystd[2:3] = Ystd[2:3].mean()  # Rotational Velocity
-		Ystd[3:4] = Ystd[3:4].mean()  # Change in Phase
+		importance_trajectory = 1.0
+		Ystd[0:1] = Ystd[0:1].mean() / importance_trajectory
+		Ystd[1:2] = Ystd[1:2].mean() / importance_trajectory # Translational Velocity
+		Ystd[2:3] = Ystd[2:3].mean() / importance_trajectory # Rotational Velocity / Dir x
+		Ystd[3:4] = Ystd[3:4].mean() / importance_trajectory # Change in Phase  / Dir y
+		Ystd[4:5] = Ystd[4:5].mean() / importance_trajectory # Change in Phase
+		start = 5
 		if config_store["use_footcontacts"]:
 			print("using Footcontacts")
-			Ystd[4:8] = Ystd[4:8].mean() # foot contacts
-			start = 8
-		else:
-			start = 4
+			Ystd[start:start + 4] = Ystd[start:start + 4].mean() # foot contacts
+			start += 4
 		
 		Ystd[start + (w // 2) * 0:start + (w // 2) * 1] = Ystd[start + (w // 2) * 0:start + (w // 2) * 1].mean()  # Trajectory Future Positions X
 		Ystd[start + (w // 2) * 1:start + (w // 2) * 2] = Ystd[start + (w // 2) * 1:start + (w // 2) * 2].mean()  # Trajectory Future Positions Y

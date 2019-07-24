@@ -83,15 +83,15 @@ class TF_PFNN_Layer(Interpolating_Layer):
 				W_bound = 1 * np.sqrt(6. / np.prod(dshape[1]))
 				weight = np.asarray(np.random.uniform(low = -W_bound, high=W_bound, size=(4, dshape[0], dshape[1])), dtype=np.float32)
 			
-			weight = tf.Variable(weight, True)
+			weight = tf.Variable(weight, True, name="weights")
 			self.sess = None
 			
 			if len(bias) == 0:
 				bias = tf.constant(0.0, shape = (4, dshape[0]))
-			bias = tf.Variable(bias, True)
+			bias = tf.Variable(bias, True, name = "bias")
 
 			print("initialized new layer: ", weight.shape, bias.shape)
-			
+		
 
 			def interpolation_function(w, phase):
 				with tf.name_scope("network_interpolation") as scope:
@@ -166,4 +166,79 @@ class TF_PFNN_Layer(Interpolating_Layer):
 		"weight":self.sess.run(self.weight).astype(np.float32).tolist(),
 		"bias":self.sess.run(self.bias).astype(np.float32).tolist()}
 		return store
+
+
+
+class TF_Variational_Layer(TF_PFNN_Layer):
+	def __init__(self, dshape, weight = [], bias = [], elu_operator = None, name = ""):
+		dshape_new = (dshape[0] * 2, dshape[1])
+		super().__init__(dshape_new, weight, bias, elu_operator, name)
+
+	def set_random_state(self, random_state):
+		self.random_state = random_state
+
+	def build_tf_graph(self, params, random_state = None):
+		with tf.name_scope("Var_Layer_xyz") as scope:
+			params = super().build_tf_graph(params)
+			dhalf = (self.dshape[0] // 2)
+			print("builtf var: ", dhalf, self.random_state.shape)
+			if random_state is None:
+				z = self.random_state[:, :dhalf]
+			else:
+				z = random_state[:, :dhalf]
+			params[0] = tf.add(params[0][:,:dhalf], tf.multiply(params[0][:, dhalf:], z), name="CombineSamples")
+		return params
+
+	def load(params):
+		"""
+		This constant function loads the network from a map store. 
+		the params[0] field should contain a map containing:
+			* dshape: Shape of the interpolated network
+			* weight: weights
+			* bias: biases
+		
+		params[1] contains the elu operator
+
+		This function is not yet fully implemented!
+		
+		Arguments:
+			params {list} -- parameters
+		
+		Returns:
+			TF_PFNN_Layer -- generated layer. 
+		"""
+		# store = params[0]
+		# dshape = np.frombuffer(store["dshape"], dtype=np.float32)
+		# weight = np.frombuffer(store["weight"], dtype=np.float32)
+		# bias = np.frombuffer(store["bias"], dtype=np.float32)
+		# elu = params[1]
+		store = params[0]
+		dshape = np.array(store["dshape"], dtype=np.float32)
+		dshape = (int(dshape[0] // 2), int(dshape[1]))
+		weight = np.array(store["weight"], dtype=np.float32)
+		bias = np.array(store["bias"], dtype=np.float32)
+		elu = params[1]
+
+		return TF_Variational_Layer(dshape, weight, bias, elu)
+	
+	def store(self):
+		"""
+		Generates a json store for the network configuration. 
+		
+		Returns:
+			map -- json store
+		"""
+		store = super().store()
+		store["VINN"] = True
+		return store
+
+	# def forward_pass(self, params,  random_state = None):
+	# 	params = self.original_layer.forward_pass()
+	# 	dhalf = (self.original_layer.dshape[0] // 2)
+	# 	if random_state is None:
+	# 		z = self.random_state[:, :dhalf]
+	# 	else:
+	# 		z = random_state[:, :dhalf]
+	# 	params[0] = tf.add(params[0][:,:dhalf], tf.multiply(params[0][:, dhalf:], z))
+	# 	return params
 
