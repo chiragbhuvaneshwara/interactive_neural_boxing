@@ -1,6 +1,6 @@
-namespace csharp SimpleMosiServer
-namespace py SimpleMosiServer
-namespace cpp SimpleMosiServer
+namespace csharp MultiMosiServer
+namespace py MultiMosiServer
+namespace cpp MultiMosiServer
 
 // Data field for a posture
 struct TPosture
@@ -47,7 +47,7 @@ enum TGait
 }
 
 // a simple motion server interface requiring a direction as an input
-service T_simple_directional_motion_server
+service T_multi_directional_motion_server
 {
 	i32 registerSession(),
 	TPosture getZeroPosture(),

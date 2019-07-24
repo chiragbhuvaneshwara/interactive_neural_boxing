@@ -1,6 +1,6 @@
 
-from .gen_py.SimpleMosiServer.ttypes import TPosture, TBone, TVector3, TGait, TQuaternion
-from .gen_py.SimpleMosiServer import T_simple_directional_motion_server
+from .gen_code.ttypes import TPosture, TBone, TVector3, TGait, TQuaternion
+from .gen_code import T_multi_directional_motion_server
 from ...controlers.pfnn_controller import Controller, Character
 
 from thrift import Thrift
@@ -139,7 +139,7 @@ class MotionServer:
 
 def CREATE_MOTION_SERVER(controller):
 	handler = MotionServer(controller)
-	processor = T_simple_directional_motion_server.Processor(handler)
+	processor = T_multi_directional_motion_server.Processor(handler)
 	transport = TSocket.TServerSocket(host="127.0.0.1", port=9999)
 	tfactory = TTransport.TBufferedTransportFactory()
 	pfactory = TBinaryProtocol.TBinaryProtocolFactory()
