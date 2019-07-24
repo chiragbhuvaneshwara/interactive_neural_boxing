@@ -1,6 +1,6 @@
 
-from .gen_code.ttypes import TPosture, TBone, TVector3, TGait, TQuaternion
-from .gen_code import T_simple_directional_motion_server
+from .gen_py.SimpleMosiServer.ttypes import TPosture, TBone, TVector3, TGait, TQuaternion
+from .gen_py.SimpleMosiServer import T_simple_directional_motion_server
 from ...controlers.pfnn_controller import Controller, Character
 
 from thrift import Thrift
@@ -75,12 +75,19 @@ def np_2TVector3(x):
 class MotionServer:
 	def __init__(self, controller: Controller):
 		self.log = {}
-		self.controller = controller
+		self.base_controller = controller
 		self.zero_posture = self.build_zero_posture("local_position")#read_BVH(bvh_path)
 		self.zero_posutre2 = self.build_zero_posture()
+		self.session_controllers = {}
+		self.session_counter = 0
 
+	def registerSession(self):
+		self.session_counter += 1
+		self.session_controllers[self.session_counter] = self.base_controller.copy()
+		return self.session_counter
+	
 	def build_zero_posture(self, position_str = "position"):
-		zp = self.controller.zero_posture
+		zp = self.base_controller.zero_posture
 		bonelist = []
 		mapping = {}
 		for bone in zp:
@@ -103,22 +110,25 @@ class MotionServer:
 	def getZeroPosture(self):
 		return self.zero_posture
 
-	def fetchFrame(self, dtime : float, currentPosture : TPosture, direction : TVector3, gait : TGait):
+	def fetchFrame(self, dtime : float, currentPosture : TPosture, direction : TVector3, gait : TGait, session_counter : int):
 		#newphase = self.controller.lastphase + self.controller.output.getdDPhase()
 		if DEBUG_TIMING:
 			start_time = time.time()
-		self.controller.pre_render(TVector3_2np(direction), self.controller.lastphase)
-		posture = self.__char2TPosture()
+		if session_counter not in self.session_controllers.keys():
+			self.session_controllers[session_counter] = self.base_controller.copy()
+			print("This is not right. Do propper session management here. had to create a session for %f on the fly. "%session_counter)
+		self.session_controllers[session_counter].pre_render(TVector3_2np(direction), self.session_controllers[session_counter].lastphase)
+		posture = self.__char2TPosture(session_counter)
 		#posture = self.zero_posutre2
-		self.controller.post_render()
+		self.session_controllers[session_counter].post_render()
 		if DEBUG_TIMING:
 			totime = time.time() - start_time
 			print("fetch frame: %f equals hypothetical %f fps"%(totime, 1/totime))
 		return posture
 	
-	def __char2TPosture(self):
+	def __char2TPosture(self, session_counter):
 		posture = copy.deepcopy(self.zero_posutre2)
-		char = self.controller.char
+		char = self.session_controllers[session_counter].char
 		for i in range(len(char.joint_positions)):
 			pos = global_to_local_pos(char.joint_positions[i], char.root_position, char.root_rotation)
 			posture.bones[i].position = np_2TVector3(pos)
@@ -134,7 +144,10 @@ def CREATE_MOTION_SERVER(controller):
 	tfactory = TTransport.TBufferedTransportFactory()
 	pfactory = TBinaryProtocol.TBinaryProtocolFactory()
 
-	server = TServer.TSimpleServer(processor, transport, tfactory, pfactory)
+	#server = TServer.TSimpleServer(processor, transport, tfactory, pfactory)
+	server = TServer.TThreadPoolServer(processor, transport, tfactory, pfactory)
+
+
 	
 	thread = threading.Thread(target=server.serve)
 	thread.daemon = True
