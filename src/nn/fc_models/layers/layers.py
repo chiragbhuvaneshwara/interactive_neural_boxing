@@ -158,7 +158,31 @@ class Interpolating_Layer(Layer):
 			"bias":self.bias}
 		return store
 
+# class Variational_Layer(FCLayer):
+# 	def __init__(self, original_layer):
+# 		self.original_layer = original_layer
+# 		self.random_state = [0.0] * self.original_layer.dshape[0]
+# 		self.weight = self.original_layer.weight
+# 		self.bias = self.original_layer.bias
+# 		self.dshape = self.original_layer.dshape
+# 		self.elu_operator = self.original_layer.elu_operator
 
+
+# 	def set_random_state(self, z):
+# 		self.random_state = z
+# 		print("random state: ", self.random_state)
+
+# 	def build_tf_graph(self, params):
+# 		pass
+
+# 	def forward_pass(self, params):
+# 		pass
+	
+# 	def store(self):
+# 		self.original_layer.store()
+	
+# 	def load(original_layer, params):
+# 		original_layer.load(params)
 
 def cubic(y0, y1, y2, y3, mu):
 	"""
