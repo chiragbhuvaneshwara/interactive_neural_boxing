@@ -1,6 +1,8 @@
 import json
 import numpy as np
 
+from .layers.layers import Layer
+
 class FCNetwork:
 	"""		
 	FCNetwork is an abstract implementation of a fully connected neural network. 
@@ -50,7 +52,7 @@ class FCNetwork:
 		
 		self.layers = []
 
-	def add_layer(self, layer):
+	def add_layer(self, layer : Layer):
 		"""
 
 		Adds a layer to the network. 

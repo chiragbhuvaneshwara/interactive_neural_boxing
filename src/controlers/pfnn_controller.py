@@ -13,6 +13,15 @@ np.set_printoptions(suppress=True)
 np.set_printoptions(linewidth=120)
 
 class Trajectory:
+	"""
+	This class contains data and functionality for local trajectory control. 
+	120 frames surrounding the current frame are considered. 
+	Trajectory positions and directions are predicted by the network and blended with the user input. 
+	This class manages gait information as well (as it is linked to the trajectory points). 
+	
+	Returns:
+		[type] -- [description]
+	"""
 	def __init__(self):
 		self.n_frames = 12 * 10  # 120 fps
 		self.median_idx = self.n_frames // 2
@@ -27,7 +36,15 @@ class Trajectory:
 		self.foot_drifting = np.array([0.0, 0.0, 0.0])
 		self.blend_bias = 2.0
 
-	def reset(self, start_location, start_orientation, start_direction):
+	def reset(self, start_location = [0,0,0], start_orientation = [1,0,0,0], start_direction = [0,0,1]):
+		"""
+		Resets the trajectory information and thus the character to 0,0,0 pointing to 0,0,1. 
+		
+		Keyword Arguments:
+			start_location {list} -- [description] (default: {[0,0,0]})
+			start_orientation {list} -- [description] (default: {[1,0,0,0]})
+			start_direction {list} -- [description] (default: {[0,0,1]})
+		"""
 		self.traj_positions = np.array([[0.0, 0.0, 0.0]] * self.n_frames)
 		self.traj_directions = np.array([[0.0, 0.0, 1.0]] * self.n_frames)
 		self.traj_rotations = np.array([0.0] * self.n_frames)
@@ -44,6 +61,18 @@ class Trajectory:
 		self.traj_gait_back = np.array([0.0] * self.n_frames)
 
 	def get_input(self, root_position, root_rotation, n_gaits):
+		"""
+		This function computes the network input vector based on the current trajectory state for the new root_position and root_rotations. 
+		
+		Arguments:
+			root_position {[type]} -- new root position
+			root_rotation {[type]} -- new root rotation
+			n_gaits {[type]} -- number of gaits
+		Returns:
+			np.array[12 * 2] -- trajectory positions
+			np.array[12 * 2] -- trajectory directions
+			np.array[12 * n_gaits] -- trajectory gaits
+		"""
 		w = self.n_frames // 10  # only every 10th frame => resulting in w = 12
 		input_pos = np.array([0.0] * 2 * w)
 		input_dir = np.array([0.0] * 2 * w)
@@ -95,6 +124,13 @@ class Trajectory:
 		return input_pos, input_dir, traj_gait
 
 	def compute_future_trajectory(self, target_dir, target_vel):
+		"""
+		Performs blending of the future trajectory for the next target direction and velocity. 
+		
+		Arguments:
+			target_dir {np.array(3)} -- Direction
+			target_vel {np.array(3)} -- Velocity
+		"""
 		# computing future trajectory
 		trajectory_positions_blend = np.array(self.traj_positions)
 		total_directional_error = np.array([0.0,0.0,0.0])
@@ -130,6 +166,13 @@ class Trajectory:
 			self.traj_rotations[i] = utils.z_angle(self.traj_directions[i])
 
 	def compute_gait_vector(self, target_vel, running):
+		"""
+		Computes the future gait vector for a specific target velocity and running gait label
+		
+		Arguments:
+			target_vel {np.array(3)} -- Velocity
+			running {int[0,1]} -- gait
+		"""
 		# setting up gait vector
 		if utils.euclidian_length(target_vel) < 0.001:
 			# standing
@@ -149,10 +192,16 @@ class Trajectory:
 			self.traj_gait_walk[self.median_idx] = 0.9 * self.traj_gait_walk[self.median_idx] + 0.1
 		# print("gaits: ", self.traj_gait_stand[self.median_idx], self.traj_gait_walk[self.median_idx], self.traj_gait_jog[self.median_idx])
 
-	def get_stand_amount(self):
-		return math.pow(1.0 - self.traj_gait_stand[self.median_idx], 0.25)  # influence of gait stand.
-
 	def step_forward(self, rot_vel):
+		"""
+		Performs a frame-step after rendering
+		
+		Arguments:
+			rot_vel {np.array(4)} -- root velocity + new root direction
+		
+		Returns:
+			[type] -- [description]
+		"""
 		# mix positions with velocity prediction
 		for i in range(0, len(self.traj_positions) // 2):
 			self.traj_positions[i] = np.array(self.traj_positions[i + 1])
@@ -164,23 +213,23 @@ class Trajectory:
 			self.traj_gait_jog[i] = self.traj_gait_jog[i + 1]
 
 		## current trajectory
-		stand_amount = self.get_stand_amount()
+		stand_amount = math.pow(1.0 - self.traj_gait_stand[self.median_idx], 0.25)  # influence of gait stand.
 
 		trajectory_update = utils.rot_around_z_3d(np.array([rot_vel[0], 0.0, rot_vel[1]]),
 											self.traj_rotations[self.median_idx])
 
 		#rotational_vel = rot_vel[2]
-		if rot_vel[2] < 0.00001 and rot_vel[3] < 0.00001:
-			rotational_vel = 0
-		elif rot_vel[2] < 0.00001:
-			rotational_vel = 0
-		elif rot_vel[3] < 0.00001:
-			if rot_vel[2] > 0:
-				rotational_vel = math.pi
-			else:
-				rotational_vel = - math.pi
-		else:
-			rotational_vel = math.atan(rot_vel[2] / rot_vel[3]) 
+		# if rot_vel[2] < 0.00001 and rot_vel[3] < 0.00001:
+		# 	rotational_vel = 0
+		# elif rot_vel[2] < 0.00001:
+		# 	rotational_vel = 0
+		# elif rot_vel[3] < 0.00001:
+		# 	if rot_vel[2] > 0:
+		# 		rotational_vel = math.pi
+		# 	else:
+		# 		rotational_vel = - math.pi
+		# else:
+		# 	rotational_vel = math.atan(rot_vel[2] / rot_vel[3]) 
 			
 		rotational_vel = math.atan2(rot_vel[2], rot_vel[3])
 
@@ -195,6 +244,13 @@ class Trajectory:
 		return stand_amount
 
 	def update_from_predict(self, prediction):
+		"""
+		Update trajectory from prediction. 
+		Prediction is assumed to contain first trajectory positions of the next 6 trajectory points for x, then y and afterwards directions, first for x then y. 
+		
+		Arguments:
+			prediction {np.array(4 * (6 * 2))} -- vector containing the network output regarding future trajectory positions and directions
+		"""
 		root_rotation = self.traj_rotations[self.median_idx]
 		root_pos = self.traj_positions[self.median_idx]
 		if DEBUG:
@@ -223,9 +279,17 @@ class Trajectory:
 
 
 class Character:
+	"""
+	Character class contains information about the simulated character. 
+	
+	Returns:
+		[type] -- [description]
+	"""
 	def __init__(self, config_store):# endJoints = 5, numJoints = 21):
 		self.endJoints = config_store["endJoints"]
 		self.joints = config_store["numJoints"] + self.endJoints# 59
+
+		# fields for joint positions and velocities in global space. 
 		self.joint_positions = np.array([[0.0, 0.0, 0.0]] * self.joints)
 		self.joint_velocities = np.array([[0.0, 0.0, 0.0]] * self.joints)
 		self.last_joint_positions = np.array(self.joint_positions)
@@ -251,6 +315,17 @@ class Character:
 		self.running = 0.0
 
 	def set_pose(self, joint_positions, joint_velocities, joint_rotations, foot_contacts = [0, 0, 0, 0]):
+		"""
+		Sets a new pose after prediction. 
+		
+		Arguments:
+			joint_positions {np.array(njoints * 3)} -- predicted root-local joint positions
+			joint_velocities {np.array(njoints * 3)} -- predicted root-local joint velocity
+			joint_rotations {[type]} -- not utilized at the moment
+		
+		Keyword Arguments:
+			foot_contacts {list} -- binary vector of foot-contacts  (default: {[0, 0, 0, 0]})
+		"""
 		self.joint_rotations = joint_rotations
 		# build local transforms from prediction
 		self.last_joint_positions = np.array(self.joint_positions)
@@ -294,6 +369,15 @@ class Character:
 
 	
 class PFNNInput(object):
+	"""
+	This class is managing the network input. It is depending on the network data model
+	
+	Arguments:
+		object {[type]} -- [description]
+	
+	Returns:
+		[type] -- [description]
+	"""
 	def __init__(self, data, joints, n_gaits, endJoints, use_foot_contacts):
 		self.data = data
 		self.joints = joints
@@ -343,6 +427,15 @@ class PFNNInput(object):
 
 
 class PFNNOutput(object):
+	"""
+	This class is managing the network output. It is depending on the network data model. 
+	
+	Arguments:
+		object {[type]} -- [description]
+	
+	Returns:
+		[type] -- [description]
+	"""
 	def __init__(self, data, joints, endJoints, use_foot_contacts):
 		self.data = data
 		self.joints = joints
@@ -385,6 +478,12 @@ class PFNNOutput(object):
 
 
 class Controller:
+	"""
+	This class is the controler. 
+	
+	Returns:
+		[type] -- [description]
+	"""
 	def __init__(self, network : FCNetwork, config_store):#xdim, ydim, endJoints = 5, numJoints = 21):
 		self.network = network
 
@@ -420,7 +519,90 @@ class Controller:
 		self.config_store = config_store
 		self.__initialize()
 
+	def pre_render(self, direction, phase):
+		"""
+		This function is called before rendering. It prepares character and trajectory to be rendered. 
+		
+		Arguments:
+			direction {np.array(3)} -- user input direction
+			phase {float} -- walking phase
+		
+		Returns:
+			float -- new phase
+		"""
+		
+		# direction = normalize(direction)
+		if DEBUG:
+			print("\n\n############## PRE RENDER ###########")
+			print("input dir: ", direction, "")
+		if DEBUG_TIMING:
+			start_time = time.time()
+		self.__update_target_dir(direction)
+		#self.update_target_dir_simple(direction)
+		self.traj.compute_gait_vector(self.target_vel, self.char.running)
+		self.traj.compute_future_trajectory(self.target_dir, self.target_vel)
+		
+		# set input
+		self.__set_trajectory()
+		self.__set_previous_pose()
+
+		if DEBUG_TIMING:
+			pre_predict = time.time()
+		[self.output.data, phase] = self.network.forward_pass([self.input.data, round(phase,2)])
+		self.lastphase = phase
+		if DEBUG_TIMING:
+			post_predict = time.time()
+
+		self.__get_root_transform()
+		self.__get_new_pose()
+
+		if DEBUG_TIMING:
+			print("prerender: %f, from this predict: %f"%(time.time() - start_time, post_predict - pre_predict))
+		return phase 
+
+	def post_render(self):
+		"""
+		This function has to be called after rendering to prepare the next frame. 
+		
+		Returns:
+			float -- changed phase depending on user output. 
+		"""
+		if DEBUG:
+			print("\n\n############## POST RENDER ###########")
+		if DEBUG_TIMING:
+			start_time = time.time()
+		stand_amount = self.traj.step_forward(self.output.getRotVel())
+		self.traj.update_from_predict(self.output.getNextTraj())
+		if DEBUG:
+			print("phase computation: ", stand_amount, self.output.getdDPhase(), self.lastphase, "")
+
+
+		# update phase
+		self.lastphase = (self.lastphase + (stand_amount) * self.output.getdDPhase()) % (1.0)
+		if DEBUG_TIMING:
+			print("post_predict: %f"%(time.time() - start_time))
+		return self.lastphase
+
+	def reset(self, start_location, start_orientation, start_direction):
+		"""
+		Resets the controller to start location, orientation and direction. 
+		
+		Arguments:
+			start_location {[type]} -- [description]
+			start_orientation {[type]} -- [description]
+			start_direction {[type]} -- [description]
+		"""
+		self.char.reset(start_location, start_orientation)
+		self.traj.reset(start_location, start_orientation, start_direction)
+
+
 	def copy(self):
+		"""
+		Should copy the controler. At the moment, just creates a new, blank controler. 
+		
+		Returns:
+			[type] -- [description]
+		"""
 		return Controller(self.network, self.config_store)
 
 	def __initialize(self):
@@ -455,7 +637,7 @@ class Controller:
 	# def getEndJointRotations(self):
 	# 	return self.out[self.out_end_joint_rot_base:self.out_end_joint_rot_base + self.endJoints * 3]
 
-	def update_target_dir(self, direction):
+	def __update_target_dir(self, direction):
 		# Compute target direction from
 		#target_vel_speed = 2.5 * np.linalg.norm(direction)  # 0.05												# target velocity factor, has to be adapted to dataset!
 		#direction = utils.rot_around_z_3d(direction, self.char.root_rotation, True)
@@ -473,19 +655,19 @@ class Controller:
 			print("updated target_dir: ", self.target_vel, self.target_dir)
 		
 
-	def update_target_dir_simple(self, direction):
+	def __update_target_dir_simple(self, direction):
 		# Compute target direction from
 		target_vel_speed = 2.5 # 0.05												# target velocity factor, has to be adapted to dataset!
 		self.target_vel = direction * target_vel_speed
 		self.target_dir = utils.normalize(np.array(self.target_vel))
 
-	def get_root_transform(self):
+	def __get_root_transform(self):
 		# compute root transform
 		self.char.root_position = np.array(self.traj.traj_positions[self.traj.median_idx])
 		self.char.root_position[1] = 0.0
 		self.char.root_rotation = self.traj.traj_rotations[self.traj.median_idx]
 
-	def set_previous_pose(self):
+	def __set_previous_pose(self):
 		# previous root transform to acurately map joint locations, velocities and rotations
 		prev_root_pos = self.traj.traj_positions[self.traj.median_idx - 1]
 		prev_root_pos[1] = 0
@@ -514,13 +696,13 @@ class Controller:
 		if self.use_rotations:
 			self.input.setJointTwist(self.output.getRotations())  # joint twist is in local space anyways.
 
-	def set_trajectory(self):
+	def __set_trajectory(self):
 		input_pos, input_dir, traj_gait = self.traj.get_input(self.char.root_position, self.char.root_rotation, self.n_gaits)
 		self.input.setTrajPos(input_pos)
 		self.input.setTrajDir(input_dir)
 		self.input.setTrajGait(traj_gait)
 
-	def get_new_pose(self):
+	def __get_new_pose(self):
 		if self.use_rotations:
 			joint_rotations = self.output.getRotations() # twist rotations
 		else:
@@ -537,53 +719,3 @@ class Controller:
 		#self.set_previous_pose()
 		self.char.set_pose(joint_positions, joint_velocities, joint_rotations)
 
-	def pre_render(self, direction, phase):
-		# direction = normalize(direction)
-		if DEBUG:
-			print("\n\n############## PRE RENDER ###########")
-			print("input dir: ", direction, "")
-		if DEBUG_TIMING:
-			start_time = time.time()
-		self.update_target_dir(direction)
-		#self.update_target_dir_simple(direction)
-		self.traj.compute_gait_vector(self.target_vel, self.char.running)
-		self.traj.compute_future_trajectory(self.target_dir, self.target_vel)
-		
-		# set input
-		self.set_trajectory()
-		self.set_previous_pose()
-
-		if DEBUG_TIMING:
-			pre_predict = time.time()
-		[self.output.data, phase] = self.network.forward_pass([self.input.data, round(phase,2)])
-		self.lastphase = phase
-		if DEBUG_TIMING:
-			post_predict = time.time()
-
-		self.get_root_transform()
-		self.get_new_pose()
-
-		if DEBUG_TIMING:
-			print("prerender: %f, from this predict: %f"%(time.time() - start_time, post_predict - pre_predict))
-		return phase 
-
-	def post_render(self):
-		if DEBUG:
-			print("\n\n############## POST RENDER ###########")
-		if DEBUG_TIMING:
-			start_time = time.time()
-		stand_amount = self.traj.step_forward(self.output.getRotVel())
-		self.traj.update_from_predict(self.output.getNextTraj())
-		if DEBUG:
-			print("phase computation: ", stand_amount, self.output.getdDPhase(), self.lastphase, "")
-
-
-		# update phase
-		self.lastphase = (self.lastphase + (stand_amount) * self.output.getdDPhase()) % (1.0)
-		if DEBUG_TIMING:
-			print("post_predict: %f"%(time.time() - start_time))
-		return self.lastphase
-
-	def reset(self, start_location, start_orientation, start_direction):
-		self.char.reset(start_location, start_orientation)
-		self.traj.reset(start_location, start_orientation, start_direction)
