@@ -14,6 +14,7 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description="This is the main file to run this project from console. You can either train a new network model or execute an existing one.")
 	parser.add_argument("-t", "--train", help="Train a network. Please specify the network type. ", choices=["pfnn", "vinn"])
 	parser.add_argument("-x", "--execute", help="Execute a pretrained network. ", choices=["pfnn_np", "pfnn_tf", "vinn_tf"])
+	parser.add_argument("-v", "--validate", help="Evaluate a pretrained network on a dataset", choices=["vinn_tf"])
 	parser.add_argument("-d", "--dataset", help="Path to the dataset-description file. The dataset is expected to have the same filename.", required=True)
 	parser.add_argument("-o", "--output", help="Path-to-Network during execution, path to folder where to place the trained networks during training. ", required = True)
 	parser.add_argument("-e", "--epochs", help="Numbers of epochs for training. ", type=int, default=50)
@@ -21,6 +22,7 @@ if __name__ == "__main__":
 	parser.add_argument("-vel", "--vinn_each_layer", type=bool, default=False)
 	parser.add_argument("-vrd", "--vinn_random_number_dim", type=int, default=-1)
 	parser.add_argument("-mth", "--multithreaded", type=bool, default=False)
+	parser.add_argument("-ed", "--evaldataset", help="dastaset containing the evaluation set")
 	args = parser.parse_args()
 
 	print("args: ", args)
@@ -74,6 +76,27 @@ if __name__ == "__main__":
 			each_layer = args.vinn_each_layer
 
 			VINNTF.from_file(datasetnpz, args.output, args.epochs, config_store, replace_layers = replace_layers, draw_each_layer = each_layer, random_number_dim = random_number_dim)
+	elif args.validate is not None:
+		target_file = args.output
+		test_data = args.evaldataset
+		data = np.load(test_data)
+		X = data["Xun"]
+		Y = data["Yun"]
+		P = data["Pun"]
+
+		if args.validate == "vinn_tf":
+			pfnn = VINNTF.load(target_file)
+			pfnn.start_tf()
+			acc = pfnn.test(X, Y, P, 10)
+
+			print("mean error: ", np.mean(np.mean(acc, axis=-1)))
+			print("mean var:   ", np.mean(np.var(acc, axis=-1)))
+		
+
+
+
+
+
 
 
 
