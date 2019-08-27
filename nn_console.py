@@ -1,6 +1,6 @@
 import argparse
 
-from src.controlers.pfnn_controller import Controller, PFNNOutput, PFNNInput, Trajectory, Character
+from src.controlers.directional_controller import DirectionalController
 from src.nn.fc_models.pfnn_np import PFNN
 from src.nn.fc_models.pfnn_tf import PFNN as PFNNTF
 from src.nn.fc_models.vinn_tf import VINN as VINNTF
@@ -47,7 +47,7 @@ if __name__ == "__main__":
 		# 		"use_rotations": False,
 		#		"n_gaits":5}
 
-		c = Controller(pfnn, config_store)
+		c = DirectionalController(pfnn, config_store)
 
 		if args.multithreaded:
 			CREATE_MULTI_MOTION_SERVER(c)
