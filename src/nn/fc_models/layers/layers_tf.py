@@ -220,7 +220,7 @@ class TF_Variational_Layer(TF_PFNN_Layer):
 		elu = params[1]
 
 		return TF_Variational_Layer(dshape, weight, bias, elu)
-	
+
 	def store(self):
 		"""
 		Generates a json store for the network configuration. 

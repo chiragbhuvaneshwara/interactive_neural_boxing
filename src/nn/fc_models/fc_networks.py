@@ -9,7 +9,7 @@ class FCNetwork:
 	Implemented member functions: 
 		* add_layer: adds a layer to the network
 		* build_tf_graph: iterates all layers to build the tf_graph
-		* forward_pass normalizes input data and performs the forward pass of all layers
+		* forward_pass: normalizes input data and performs the forward pass of all layers
 		* store: stores the networks as well as the data of all layers in a json file. 
 	
 	Not implemented member functions: 
