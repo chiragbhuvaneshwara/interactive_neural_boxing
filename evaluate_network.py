@@ -9,8 +9,41 @@ import numpy as np
 
 
 def _store_predictions(network_predicted_output, actual_output):
-    output_file_location = "network_output/pfnn_random_noise_each_layer.npz"
+    output_file_location = "network_output/pfnn_vector_random_noise_each_layer.npz"
     np.savez(output_file_location, network_output=network_predicted_output, actual_output=actual_output)
+
+
+def evaluate_network(network, dict_data_fields):
+    """
+
+    """
+    # Load test data
+    test_filename = "data/data_mk4D_test.npz"
+
+    test_data_full = np.load(test_filename)
+
+    all_input_motion = test_data_full['Xun']
+    all_phase_data = test_data_full['Pun']
+    all_output_motion = test_data_full['Yun']
+
+    network_predicted_output_motion = np.zeros_like(all_output_motion)
+
+    num_test_pts = all_input_motion.shape[0]
+
+    for data_idx in range(num_test_pts):
+        curr_motion = all_input_motion[data_idx, :]
+        curr_phase = all_phase_data[data_idx]
+        network_input = [curr_motion, curr_phase]
+        network_output = network.forward_pass(network_input)
+        network_predicted_output_motion[data_idx, :] = network_output[0]
+
+    _store_predictions(network_predicted_output_motion, all_output_motion)
+
+
+
+#############################
+# Methods below not used
+#############################
 
 
 def _get_data_params(data_filename):
@@ -57,31 +90,6 @@ def evaluate_network_with_random_layers(network_filename, dict_data_fields):
     _store_predictions(network_predicted_output_motion, all_output_motion)
 
 
-def evaluate_network(network, dict_data_fields):
-    """
-
-    """
-    # Load test data
-    test_filename = "data/data_mk4D_test.npz"
-
-    test_data_full = np.load(test_filename)
-
-    all_input_motion = test_data_full['Xun']
-    all_phase_data = test_data_full['Pun']
-    all_output_motion = test_data_full['Yun']
-
-    network_predicted_output_motion = np.zeros_like(all_output_motion)
-
-    num_test_pts = all_input_motion.shape[0]
-
-    for data_idx in range(num_test_pts):
-        curr_motion = all_input_motion[data_idx, :]
-        curr_phase = all_phase_data[data_idx]
-        network_input = [curr_motion, curr_phase]
-        network_output = network.forward_pass(network_input)
-        network_predicted_output_motion[data_idx, :] = network_output[0]
-
-    _store_predictions(network_predicted_output_motion, all_output_motion)
 
 
 def evaluate_with_random_noise(network, dict_data_fields):

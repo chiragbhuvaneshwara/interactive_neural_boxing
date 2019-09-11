@@ -27,6 +27,7 @@ class pfnn_layer_with_random_noise(TF_PFNN_Layer):
 	def __init__(self, dshape, weight = [], bias = [], elu_operator = None, name = ""):
 		super().__init__(dshape, weight, bias, elu_operator, name)
 
+
 	def set_random_state(self, shape=(1,), mean=0.0, std_dev=1.0):
 		self.random_noise_to_add = tf.random.normal(shape, mean=mean, stddev=std_dev)
 
@@ -85,7 +86,6 @@ class pfnn_random_layers(PFNN):
 	@author: Janis
 	"""
 
-
 	def __init__(self, input_size, output_size, hidden_size, norm, batch_size = 32, layers = [], dropout = 0.7, replace_layers = [], draw_each_layer = False, random_number_dim = -1):
 		#input_size, output_size, hidden_size, norm, batch_size = 32, layers = [], dropout = 0.7):
 		"""
@@ -135,7 +135,7 @@ class pfnn_random_layers(PFNN):
 		self.first_decay_steps = 0
 
 
-	def load(target_file):
+	def load(target_file, random_noise_dim, layers_to_add_random_noise):
 		"""
 			@param : random_layers - python list containing the layers to keep as random noise
 		"""
@@ -152,14 +152,35 @@ class pfnn_random_layers(PFNN):
 
 			replace_layers = []
 
-			l0 = pfnn_layer_with_random_noise.load([store["layer_0"], tf.nn.elu])
-			l0.set_random_state()
-			
-			l1 = pfnn_layer_with_random_noise.load([store["layer_1"], tf.nn.elu])
-			l1.set_random_state()
-			
-			l2 = pfnn_layer_with_random_noise.load([store["layer_2"], tf.nn.elu])
-			l2.set_random_state()
+			if 0 in layers_to_add_random_noise:
+				l0 = pfnn_layer_with_random_noise.load([store["layer_0"], tf.nn.elu])
+				if random_noise_dim < 0:
+					l0.set_random_state()
+				else:
+					size = (1, hidden_size)
+					l0.set_random_state(size)
+			else:
+				l0 = TF_PFNN_Layer.load([store["layer_0"], tf.nn.elu])
+
+			if 1 in layers_to_add_random_noise:
+				l1 = pfnn_layer_with_random_noise.load([store["layer_1"], tf.nn.elu])
+				if random_noise_dim < 0:
+					l1.set_random_state()
+				else:
+					size = (1, hidden_size)
+					l1.set_random_state(size)
+			else:
+				l1 = TF_PFNN_Layer.load([store["layer_1"], tf.nn.elu])			
+
+			if 2 in layers_to_add_random_noise:
+				l2 = pfnn_layer_with_random_noise.load([store["layer_2"], tf.nn.elu])
+				if random_noise_dim < 0:
+					l2.set_random_state()
+				else:
+					size = (1, output_size)
+					l2.set_random_state(size)
+			else:
+				l2 = TF_PFNN_Layer.load([store["layer_2"], tf.nn.elu])
 
 			layers = [l0, l1, l2]
 
