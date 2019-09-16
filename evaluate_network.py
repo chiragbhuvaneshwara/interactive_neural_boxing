@@ -37,6 +37,8 @@ def evaluate_network(network, dict_data_fields):
         network_output = network.forward_pass(network_input)
         network_predicted_output_motion[data_idx, :] = network_output[0]
 
+    squared_error_predictions = ((network_predicted_output_motion - all_output_motion)**2).mean(axis=0).mean()
+    print("Squared error in the predictions is: ", squared_error_predictions)
     _store_predictions(network_predicted_output_motion, all_output_motion)
 
 
