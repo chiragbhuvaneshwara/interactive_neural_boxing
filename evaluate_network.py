@@ -9,7 +9,7 @@ import numpy as np
 
 
 def _store_predictions(network_predicted_output, actual_output):
-    output_file_location = "network_output/pfnn_vector_random_noise_each_layer.npz"
+    output_file_location = "network_output/pfnn_vector_random_noise_each_phase.npz"
     np.savez(output_file_location, network_output=network_predicted_output, actual_output=actual_output)
 
 

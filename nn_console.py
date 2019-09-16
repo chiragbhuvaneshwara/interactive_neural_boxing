@@ -21,7 +21,9 @@ if __name__ == "__main__":
 	parser.add_argument("-o", "--output", help="Path-to-Network during execution, path to folder where to place the trained networks during training. ", default="trained_models/epoch_49.json")
 	parser.add_argument("-e", "--epochs", help="Numbers of epochs for training. ", type=int, default=50)
 	parser.add_argument("-drn", "--dimension_random_noise", type=list, default=0)
+	parser.add_argument("-par", "--params_random_noise", help="Parameters of Random Noise. ", type=int, default=(0.,0.2))
 	parser.add_argument("-larn", "--layers_add_random_noise", type=list, default=[0,1,2])
+	parser.add_argument("-sam", "--sample_noise_each_phase", type=list, default=True)
 	parser.add_argument("-vrl", "--vinn_replace_layers", type=list, default=[])
 	parser.add_argument("-vel", "--vinn_each_layer", type=bool, default=False)
 	parser.add_argument("-vrd", "--vinn_random_number_dim", type=int, default=-1)
@@ -41,7 +43,13 @@ if __name__ == "__main__":
 			pfnn = VINNTF.load(target_file)
 			pfnn.start_tf()
 		elif args.execute == "pfnn_random":
-			pfnn = pfnn_random_layers.load(target_file, args.dimension_random_noise, args.layers_add_random_noise)
+			pfnn = pfnn_random_layers.load(
+						target_file, 
+						args.dimension_random_noise, 
+						args.layers_add_random_noise,
+						args.params_random_noise,
+						args.sample_noise_each_phase
+					)
 			pfnn.start_tf()
 
 		dataset_config_file = args.dataset #"data/dataset.json"

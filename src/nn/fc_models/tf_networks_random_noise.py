@@ -20,26 +20,45 @@ class pfnn_layer_with_random_noise(TF_PFNN_Layer):
 
 	The following methods are used directly/indirectly from TF_PFNN_Layer:
 		1. __init__
-		3. set_random_state
-		4. store()
+		2. set_random_state
+		3. store()
 
 	"""
 	def __init__(self, dshape, weight = [], bias = [], elu_operator = None, name = ""):
 		super().__init__(dshape, weight, bias, elu_operator, name)
 
 
-	def set_random_state(self, shape=(1,), mean=0.0, std_dev=1.0):
-		self.random_noise_to_add = tf.random.normal(shape, mean=mean, stddev=std_dev)
+	def set_random_noise_parameters(self, shape, mean, std_dev):
+		self.batch_size, self.dim_noise = shape
+		self.mean = mean
+		self.std_dev = std_dev
+
+
+	def set_random_noise(self):
+		self.random_noise_to_add = tf.random.normal((self.batch_size, self.dim_noise), mean=self.mean, stddev=self.std_dev)
+
+	def get_random_noise(self):
+		return np.random.normal(self.mean, self.std_dev, self.dim_noise)
+
+
+	def set_random_noise_placeholder(self, random_noise_placeholder):
+		"""
+			During testing, we sometimes need to pass the random noise as a placeholder.
+		"""
+		self.random_noise_to_add = random_noise_placeholder
+
 
 	def build_tf_graph(self, params):
 		params = super().build_tf_graph(params)
 		params[0] = tf.add(params[0], self.random_noise_to_add)
 		return params
 
+
 	def forward_pass(self, params):
 		super().forward_pass(params)
 		params[0] = tf.add(params[0], self.random_noise_to_add)
 		return params
+
 
 	def load(params):
 		"""
@@ -59,11 +78,6 @@ class pfnn_layer_with_random_noise(TF_PFNN_Layer):
 		Returns:
 			TF_PFNN_Layer -- generated layer. 
 		"""
-		# store = params[0]
-		# dshape = np.frombuffer(store["dshape"], dtype=np.float32)
-		# weight = np.frombuffer(store["weight"], dtype=np.float32)
-		# bias = np.frombuffer(store["bias"], dtype=np.float32)
-		# elu = params[1]
 		store = params[0]
 		dshape = np.array(store["dshape"], dtype=np.float32)
 		weight = np.array(store["weight"], dtype=np.float32)
@@ -71,7 +85,6 @@ class pfnn_layer_with_random_noise(TF_PFNN_Layer):
 		elu = params[1]
 
 		return pfnn_layer_with_random_noise(dshape, weight, bias, elu)
-
 
 
 class pfnn_random_layers(PFNN):
@@ -86,8 +99,19 @@ class pfnn_random_layers(PFNN):
 	@author: Janis
 	"""
 
-	def __init__(self, input_size, output_size, hidden_size, norm, batch_size = 32, layers = [], dropout = 0.7, replace_layers = [], draw_each_layer = False, random_number_dim = -1):
-		#input_size, output_size, hidden_size, norm, batch_size = 32, layers = [], dropout = 0.7):
+	def __init__(self, 
+			input_size, output_size, hidden_size, 
+			norm, batch_size = 32, 
+			layers = [], 
+			dropout = 0.7, 
+			replace_layers = [], 
+			draw_each_layer = False, 
+			random_number_dim = -1,
+			random_noise_dim = -1,
+			layers_to_add_random_noise = [],
+			params_random_noise = (),
+			sample_at_each_phase=False
+		):
 		"""
 
 		Implementation of variational interpolating neural networks using tensorflow backend. 
@@ -121,7 +145,7 @@ class pfnn_random_layers(PFNN):
 
 		self.x = tf.placeholder(tf.float32, shape=[self.batch_size, self.input_size], name="InputString")
 		self.y = tf.placeholder(tf.float32, shape=[self.batch_size, self.output_size], name="OutputString")
-		self.p = tf.placeholder(tf.float32, shape=[self.batch_size], name = "Phase")	
+		self.p = tf.placeholder(tf.float32, shape=[self.batch_size], name = "Phase")
 
 		self.counter = tf.placeholder(tf.int32, name="step_counter")
 
@@ -130,12 +154,67 @@ class pfnn_random_layers(PFNN):
 		self.add_layer(l2)
 		self.replace_layers = replace_layers
 
+		self.sample_at_each_phase = sample_at_each_phase
+		if self.sample_at_each_phase:
+			self.prev_phase_val = None
+		self._perform_processing_for_random_noise_all_layers(random_noise_dim, layers_to_add_random_noise, params_random_noise)
+
 		self.train_step = None
 		self.cost_function = None
 		self.first_decay_steps = 0
 
 
-	def load(target_file, random_noise_dim, layers_to_add_random_noise):
+	def _perform_processing_for_random_noise_all_layers(self, random_noise_dim, layers_to_add_random_noise, params_random_noise):
+		"""
+			During evaluation of the motion, for an experiment we need to add random noise to the layers
+		"""
+		mean = params_random_noise[0]
+		std_dev = params_random_noise[1]
+
+		if 0 in layers_to_add_random_noise:
+			if random_noise_dim < 0:
+				shape_noise = (self.batch_size, )
+			else:
+				shape_noise = (self.batch_size, self.hidden_size)
+
+			self.layers[0].set_random_noise_parameters(shape=shape_noise, mean=mean, std_dev=std_dev)
+
+			if self.sample_at_each_phase:
+				self.first_layer_random_noise_placeholder = tf.placeholder(tf.float32, shape=[self.batch_size, self.hidden_size], name="RandomNoiseFirstLayer")
+				self.layers[0].set_random_noise_placeholder(self.first_layer_random_noise_placeholder)
+			else:
+				self.layers[0].set_random_noise()
+
+		if 1 in layers_to_add_random_noise:
+			if random_noise_dim < 0:
+				shape_noise = (self.batch_size, )
+			else:
+				shape_noise = (self.batch_size, self.hidden_size)
+
+			self.layers[1].set_random_noise_parameters(shape=shape_noise, mean=mean, std_dev=std_dev)
+
+			if self.sample_at_each_phase:
+				self.second_layer_random_noise_placeholder = tf.placeholder(tf.float32, shape=[self.batch_size, self.hidden_size], name="RandomNoiseSecondLayer")
+				self.layers[1].set_random_noise_placeholder(self.second_layer_random_noise_placeholder)
+			else:
+				self.layers[1].set_random_noise()
+
+		if 2 in layers_to_add_random_noise:
+			if random_noise_dim < 0:
+				shape_noise = (self.batch_size, )
+			else:
+				shape_noise = (self.batch_size, self.output_size)
+
+			self.layers[2].set_random_noise_parameters(shape=shape_noise, mean=mean, std_dev=std_dev)
+
+			if self.sample_at_each_phase:
+				self.third_layer_random_noise_placeholder = tf.placeholder(tf.float32, shape=[self.batch_size, self.output_size], name="RandomNoiseThirdLayer")
+				self.layers[2].set_random_noise_placeholder(self.third_layer_random_noise_placeholder)
+			else:
+				self.layers[2].set_random_noise()
+
+
+	def load(target_file, random_noise_dim, layers_to_add_random_noise, params_random_noise, sample_at_each_phase):
 		"""
 			@param : random_layers - python list containing the layers to keep as random noise
 		"""
@@ -154,37 +233,35 @@ class pfnn_random_layers(PFNN):
 
 			if 0 in layers_to_add_random_noise:
 				l0 = pfnn_layer_with_random_noise.load([store["layer_0"], tf.nn.elu])
-				if random_noise_dim < 0:
-					l0.set_random_state()
-				else:
-					size = (1, hidden_size)
-					l0.set_random_state(size)
 			else:
 				l0 = TF_PFNN_Layer.load([store["layer_0"], tf.nn.elu])
 
 			if 1 in layers_to_add_random_noise:
 				l1 = pfnn_layer_with_random_noise.load([store["layer_1"], tf.nn.elu])
-				if random_noise_dim < 0:
-					l1.set_random_state()
-				else:
-					size = (1, hidden_size)
-					l1.set_random_state(size)
 			else:
 				l1 = TF_PFNN_Layer.load([store["layer_1"], tf.nn.elu])			
 
 			if 2 in layers_to_add_random_noise:
 				l2 = pfnn_layer_with_random_noise.load([store["layer_2"], tf.nn.elu])
-				if random_noise_dim < 0:
-					l2.set_random_state()
-				else:
-					size = (1, output_size)
-					l2.set_random_state(size)
 			else:
 				l2 = TF_PFNN_Layer.load([store["layer_2"], tf.nn.elu])
 
 			layers = [l0, l1, l2]
 
-			pfnn_random = pfnn_random_layers(input_size, output_size, hidden_size, norm, batch_size = 1, layers = layers, replace_layers=replace_layers, dropout=1)
+			pfnn_random = pfnn_random_layers(
+								input_size, 
+								output_size, 
+								hidden_size, 
+								norm, 
+								batch_size = 1, 
+								layers = layers, 
+								replace_layers=replace_layers, 
+								dropout=1,
+								random_noise_dim = random_noise_dim,
+								layers_to_add_random_noise = layers_to_add_random_noise,
+								params_random_noise = params_random_noise,
+								sample_at_each_phase=sample_at_each_phase
+							)
 			return pfnn_random
 
 	
@@ -217,6 +294,39 @@ class pfnn_random_layers(PFNN):
 		self.sess.run(tf.global_variables_initializer())
 
 
+	def _get_if_phase_has_changed(self, curr_phase_val):
+		has_phase_changed = False
+		
+		if self.prev_phase_val is None:
+			has_phase_changed = True
+		elif self.prev_phase_val > 0.5 and curr_phase_val < 0.5:
+			has_phase_changed = True
+		elif self.prev_phase_val < 0.5 and curr_phase_val > 0.5:
+			has_phase_changed = True
+		
+		self.prev_phase_val = curr_phase_val
+		return has_phase_changed
+
+
+	def _get_output_random_noise_each_phase(self, input_motion_data, input_phase):
+		if self._get_if_phase_has_changed(input_phase):
+			self.first_layer_random_noise_val = self.layers[0].get_random_noise()
+			self.second_layer_random_noise_val = self.layers[1].get_random_noise()
+			self.third_layer_random_noise_val = self.layers[2].get_random_noise()
+
+		out = self.sess.run(
+						[self.network_output], 
+						feed_dict={
+							self.x: [input_motion_data], 
+							self.p: [input_phase],
+							self.first_layer_random_noise_placeholder : [self.first_layer_random_noise_val],
+							self.second_layer_random_noise_placeholder : [self.second_layer_random_noise_val],
+							self.third_layer_random_noise_placeholder : [self.third_layer_random_noise_val]
+						}
+					)
+		return out
+
+
 	def forward_pass(self, params):
 		"""
 		@param : params - Python list containing the data needed to run the network
@@ -226,14 +336,19 @@ class pfnn_random_layers(PFNN):
 			phase - the current phase
 		"""
 		# normalize: 
-		params[0] = np.array(params[0])
-		if len(params[0]) == 0:
-			params[0] = np.array(self.norm["Xmean"])
-		params[0] = (params[0] - self.norm["Xmean"]) / self.norm["Xstd"]
+		input_motion_data = np.array(params[0])
+		input_phase = params[1]
 
-		# draw new random sample
-		out = self.sess.run([self.network_output], feed_dict={self.x: [params[0]], self.p: [params[1]]})
+		if len(input_motion_data) == 0:
+			input_motion_data = np.array(self.norm["Xmean"])
+		input_motion_data = (input_motion_data - self.norm["Xmean"]) / self.norm["Xstd"]
+
+		if not self.sample_at_each_phase:
+			out = self.sess.run([self.network_output], feed_dict={self.x: [input_motion_data], self.p: [input_phase]})
+		else:
+			out = self._get_output_random_noise_each_phase(input_motion_data, input_phase)
+
 		out = np.array(out[0][0])
 		out = (out * self.norm["Ystd"]) + self.norm["Ymean"]
 
-		return [out, params[1]]
+		return [out, input_phase]
