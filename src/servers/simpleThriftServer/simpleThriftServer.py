@@ -109,6 +109,10 @@ class MotionServer:
 		#newphase = self.controller.lastphase + self.controller.output.getdDPhase()
 		if DEBUG_TIMING:
 			start_time = time.time()
+		if gait == TGait.running:
+			self.controller.char.running = True
+		else:
+			self.controller.char.running = False
 		self.controller.pre_render(TVector3_2np(direction), self.controller.lastphase)
 		posture = self.__char2TPosture()
 		#posture = self.zero_posutre2
