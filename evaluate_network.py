@@ -42,7 +42,6 @@ def evaluate_network(network, dict_data_fields):
     _store_predictions(network_predicted_output_motion, all_output_motion)
 
 
-
 #############################
 # Methods below not used
 #############################
