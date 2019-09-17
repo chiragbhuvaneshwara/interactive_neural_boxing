@@ -94,7 +94,7 @@ class VINN(PFNN):
 		self.first_decay_steps = 0
 
 
-	def load(target_file):
+	def load(target_file, batch_size = 1):
 		with open(target_file, "r") as f:
 			store = json.load(f)
 			# store = {"nlayers":(len(self.layers)),
@@ -130,7 +130,7 @@ class VINN(PFNN):
 
 			layers = [l0, l1, l2]
 
-			vinn = VINN(input_size, output_size, hidden_size, norm, batch_size = 1, layers = layers, replace_layers=replace_layers, dropout=1)
+			vinn = VINN(input_size, output_size, hidden_size, norm, batch_size = batch_size, layers = layers, replace_layers=replace_layers, dropout=1)
 			return vinn
 			# pfnn = PFNN(input_size, output_size, hidden_size, norm, batch_size = 1, layers=layers, dropout = 0.999)
 			# pfnn.store = store
@@ -313,6 +313,35 @@ class VINN(PFNN):
 		out = np.array(out[0][0])
 		out = (out * self.norm["Ystd"]) + self.norm["Ymean"]
 		return [out, params[1]]
+
+	def test(self, test_x, test_y, test_p, num_predict, batch_size = 1):
+		accuracy = []
+		for i in range(0, len(test_x), batch_size):
+			tmp_acc = []
+			x = np.array(test_x[i * batch_size:i * batch_size + batch_size])
+			y_ = np.array(test_y[i * batch_size:i * batch_size + batch_size])
+			p = np.array(test_p[i * batch_size:i * batch_size + batch_size])
+			x = (x - self.norm["Xmean"]) / self.norm["Xstd"]
+
+			if len(x) != batch_size:
+				continue
+			for j in range(num_predict):
+				# forward pass
+
+				# draw new random sample
+				out = self.sess.run([self.network_output], feed_dict={self.x: x, self.p: p})
+				out = np.array(out[0])
+				out = (out * self.norm["Ystd"]) + self.norm["Ymean"]
+
+				diff = np.mean((out - y_) **2, axis=-1)
+				tmp_acc.append(diff)
+
+			tmp_acc = np.array(tmp_acc)
+			tmp_acc = np.transpose(tmp_acc)
+			accuracy.extend(tmp_acc)
+			if i % 100 == 0:
+				sys.stdout.write('\r %f'%((i * batch_size) / len(test_x)))
+		return accuracy
 
 	def from_file(dataset, target_path, epochs, config_store, replace_layers = [], draw_each_layer = False, random_number_dim = -1):
 		"""

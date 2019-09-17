@@ -1,7 +1,7 @@
 
 from .gen_code.ttypes import TPosture, TBone, TVector3, TGait, TQuaternion
 from .gen_code import T_multi_directional_motion_server
-from ...controlers.pfnn_controller import Controller, Character
+from ...controlers.directional_controller import DirectionalController
 
 from thrift import Thrift
 from thrift.transport import TSocket, TTransport
@@ -73,7 +73,7 @@ def np_2TVector3(x):
 	return TVector3(x[0], x[1], x[2])
 
 class MotionServer:
-	def __init__(self, controller: Controller):
+	def __init__(self, controller: DirectionalController):
 		self.log = {}
 		self.base_controller = controller
 		self.zero_posture = self.build_zero_posture("local_position")#read_BVH(bvh_path)
@@ -126,14 +126,17 @@ class MotionServer:
 			print("fetch frame: %f equals hypothetical %f fps"%(totime, 1/totime))
 		return posture
 	
-	def __char2TPosture(self, session_counter):
+	def __char2TPosture(self):
 		posture = copy.deepcopy(self.zero_posutre2)
-		char = self.session_controllers[session_counter].char
-		for i in range(len(char.joint_positions)):
-			pos = global_to_local_pos(char.joint_positions[i], char.root_position, char.root_rotation)
-			posture.bones[i].position = np_2TVector3(pos)
-		posture.location = np_2TVector3(char.root_position)
-		posture.rotation = char.root_rotation
+		pose = self.controller.getPose()
+		for i in range(len(pose)):
+			#pos = global_to_local_pos(char.joint_positions[i], char.root_position, char.root_rotation)
+			posture.bones[i].position = np_2TVector3(pose[i])
+		
+		root_pos, root_rot = self.controller.getWorldPosRot()
+		
+		posture.location = np_2TVector3(root_pos)
+		posture.rotation = root_rot
 		return posture
 
 
