@@ -4,21 +4,18 @@ from src.controlers.pfnn_controller import Controller, PFNNOutput, PFNNInput, Tr
 from src.nn.fc_models.pfnn_np import PFNN
 from src.nn.fc_models.pfnn_tf import PFNN as PFNNTF
 from src.nn.fc_models.vinn_tf import VINN as VINNTF
-from src.nn.fc_models.tf_networks_random_noise import pfnn_random_layers
-
 from src.servers.simpleThriftServer.simpleThriftServer import CREATE_MOTION_SERVER
 from src.servers.MultiThriftServer.MultiThriftServer import CREATE_MOTION_SERVER as CREATE_MULTI_MOTION_SERVER
 import numpy as np
 import json
-import tensorflow as tf
-# tf.enable_eager_execution()
+
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description="This is the main file to run this project from console. You can either train a new network model or execute an existing one.")
 	parser.add_argument("-t", "--train", help="Train a network. Please specify the network type. ", choices=["pfnn", "vinn"])
-	parser.add_argument("-x", "--execute", help="Execute a pretrained network. ", choices=["pfnn_np", "pfnn_tf", "vinn_tf", "pfnn_random"], default="pfnn_random")
-	parser.add_argument("-d", "--dataset", help="Path to the dataset-description file. The dataset is expected to have the same filename.", default="data/data_mk4D.json")
-	parser.add_argument("-o", "--output", help="Path-to-Network during execution, path to folder where to place the trained networks during training. ", default="trained_models/epoch_49.json")
+	parser.add_argument("-x", "--execute", help="Execute a pretrained network. ", choices=["pfnn_np", "pfnn_tf", "vinn_tf"])
+	parser.add_argument("-d", "--dataset", help="Path to the dataset-description file. The dataset is expected to have the same filename.", required=True)
+	parser.add_argument("-o", "--output", help="Path-to-Network during execution, path to folder where to place the trained networks during training. ", required = True)
 	parser.add_argument("-e", "--epochs", help="Numbers of epochs for training. ", type=int, default=50)
 	parser.add_argument("-vrl", "--vinn_replace_layers", type=list, default=[])
 	parser.add_argument("-vel", "--vinn_each_layer", type=bool, default=False)
@@ -38,9 +35,6 @@ if __name__ == "__main__":
 		elif args.execute == "vinn_tf":
 			pfnn = VINNTF.load(target_file)
 			pfnn.start_tf()
-		elif args.execute == "pfnn_random":
-			pfnn = pfnn_random_layers.load(target_file)
-			pfnn.start_tf()
 
 		dataset_config_file = args.dataset #"data/dataset.json"
 		with open(dataset_config_file, "r") as f:
@@ -51,16 +45,12 @@ if __name__ == "__main__":
 		# 		"use_rotations": False,
 		#		"n_gaits":5}
 
-		from evaluate_network import evaluate_network
-		evaluate_network(pfnn, config_store)
+		c = Controller(pfnn, config_store)
 
-		# TODO : Controller,  motion server not needed, remove this later
-		# c = Controller(pfnn, config_store)
-
-		# if args.multithreaded:
-		# 	CREATE_MULTI_MOTION_SERVER(c)
-		# else:
-		# 	CREATE_MOTION_SERVER(c)
+		if args.multithreaded:
+			CREATE_MULTI_MOTION_SERVER(c)
+		else:
+			CREATE_MOTION_SERVER(c)
 	elif (args.train is not None):
 		if args.train == "pfnn":
 			with open(args.dataset) as f:

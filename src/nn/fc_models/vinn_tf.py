@@ -68,9 +68,9 @@ class VINN(PFNN):
 			else:
 				l0 = TF_PFNN_Layer((hidden_size, input_size), elu_operator = tf.nn.elu, name="Layer0")
 			if 1 in replace_layers:
-				l1 = TF_Variational_Layer((hidden_size, hidden_size), elu_operator = tf.nn.elu, name="Layer1")
+				l1 = TF_Variational_Layer((hidden_size, hidden_size), elu_operator =tf.nn.elu, name="Layer1")
 			else:
-				l1 = TF_PFNN_Layer((hidden_size, hidden_size), elu_operator = tf.nn.elu, name="Layer1")
+				l1 = TF_PFNN_Layer((hidden_size, hidden_size), elu_operator =tf.nn.elu, name="Layer1")
 			if 2 in replace_layers:
 				l2 = TF_Variational_Layer((output_size, hidden_size), name="Layer2")
 			else:
@@ -157,7 +157,7 @@ class VINN(PFNN):
 		# 	pfnn = PFNN(input_size, output_size, hidden_size, norm, batch_size = 1, layers=layers, dropout = 0.999)
 
 		# 	return pfnn
-
+		
 		# for l in range(len(self.layers)):
 		# 	store["layer_%d"%l] = self.layers[l].store()
 
@@ -290,15 +290,8 @@ class VINN(PFNN):
 
 		self.sess = tf.Session(config=config)
 		self.sess.run(tf.global_variables_initializer())
-
+	
 	def forward_pass(self, params):
-		"""
-		@param : params - Python list containing the data needed to run the network
-			0 - input data
-			1 - phase information
-		@returns : out - output of the network, i.e. the prediction of next step of motion
-			phase - the current phase
-		"""
 		# print(self.random_number_dim)
 		# if self.draw_each_layer:
 		# 	for l in self.layers:
