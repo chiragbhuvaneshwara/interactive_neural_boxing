@@ -1,27 +1,27 @@
-from .layers.layers_tf import TF_PFNN_Layer
+from .layers.layers_tf import TF_MANN_Layer
+from .layers.layers_tf import TF_FCLayer
 from .fc_networks import FCNetwork
 
 import tensorflow as tf
 import numpy as np
 import sys, os, datetime, json
 
-class PFNN(FCNetwork):
+class MANN(FCNetwork):
 	"""
 
-	Implementation of phase-functioned neural networks using tensorflow backend. 
+	Implementation of mode-adaptive neural networks using tensorflow backend. 
 
 	This class is a realization of FCNetwork. 
 
 	Please consider using the from_file function, which loads a numpy datastructure containing training pairs and constructs and trains a network. 
 
-	@author: Janis
+	@author: Janis and Usama (for changes w.r.t MANN)
 	"""
 
-
-	def __init__(self, input_size, output_size, hidden_size, norm, batch_size = 32, layers = [], dropout = 0.7):
+	def __init__(self, input_size, output_size, hidden_size, norm, batch_size = 32, layers = [], dropout = 0.7, gating_indices = [0,1,2]):
 		"""
 
-		Implementation of phase-functioned neural networks using tensorflow backend. 
+		Implementation of mode-adaptive neural networks using tensorflow backend. 
 
 		This class is a realization of FCNetwork. 
 
@@ -35,7 +35,7 @@ class PFNN(FCNetwork):
 		"""
 
 		super().__init__(input_size, output_size, hidden_size, norm)
-		print("Init PFNN TF")
+		print("Init MANN TF")
 
 		self.batch_size = batch_size
 		self.dropout = dropout
@@ -46,11 +46,22 @@ class PFNN(FCNetwork):
 		
 		self.counter = tf.placeholder(tf.int32, name="step_counter")
 
+		self.gatingnet = FCNetwork(len(gating_indices), 4, 32, norm)
+		self.gating_indices = gating_indices
+
+		GL0 = TF_FCLayer((32, len(gating_indices)), None, None, elu_operator = tf.nn.elu, name="GLayer0")
+		GL1 = TF_FCLayer((32, 32), None, None, elu_operator = tf.nn.elu, name="GLayer1")
+		GL2 = TF_FCLayer((4, 32), None, None, name="GLayer2")
+
+		self.gatingnet.add_layer(GL0)
+		self.gatingnet.add_layer(GL1)
+		self.gatingnet.add_layer(GL2)
+		
 
 		if len(layers) != 3:
-			l0 = TF_PFNN_Layer((hidden_size, input_size), elu_operator = tf.nn.elu, name="Layer0")
-			l1 = TF_PFNN_Layer((hidden_size, hidden_size), elu_operator =tf.nn.elu, name="Layer1")
-			l2 = TF_PFNN_Layer((output_size, hidden_size), name="Layer2")
+			l0 = TF_MANN_Layer((hidden_size, input_size), elu_operator = tf.nn.elu, name="Layer0")
+			l1 = TF_MANN_Layer((hidden_size, hidden_size), elu_operator =tf.nn.elu, name="Layer1")
+			l2 = TF_MANN_Layer((output_size, hidden_size), name="Layer2")
 		else:
 			l0, l1, l2 = layers[0], layers[1], layers[2]
 
@@ -80,10 +91,10 @@ class PFNN(FCNetwork):
 				print("ERROR: layers not matching. Stored: " + nlayers)
 				return
 
-			layers = [TF_PFNN_Layer.load([store["layer_0"], tf.nn.elu]), 
-						TF_PFNN_Layer.load([store["layer_1"], tf.nn.elu]),
-						TF_PFNN_Layer.load([store["layer_2"], None])]
-			pfnn = PFNN(input_size, output_size, hidden_size, norm, batch_size = 1, layers=layers, dropout = 0.999)
+			layers = [TF_MANN_Layer.load([store["layer_0"], tf.nn.elu]), 
+						TF_MANN_Layer.load([store["layer_1"], tf.nn.elu]),
+						TF_MANN_Layer.load([store["layer_2"], None])]
+			pfnn = MANN(input_size, output_size, hidden_size, norm, batch_size = 1, layers=layers, dropout = 0.999)
 			pfnn.store = store
 			return pfnn
 		
@@ -105,11 +116,19 @@ class PFNN(FCNetwork):
 		#net_in = self.x[:, :-1]
 		dropout_prob = tf.constant(self.dropout, tf.float32, name="dropoutProb")
 
-		params = [self.x, self.p, dropout_prob]
+		# self.x[:,self.gating_indices]
+		gating_input = tf.gather(self.x, self.gating_indices, axis=1)
+		print("gating input: ", gating_input)
 
-		
+		params = [gating_input, 0, dropout_prob]
 		print("input shape: ", self.x.shape)
+		
+		out_gating = self.gatingnet.build_tf_graph(params)
+
+		params = [self.x, out_gating[0], dropout_prob]
+
 		params = super().build_tf_graph(params)
+
 		self.network_output = tf.identity(params[0], name="networkOut")
 		output = self.network_output
 		print("output shape: ", output.shape)
@@ -326,5 +345,5 @@ class PFNN(FCNetwork):
 		X = np.concatenate([X, P[:, np.newaxis]], axis=-1)
 
 
-		pfnn = PFNN(input_dim, output_dim, 512, norm)
+		pfnn = MANN(input_dim, output_dim, 512, norm)
 		pfnn.train(X, Y, epochs, target_path)
