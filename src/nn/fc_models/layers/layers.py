@@ -194,3 +194,8 @@ def cubic(y0, y1, y2, y3, mu):
 	(-0.5 * y0 + 0.5 * y2) * mu +
 	(y1))
 
+def linear():
+	"""
+	Linear interpolation implementation
+	"""
+	return()

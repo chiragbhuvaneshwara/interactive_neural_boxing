@@ -4,6 +4,7 @@ from src.controlers.directional_controller import DirectionalController
 from src.nn.fc_models.pfnn_np import PFNN
 from src.nn.fc_models.pfnn_tf import PFNN as PFNNTF
 from src.nn.fc_models.vinn_tf import VINN as VINNTF
+from src.nn.fc_models.mann_tf import MANN as MANNTF
 from src.nn.fc_models.tf_networks_random_noise import pfnn_random_layers
 
 from src.servers.simpleThriftServer.simpleThriftServer import CREATE_MOTION_SERVER
@@ -18,9 +19,9 @@ from evaluate_network import evaluate_network
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description="This is the main file to run this project from console. You can either train a new network model or execute an existing one.")
-	parser.add_argument("-t", "--train", help="Train a network. Please specify the network type. ", choices=["pfnn", "vinn"])
-	parser.add_argument("-x", "--execute", help="Execute a pretrained network. ", choices=["pfnn_np", "pfnn_tf", "vinn_tf", "pfnn_random"])
-	parser.add_argument("-v", "--validate", help="Evaluate a pretrained network on a dataset", choices=["vinn_tf", "pfnn_random"])
+	parser.add_argument("-t", "--train", help="Train a network. Please specify the network type. ", choices=["pfnn", "vinn", "mann"])
+	parser.add_argument("-x", "--execute", help="Execute a pretrained network. ", choices=["pfnn_np", "pfnn_tf", "vinn_tf", "pfnn_random", "mann_tf"])
+	parser.add_argument("-v", "--validate", help="Evaluate a pretrained network on a dataset", choices=["vinn_tf"])
 	parser.add_argument("-d", "--dataset", help="Path to the dataset-description file. The dataset is expected to have the same filename.", required=True)
 	parser.add_argument("-o", "--output", help="Path-to-Network during execution, path to folder where to place the trained networks during training. ", required = True)
 	parser.add_argument("-e", "--epochs", help="Numbers of epochs for training. ", type=int, default=50)
@@ -55,6 +56,9 @@ if __name__ == "__main__":
 						args.params_random_noise,
 						args.sample_noise_each_phase
 					)
+			pfnn.start_tf()
+		elif args.execute == "mann_tf":
+			pfnn = MANNTF.load(target_file)
 			pfnn.start_tf()
 
 		dataset_config_file = args.dataset #"data/dataset.json"

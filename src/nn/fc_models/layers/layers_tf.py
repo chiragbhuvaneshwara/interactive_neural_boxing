@@ -11,19 +11,29 @@ class TF_FCLayer(FCLayer):
 
 	@author: Janis
 	"""
-	def __init__(self, dshape, weight, bias, elu_operator = None):
+	def __init__(self, dshape, weight, bias, elu_operator = None, name = ""):
 		"""
 		FCLayer is the base implementation of a fully connected layer. 
 		This class provides the tensorflow implementation for FCLayer. 
 		
 		Arguments:
 			dshape {list / tuple} -- shape of the layer
-			weight {tf.variable} -- tensorflow object to the weights
+			weight {tf.variable} -- tensorflow object to the weights, if none, object is created. 
 			bias {tf.variable} -- tensorflow object to the bias
 		
 		Keyword Arguments:
 			elu_operator {function} -- elu operation (e.g. tf.nn.elu) (default: {None})
 		"""
+		
+		if weight is None:
+    			# this will create layer weights for this specific dimensions
+    			W_bound = 1 * np.sqrt(6. / np.prod(dshape[1]))
+    			gweight = np.asarray(np.random.uniform(low = -W_bound, high=W_bound, size=(dshape[0], dshape[1])), dtype=np.float32)
+    			weight = tf.Variable(gweight, True, name="weight")
+		if bias is None: 
+			gbias = tf.constant(0.0, shape = (dshape[0], 1))
+			bias = tf.Variable(gbias, True, name="bias")
+
 		super().__init__(dshape, weight, bias, elu_operator)
 
 	def build_tf_graph(self, params):
@@ -46,6 +56,7 @@ class TF_FCLayer(FCLayer):
 			dropout = params[2]
 			di = x[:,:, tf.newaxis]
 			did = tf.nn.dropout(di, dropout)
+			print("layer: ", self.weight, did)# tf.matmul(self.weight, did))
 
 			a = tf.reshape(tf.matmul(self.weight, did), self.bias.shape) + self.bias
 			if self.elu_operator is not None:
@@ -61,7 +72,7 @@ class TF_PFNN_Layer(Interpolating_Layer):
 	@author: Janis
 	"""
 
-
+	
 	def __init__(self, dshape, weight = [], bias = [], elu_operator = None, name = ""):
 		"""
 		This class provides the tensorflow implementation of a phase-functioned layer using a catmul-rom spline. 
@@ -167,6 +178,121 @@ class TF_PFNN_Layer(Interpolating_Layer):
 		"bias":self.sess.run(self.bias).astype(np.float32).tolist()}
 		return store
 
+class TF_MANN_Layer(Interpolating_Layer):
+	"""
+	This class provides the tensorflow implementation of a mode-adaptive layer using linear interpolation. 
+	It is a realization of an interpolating layer. 
+
+	@author: Janis and Usama (for changes w.r.t MANN)
+	"""
+
+
+	def __init__(self, dshape, weight = [], bias = [], elu_operator = None, name = ""):
+		"""
+		This class provides the tensorflow implementation of a mode-adaptive layer using linear interpolation. 
+		It is a realization of an interpolating layer. 
+
+		
+		Arguments:
+			dshape {list / tuple} -- shape of the (synthesized) layer
+		
+		Keyword Arguments:
+			weight {list} -- optional weight for fine-tuning (not yet implemented) (default: {[]})
+			bias {list} -- optional weight for fine-tuning (not yet implemented) (default: {[]})
+			elu_operator {function} -- elu operation (e.g. tf.nn.elu) (default: {None})
+
+		"""
+		
+		with tf.name_scope(name) as scope:
+			if len(weight) == 0:
+				W_bound = 1 * np.sqrt(6. / np.prod(dshape[1]))
+				weight = np.asarray(np.random.uniform(low = -W_bound, high=W_bound, size=(4, dshape[0], dshape[1])), dtype=np.float32)
+			
+			weight = tf.Variable(weight, True, name="weights")
+			self.sess = None
+			
+			if len(bias) == 0:
+				bias = tf.constant(0.0, shape = (4, dshape[0]))
+			bias = tf.Variable(bias, True, name = "bias")
+
+			print("initialized new layer: ", weight.shape, bias.shape)
+		
+
+			def interpolation_function(w, phase): #Usama: use blending weights instead of phase // matrix multiplication of weights and blending weights
+				with tf.name_scope("network_interpolation") as scope:
+					# This function performs the splitting of variables to the four layers. 
+					# this part makes the spline cyclic. 
+					# pscale = 4 * phase
+					# pamount = pscale % 1.0
+					# p1 = tf.cast(pscale, tf.int32) % 4
+					# p0 = (p1 - 1) % 4
+					# p2 = (p1 + 1) % 4
+					# p3 = (p1 + 2) % 4
+
+					# y0 = tf.nn.embedding_lookup(w, p0)
+					# y1 = tf.nn.embedding_lookup(w, p1)
+					# y2 = tf.nn.embedding_lookup(w, p2)
+					# y3 = tf.nn.embedding_lookup(w, p3)
+					#y0 = tf.gather(w, 0)
+					#y1 = tf.gather(w, 1)
+					#y2 = tf.gather(w, 2)
+					#y3 = tf.gather(w, 3)
+					# w[0] * phase[0]
+
+					# pamount has to be rescaled appropriately, depending on weights (3 dimensions) and biases (2 dimensions)
+					# if len(y0.shape) == 3:
+					# 	pamount = pamount[:, tf.newaxis, tf.newaxis]
+					# if len(y0.shape) == 2:
+					# 	pamount = pamount[:, tf.newaxis]
+
+					# interpolation using a cubic-catmul rom spline. 
+					# wi = cubic(y0, y1, y2, y3, pamount)
+					wi = tf.matmul(phase, w)
+				return wi
+		super().__init__(dshape, weight, bias, elu_operator, TF_FCLayer, interpolation_function)
+
+	def load(params):
+		"""
+		This constant function loads the network from a map store. 
+		the params[0] field should contain a map containing:
+			* dshape: Shape of the interpolated network
+			* weight: weights
+			* bias: biases
+		
+		params[1] contains the elu operator
+
+		This function is not yet fully implemented!
+		
+		Arguments:
+			params {list} -- parameters
+		
+		Returns:
+			TF_MANN_Layer -- generated layer. 
+		"""
+		# store = params[0]
+		# dshape = np.frombuffer(store["dshape"], dtype=np.float32)
+		# weight = np.frombuffer(store["weight"], dtype=np.float32)
+		# bias = np.frombuffer(store["bias"], dtype=np.float32)
+		# elu = params[1]
+		store = params[0]
+		dshape = np.array(store["dshape"], dtype=np.float32)
+		weight = np.array(store["weight"], dtype=np.float32)
+		bias = np.array(store["bias"], dtype=np.float32)
+		elu = params[1]
+
+		return TF_MANN_Layer(dshape, weight, bias, elu)
+
+	def store(self):
+		"""
+		Generates a json store for the network configuration. 
+		
+		Returns:
+			map -- json store
+		"""
+		store = {"dshape":np.array(self.dshape).tolist(), 
+		"weight":self.sess.run(self.weight).astype(np.float32).tolist(),
+		"bias":self.sess.run(self.bias).astype(np.float32).tolist()}
+		return store
 
 
 class TF_Variational_Layer(TF_PFNN_Layer):

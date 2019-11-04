@@ -21,4 +21,3 @@ Implementations:
 
 	* NP_FCLayer: similar to TF_FCLayer with numpy backend (only inference)
 	* NP_PFNN_Layer: similar to TF_PFNN_Layer with numpy backend (only inference)
-
