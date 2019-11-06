@@ -143,7 +143,7 @@ class Interpolating_Layer(Layer):
 		input_string = params[0]
 		interpolation_factor = params[1]
 		layer = self.__construct__layer(interpolation_factor, dynamic=False)
-		params[0] = layer.build_tf_graph(params)
+		params = layer.build_tf_graph(params)
 		return params
 
 	def store(self):
