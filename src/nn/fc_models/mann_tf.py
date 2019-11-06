@@ -48,7 +48,7 @@ class MANN(FCNetwork):
 
 		self.gatingnet = FCNetwork(len(gating_indices), 4, 32, norm)
 		self.gating_indices = gating_indices
-
+		
 		GL0 = TF_FCLayer((32, len(gating_indices)), None, None, elu_operator = tf.nn.elu, name="GLayer0")
 		GL1 = TF_FCLayer((32, 32), None, None, elu_operator = tf.nn.elu, name="GLayer1")
 		GL2 = TF_FCLayer((4, 32), None, None, name="GLayer2")
@@ -124,12 +124,13 @@ class MANN(FCNetwork):
 		print("input shape: ", self.x.shape)
 		
 		out_gating = self.gatingnet.build_tf_graph(params)
-
-		params = [self.x, out_gating[0], dropout_prob]
+		# softmax on out_gating[0]
+		sft_out_gating = tf.nn.softmax(out_gating[0], name="gnetworkOut")
+		params = [self.x, sft_out_gating, dropout_prob]
 
 		params = super().build_tf_graph(params)
 
-		self.network_output = tf.identity(params[0], name="networkOut")
+		self.network_output = tf.identity(params[0], name="mpnetworkOut")
 		output = self.network_output
 		print("output shape: ", output.shape)
 

@@ -54,14 +54,16 @@ class TF_FCLayer(FCLayer):
 			x = params[0]
 			p = params[1]
 			dropout = params[2]
-			di = x[:,:, tf.newaxis]
-			did = tf.nn.dropout(di, dropout)
+			if x.shape[-1] != 1:
+				x = x[:,:, tf.newaxis]
+			did = tf.nn.dropout(x, dropout)
 			print("layer: ", self.weight, did)# tf.matmul(self.weight, did))
 
-			a = tf.reshape(tf.matmul(self.weight, did), self.bias.shape) + self.bias
+			a = (tf.matmul(self.weight, did)) + self.bias
 			if self.elu_operator is not None:
 				a = self.elu_operator(a)
-		return a
+		params[0] = a
+		return params
 
 
 class TF_PFNN_Layer(Interpolating_Layer):
@@ -247,7 +249,11 @@ class TF_MANN_Layer(Interpolating_Layer):
 
 					# interpolation using a cubic-catmul rom spline. 
 					# wi = cubic(y0, y1, y2, y3, pamount)
-					wi = tf.matmul(phase, w)
+					if len(w.shape) == 3:
+						wi = phase[:,0,tf.newaxis] * w[0] + phase[:,1,tf.newaxis] * w[1] + phase[:,2,tf.newaxis] * w[2] + phase[:,3,tf.newaxis] * w[3]#tf.matmul(phase, w)
+					else:
+						wi = phase[:,0] * w[0] + phase[:,1] * w[1] + phase[:,2] * w[2] + phase[:,3] * w[3]#tf.matmul(phase, w)
+						wi = tf.reshape(wi, (wi.shape[0], wi.shape[1], 1))
 				return wi
 		super().__init__(dshape, weight, bias, elu_operator, TF_FCLayer, interpolation_function)
 
