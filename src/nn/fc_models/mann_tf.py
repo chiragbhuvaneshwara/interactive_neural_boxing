@@ -131,7 +131,7 @@ class MANN(FCNetwork):
 		params = super().build_tf_graph(params)
 
 		self.network_output = tf.identity(params[0], name="mpnetworkOut")
-		output = self.network_output
+		output = tf.reshape(self.network_output, (self.network_output.shape[0], self.network_output.shape[1]))
 		print("output shape: ", output.shape)
 
 
