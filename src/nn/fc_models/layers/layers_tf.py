@@ -29,10 +29,10 @@ class TF_FCLayer(FCLayer):
     			# this will create layer weights for this specific dimensions
     			W_bound = 1 * np.sqrt(6. / np.prod(dshape[1]))
     			gweight = np.asarray(np.random.uniform(low = -W_bound, high=W_bound, size=(dshape[0], dshape[1])), dtype=np.float32)
-    			weight = tf.Variable(gweight, True, name="weight")
+    			weight = tf.Variable(gweight, True, name="gweight")
 		if bias is None: 
 			gbias = tf.constant(0.0, shape = (dshape[0], 1))
-			bias = tf.Variable(gbias, True, name="bias")
+			bias = tf.Variable(gbias, True, name="gbias")
 
 		super().__init__(dshape, weight, bias, elu_operator)
 
@@ -50,7 +50,7 @@ class TF_FCLayer(FCLayer):
 		Returns:
 			tf.variable -- network output tensorflow object
 		"""
-		with tf.name_scope("Layer") as scope:
+		with tf.name_scope("GLayer") as scope:
 			x = params[0]
 			p = params[1]
 			dropout = params[2]
@@ -210,12 +210,12 @@ class TF_MANN_Layer(Interpolating_Layer):
 				W_bound = 1 * np.sqrt(6. / np.prod(dshape[1]))
 				weight = np.asarray(np.random.uniform(low = -W_bound, high=W_bound, size=(4, dshape[0], dshape[1])), dtype=np.float32)
 			
-			weight = tf.Variable(weight, True, name="weights")
+			weight = tf.Variable(weight, True, name="MPweights")
 			self.sess = None
 			
 			if len(bias) == 0:
 				bias = tf.constant(0.0, shape = (4, dshape[0]))
-			bias = tf.Variable(bias, True, name = "bias")
+			bias = tf.Variable(bias, True, name = "MPbias")
 
 			print("initialized new layer: ", weight.shape, bias.shape)
 		
