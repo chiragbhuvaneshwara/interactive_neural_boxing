@@ -59,9 +59,9 @@ class MANN(FCNetwork):
 		
 
 		if len(layers) != 3:
-			l0 = TF_MANN_Layer((hidden_size, input_size), elu_operator = tf.nn.elu, name="Layer0")
-			l1 = TF_MANN_Layer((hidden_size, hidden_size), elu_operator =tf.nn.elu, name="Layer1")
-			l2 = TF_MANN_Layer((output_size, hidden_size), name="Layer2")
+			l0 = TF_MANN_Layer((hidden_size, input_size), elu_operator = tf.nn.elu, name="MPLayer0")
+			l1 = TF_MANN_Layer((hidden_size, hidden_size), elu_operator =tf.nn.elu, name="MPLayer1")
+			l2 = TF_MANN_Layer((output_size, hidden_size), name="MPLayer2")
 		else:
 			l0, l1, l2 = layers[0], layers[1], layers[2]
 
