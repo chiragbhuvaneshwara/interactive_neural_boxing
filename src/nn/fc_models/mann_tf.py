@@ -74,6 +74,26 @@ class MANN(FCNetwork):
 		self.cost_function = None
 		self.first_decay_steps = 0
 
+	def store(self, target_file):
+		"""
+		Stores the whole network in a json file. 
+		
+		Arguments:
+			target_file {string} -- path to the target *.json file. 
+		"""
+		store = {"nlayers":(len(self.layers)),
+				"input_size":(self.input_size),
+				"output_size":(self.output_size),
+				"hidden_size":(self.hidden_size), 
+				"norm":self.norm,
+				"gatingIndices":self.gating_indices}
+		
+		for l in range(len(self.layers)):
+			store["layer_%d"%l] = self.layers[l].store()
+
+		with open(target_file, "w") as f:
+			json.dump(store, f)
+
 	def load(target_file):
 		with open(target_file, "r") as f:
 			store = json.load(f)
@@ -87,6 +107,7 @@ class MANN(FCNetwork):
 			hidden_size = store["hidden_size"]
 			norm = store["norm"]			
 			nlayers = store["nlayers"]
+			gating_indices = store["gatingIndices"]
 			if not nlayers == 3:
 				print("ERROR: layers not matching. Stored: " + nlayers)
 				return
@@ -94,8 +115,8 @@ class MANN(FCNetwork):
 			layers = [TF_MANN_Layer.load([store["layer_0"], tf.nn.elu]), 
 						TF_MANN_Layer.load([store["layer_1"], tf.nn.elu]),
 						TF_MANN_Layer.load([store["layer_2"], None])]
-			pfnn = MANN(input_size, output_size, hidden_size, norm, batch_size = 1, layers=layers, dropout = 0.999)
-			pfnn.store = store
+			pfnn = MANN(input_size, output_size, hidden_size, norm, batch_size = 1, layers=layers, dropout = 1,gating_indices=gating_indices )
+			pfnn.configstore = store
 			return pfnn
 		
 		# for l in range(len(self.layers)):
@@ -254,7 +275,7 @@ class MANN(FCNetwork):
 		out = (out * self.norm["Ystd"]) + self.norm["Ymean"]
 		return [out, params[1]]
 
-	def from_file(dataset, target_path, epochs, config_store):
+	def from_file(dataset, target_path, epochs, config_store, gating_indices = [0,1,2]):
 		"""
 		This constant function loads a *.npz numpy stored dataset, builds the network and trains it. 
 
@@ -346,5 +367,5 @@ class MANN(FCNetwork):
 		X = np.concatenate([X, P[:, np.newaxis]], axis=-1)
 
 
-		pfnn = MANN(input_dim, output_dim, 512, norm)
+		pfnn = MANN(input_dim, output_dim, 512, norm, gating_indices=gating_indices)
 		pfnn.train(X, Y, epochs, target_path)

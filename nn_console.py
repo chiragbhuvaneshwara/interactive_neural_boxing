@@ -5,8 +5,11 @@ from src.nn.fc_models.pfnn_np import PFNN
 from src.nn.fc_models.pfnn_tf import PFNN as PFNNTF
 from src.nn.fc_models.vinn_tf import VINN as VINNTF
 from src.nn.fc_models.mann_tf import MANN as MANNTF
+<<<<<<< HEAD
 from src.nn.fc_models.tf_networks_random_noise import pfnn_random_layers
 
+=======
+>>>>>>> updated mann implementation.
 from src.servers.simpleThriftServer.simpleThriftServer import CREATE_MOTION_SERVER
 from src.servers.MultiThriftServer.MultiThriftServer import CREATE_MOTION_SERVER as CREATE_MULTI_MOTION_SERVER
 import numpy as np
@@ -49,7 +52,7 @@ if __name__ == "__main__":
 			pfnn = VINNTF.load(target_file)
 			pfnn.start_tf()
 		elif args.execute == "pfnn_random":
-			pfnn = pfnn_random_layers.load(
+    			pfnn = pfnn_random_layers.load(
 						target_file, 
 						args.dimension_random_noise, 
 						args.layers_add_random_noise,
