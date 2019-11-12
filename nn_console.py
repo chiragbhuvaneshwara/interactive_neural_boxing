@@ -23,7 +23,11 @@ from evaluate_network import evaluate_network
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description="This is the main file to run this project from console. You can either train a new network model or execute an existing one.")
 	parser.add_argument("-t", "--train", help="Train a network. Please specify the network type. ", choices=["pfnn", "vinn", "mann"])
+<<<<<<< HEAD
 	parser.add_argument("-x", "--execute", help="Execute a pretrained network. ", choices=["pfnn_np", "pfnn_tf", "vinn_tf", "pfnn_random", "mann_tf"])
+=======
+	parser.add_argument("-x", "--execute", help="Execute a pretrained network. ", choices=["pfnn_np", "pfnn_tf", "vinn_tf", "mann_tf"])
+>>>>>>> 6677e3f5306b974afe60bebad42a846c65141e10
 	parser.add_argument("-v", "--validate", help="Evaluate a pretrained network on a dataset", choices=["vinn_tf"])
 	parser.add_argument("-d", "--dataset", help="Path to the dataset-description file. The dataset is expected to have the same filename.", required=True)
 	parser.add_argument("-o", "--output", help="Path-to-Network during execution, path to folder where to place the trained networks during training. ", required = True)

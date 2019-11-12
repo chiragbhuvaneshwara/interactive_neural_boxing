@@ -75,7 +75,7 @@ class MANN(FCNetwork):
 		self.first_decay_steps = 0
 
 	def store(self, target_file):
-		"""
+    		"""
 		Stores the whole network in a json file. 
 		
 		Arguments:
@@ -276,7 +276,7 @@ class MANN(FCNetwork):
 		return [out, params[1]]
 
 	def from_file(dataset, target_path, epochs, config_store, gating_indices = [0,1,2]):
-		"""
+    		"""
 		This constant function loads a *.npz numpy stored dataset, builds the network and trains it. 
 
 		The data is assumed to be stored as 
