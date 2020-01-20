@@ -100,7 +100,7 @@ class TF_PFNN_Layer(Interpolating_Layer):
 			self.sess = None
 			
 			if len(bias) == 0:
-				bias = tf.constant(0.0, shape = (4, dshape[0]))
+				bias = tf.constant(0.0, shape = (4, dshape[0], 1))
 			bias = tf.Variable(bias, True, name = "bias")
 
 			print("initialized new layer: ", weight.shape, bias.shape)
