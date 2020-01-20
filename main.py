@@ -9,7 +9,7 @@ from src.servers.MultiThriftServer.MultiThriftServer import CREATE_MOTION_SERVER
 import numpy as np
 import json
 
-args_dataset = "./data/data_4D_60fps.json"
+args_dataset = "./data/reaching_simple.json"
 args_output = "./trained_models/mann/"
 
 with open(args_dataset) as f:
@@ -32,16 +32,16 @@ gating_indices = [
     4 * window + middle_point + 0 * window, 4 * window + middle_point + 1 * window, 4 * window + middle_point + 2 * window, # gaits
     # left Foot positions
     start_poses + find_joint_index("LeftFoot") * 3, start_poses + find_joint_index("LeftFoot") * 3 + 1, start_poses + find_joint_index("LeftFoot") * 3 + 2,
-    start_poses + find_joint_index("LeftToeBase") * 3, start_poses + find_joint_index("LeftToeBase") * 3 + 1, start_poses + find_joint_index("LeftToeBase") * 3 + 2,
+   #start_poses + find_joint_index("LeftToeBase") * 3, start_poses + find_joint_index("LeftToeBase") * 3 + 1, start_poses + find_joint_index("LeftToeBase") * 3 + 2,
     # left foot velocities
     start_poses + n_joints + find_joint_index("LeftFoot") * 3, start_poses + n_joints + find_joint_index("LeftFoot") * 3 + 1, start_poses + n_joints + find_joint_index("LeftFoot") * 3 + 2,
-    start_poses + n_joints + find_joint_index("LeftToeBase") * 3, start_poses + n_joints + find_joint_index("LeftToeBase") * 3 + 1, start_poses + n_joints + find_joint_index("LeftToeBase") * 3 + 2,
+    #start_poses + n_joints + find_joint_index("LeftToeBase") * 3, start_poses + n_joints + find_joint_index("LeftToeBase") * 3 + 1, start_poses + n_joints + find_joint_index("LeftToeBase") * 3 + 2,
     # Right Foot positions
     start_poses + find_joint_index("RightFoot") * 3, start_poses + find_joint_index("RightFoot") * 3 + 1, start_poses + find_joint_index("RightFoot") * 3 + 2,
-    start_poses + find_joint_index("RightToeBase") * 3, start_poses + find_joint_index("RightToeBase") * 3 + 1, start_poses + find_joint_index("RightToeBase") * 3 + 2,
+    #start_poses + find_joint_index("RightToeBase") * 3, start_poses + find_joint_index("RightToeBase") * 3 + 1, start_poses + find_joint_index("RightToeBase") * 3 + 2,
     # Right foot velocities
     start_poses + n_joints + find_joint_index("RightFoot") * 3, start_poses + n_joints + find_joint_index("RightFoot") * 3 + 1, start_poses + n_joints + find_joint_index("RightFoot") * 3 + 2,
-    start_poses + n_joints + find_joint_index("RightToeBase") * 3, start_poses + n_joints + find_joint_index("RightToeBase") * 3 + 1, start_poses + n_joints + find_joint_index("RightToeBase") * 3 + 2,
+    #start_poses + n_joints + find_joint_index("RightToeBase") * 3, start_poses + n_joints + find_joint_index("RightToeBase") * 3 + 1, start_poses + n_joints + find_joint_index("RightToeBase") * 3 + 2,
 
 ]
 MANNTF.from_file(datasetnpz, args_output, 10, config_store, gating_indices=gating_indices)

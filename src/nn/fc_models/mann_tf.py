@@ -321,8 +321,8 @@ class MANN(FCNetwork):
         Xstd[w * 4:w * 4 + w * gaits] = Xstd[w * 4:w * 4 + w * gaits].mean()
         start = w * (4 + gaits)
 
-        Xstd[start + j * 3 * 0:start + j * 3 * 1] = Xstd[start + j * 3 * 0:start + j * 3 * 1].mean() / (joint_weights.repeat(3) * 0.1)  # Pos
-        Xstd[start + j * 3 * 1:start + j * 3 * 2] = Xstd[start + j * 3 * 1:start + j * 3 * 2].mean() / (joint_weights.repeat(3) * 0.1)  # Vel
+        Xstd[start + j * 3 * 0:start + j * 3 * 1] = Xstd[start + j * 3 * 0:start + j * 3 * 1].mean() #/ (joint_weights.repeat(3) * 0.1)  # Pos
+        Xstd[start + j * 3 * 1:start + j * 3 * 2] = Xstd[start + j * 3 * 1:start + j * 3 * 2].mean() #/ (joint_weights.repeat(3) * 0.1)  # Vel
         #Xstd[w * start + j * 3 * 2:w * start + j * (3 * 2) + (j)] = Xstd[w * start + j * 3 * 2:w * start + j * (3 * 2) + (j)].mean() / (joint_weights * 0.1)  # twists
         #start = start + j * 3 * 2
         #Xstd[start:] = Xstd[start:].mean()
