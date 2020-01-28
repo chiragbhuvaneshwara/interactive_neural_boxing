@@ -26,10 +26,10 @@ class TF_FCLayer(FCLayer):
 		"""
 		
 		if weight is None:
-    			# this will create layer weights for this specific dimensions
-    			W_bound = 1 * np.sqrt(6. / np.prod(dshape[1]))
-    			gweight = np.asarray(np.random.uniform(low = -W_bound, high=W_bound, size=(dshape[0], dshape[1])), dtype=np.float32)
-    			weight = tf.Variable(gweight, True, name="gweight")
+				# this will create layer weights for this specific dimensions
+				W_bound = 1 * np.sqrt(6. / np.prod(dshape[1]))
+				gweight = np.asarray(np.random.uniform(low = -W_bound, high=W_bound, size=(dshape[0], dshape[1])), dtype=np.float32)
+				weight = tf.Variable(gweight, True, name="gweight")
 		if bias is None: 
 			gbias = tf.constant(0.0, shape = (dshape[0], 1))
 			bias = tf.Variable(gbias, True, name="gbias")
@@ -57,9 +57,17 @@ class TF_FCLayer(FCLayer):
 			if x.shape[-1] != 1:
 				x = x[:,:, tf.newaxis]
 			did = tf.nn.dropout(x, dropout)
-			print("layer: ", self.weight, did)# tf.matmul(self.weight, did))
+			if len(self.weight.shape) < len(x.shape):
+				# did not propperly batch yet.
+				batch_size = [x.shape[0]]
+				for i in range(1, len(x.shape)):
+					batch_size.extend([1])
+				weight = tf.tile(tf.expand_dims(self.weight, axis=0),batch_size)
+			else:
+				weight = self.weight
+			print("layer: ", weight, did)# tf.matmul(self.weight, did))
 
-			a = (tf.matmul(self.weight, did)) + self.bias
+			a = (tf.matmul(weight, did)) + self.bias
 			if self.elu_operator is not None:
 				a = self.elu_operator(a)
 		params[0] = a
