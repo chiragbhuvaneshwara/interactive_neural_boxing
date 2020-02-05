@@ -7,3 +7,5 @@ Blender_Save_Vars/*
 Blender Code Snippets/saved_vis_data/*
 !Blender Code Snippets/saved_vis_data/*.md
 .idea
+
+Notebooks/.ipynb_checkpoints/LoadVars-checkpoint.ipynb
