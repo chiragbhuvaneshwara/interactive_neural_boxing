@@ -1,4 +1,9 @@
 Data/*
+!Data/*.md
+
 Blender_Save_Vars/*
+!Blender_Save_Vars/*.md
+
 Blender Code Snippets/saved_vis_data/*
+!Blender Code Snippets/saved_vis_data/*.md
 .idea
