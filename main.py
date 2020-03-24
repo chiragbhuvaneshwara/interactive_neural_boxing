@@ -4,17 +4,18 @@ from src.nn.fc_models.pfnn_np import PFNN
 from src.nn.fc_models.pfnn_tf import PFNN as PFNNTF
 from src.nn.fc_models.mann_tf import MANN as MANNTF
 from src.nn.fc_models.vinn_tf import VINN as VINNTF
-from src.servers.simpleThriftServer.simpleThriftServer import CREATE_MOTION_SERVER
-from src.servers.MultiThriftServer.MultiThriftServer import CREATE_MOTION_SERVER as CREATE_MULTI_MOTION_SERVER
+# from src.servers.simpleThriftServer.simpleThriftServer import CREATE_MOTION_SERVER
+# from src.servers.MultiThriftServer.MultiThriftServer import CREATE_MOTION_SERVER as CREATE_MULTI_MOTION_SERVER
 import numpy as np
 import json
 
-args_dataset = "./data/reaching_simple.json"
+args_dataset = "./data/boxing_config.json"
 args_output = "./trained_models/mann/"
 
 with open(args_dataset) as f:
     config_store = json.load(f)
-datasetnpz = args_dataset.replace(".json", ".npz")
+# datasetnpz = args_dataset.replace(".json", ".npz")
+datasetnpz = args_dataset.split('_')[0] + '_train.npz'
 
 start_poses = (config_store["n_gaits"] + 4) * 12
 n_joints = config_store["numJoints"] * 3
@@ -44,4 +45,4 @@ gating_indices = [
     #start_poses + n_joints + find_joint_index("RightToeBase") * 3, start_poses + n_joints + find_joint_index("RightToeBase") * 3 + 1, start_poses + n_joints + find_joint_index("RightToeBase") * 3 + 2,
 
 ]
-MANNTF.from_file(datasetnpz, args_output, 10, config_store, gating_indices=gating_indices)
+MANNTF.from_file(datasetnpz, args_output, 50, config_store, gating_indices=gating_indices)

@@ -3,6 +3,8 @@ from .layers.layers_tf import TF_FCLayer
 from .fc_networks import FCNetwork
 
 import tensorflow as tf
+# import tensorflow.compat.v1 as tf
+# tf.disable_v2_behavior()
 import numpy as np
 import sys, os, datetime, json
 
@@ -42,7 +44,7 @@ class MANN(FCNetwork):
 
         self.x = tf.placeholder(tf.float32, shape=[self.batch_size, self.input_size], name="InputString")
         self.y = tf.placeholder(tf.float32, shape=[self.batch_size, self.output_size], name="OutputString")
-        self.p = tf.placeholder(tf.float32, shape=[self.batch_size], name = "Phase")
+        # self.p = tf.placeholder(tf.float32, shape=[self.batch_size], name = "Phase")
         
         self.counter = tf.placeholder(tf.int32, name="step_counter")
 
@@ -230,10 +232,13 @@ class MANN(FCNetwork):
                         break
                     x = input[i:(i + self.batch_size), :]
                     p = x[:,-1]
-                    x = x[:,:-1]
+                    # x = x[:,:-1]
                     y = output[i:i + self.batch_size]
                     #y = y_data.reshape(self.batch_size, self.output_shape)
-                    merged, _, loss_value, acc = sess.run([self.merged, self.train_step, self.cost_function, self.accuracy], feed_dict={self.x: x, self.y: y, self.p: p, self.counter: counter[0]})
+                    # merged, _, loss_value, acc = sess.run([self.merged, self.train_step, self.cost_function, self.accuracy], feed_dict={self.x: x, self.y: y, self.p: p, self.counter: counter[0]})
+                    merged, _, loss_value, acc = sess.run(
+                        [self.merged, self.train_step, self.cost_function, self.accuracy],
+                        feed_dict={self.x: x, self.y: y, self.counter: counter[0]})
                     #sess.run(self.counter.assign_add(1))
                     self.summary_writer.add_summary(merged, i + e * len(input))
                     step_counter += 1
@@ -294,7 +299,7 @@ class MANN(FCNetwork):
         data = np.load(dataset)
         X = data["Xun"]
         Y = data["Yun"]
-        P = data["Pun"]
+        # P = data["Pun"]
 
         Xmean = np.mean(X, axis=0)
         Ymean = np.mean(Y, axis=0)
@@ -366,8 +371,11 @@ class MANN(FCNetwork):
         input_dim = X.shape[1]
         output_dim = Y.shape[1]
 
-        X = np.concatenate([X, P[:, np.newaxis]], axis=-1)
+        # X = np.concatenate([X, P[:, np.newaxis]], axis=-1)
 
+        print('################################')
+        print(X.shape)
+        print(Y.shape)
 
-        pfnn = MANN(input_dim, output_dim, 512, norm, gating_indices=gating_indices)
-        pfnn.train(X, Y, epochs, target_path)
+        mann = MANN(input_dim, output_dim, 512, norm, gating_indices=gating_indices)
+        mann.train(X, Y, epochs, target_path)

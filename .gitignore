@@ -4,6 +4,7 @@ trained_models/*
 !trained_models/README.txt
 .vscode/*
 
+kubectl
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
