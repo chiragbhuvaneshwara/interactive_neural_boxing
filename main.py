@@ -234,7 +234,9 @@ def process_data(handler: FeatureExtractor, blender_path):
         # gait = handler.load_gait(gait_path, frame_rate_divisor = frame_rate_div, frame_rate_offset=div)
         # phase, dphase = handler.load_phase(phase_path, frame_rate_divisor = frame_rate_div, frame_rate_offset=div)
         blender_np = handler.load_blender_data(blender_path, frame_rate_divisor=frame_rate_div, frame_rate_offset=div)
+        # right_punch_target, right_action = handler.get_punch_targets(blender_np[:, 0])
         right_punch_target = handler.get_punch_targets(blender_np[:, 0])
+        # left_punch_target, left_action = handler.get_punch_targets(blender_np[:, 1])
         left_punch_target = handler.get_punch_targets(blender_np[:, 1])
         #############################################################################################
         # These work but they aren't as accurate as blender
@@ -264,12 +266,17 @@ def process_data(handler: FeatureExtractor, blender_path):
             # print('#################')
 
             Xc.append(np.hstack([
-                rootposs[:, 0].ravel(), rootposs[:, 2].ravel(),  # Trajectory Pos, 2 * 12d
-                rootdirs[:, 0].ravel(), rootdirs[:, 2].ravel(),  # Trajectory Dir, 2 * 12d
+                # rootposs[:, 0].ravel(), rootposs[:, 2].ravel(),  # Trajectory Pos, 2 * 12d
+                # rootdirs[:, 0].ravel(), rootdirs[:, 2].ravel(),  # Trajectory Dir, 2 * 12d
                 # rootgait[:,0].ravel(), rootgait[:,1].ravel(), # Trajectory Gait, 6 * 12d
                 # rootgait[:,2].ravel(), rootgait[:,3].ravel(),
                 # rootgait[:,4].ravel(), rootgait[:,5].ravel(),
-                blender_data.ravel(),  # 6 (rows or frames) * 2d (left punch and right punch)
+                blender_data.ravel(),
+                # 2d (left punch phase and right punch phase)  (Only giving how far we are into the punch action. What if we have more actions? _Need an action vector)
+                # right_action[i],
+                # left_action[i],
+                right_punch_target[i].ravel(),
+                left_punch_target[i].ravel(),
                 local_positions[i - 1].ravel(),  # Joint Pos
                 local_velocities[i - 1].ravel(),  # Joint Vel
             ]))
@@ -282,11 +289,11 @@ def process_data(handler: FeatureExtractor, blender_path):
                 # root_rvelocity[i].ravel(),    # Root Rot Vel, 1D
                 root_new_forward[i].ravel(),  # new forward direction in 2D relative to past rotation.
                 # dphase[i],                    # Change in Phase, 1D
-                right_punch_target.ravel(),
-                left_punch_target.ravel(),
+                # right_punch_target.ravel(),
+                # left_punch_target.ravel(),
                 np.concatenate([feet_l[i], feet_r[i]], axis=-1),  # Contacts, 4D
-                rootposs_next[:, 0].ravel(), rootposs_next[:, 2].ravel(),  # Next Trajectory Pos
-                rootdirs_next[:, 0].ravel(), rootdirs_next[:, 2].ravel(),  # Next Trajectory Dir
+                # rootposs_next[:, 0].ravel(), rootposs_next[:, 2].ravel(),  # Next Trajectory Pos
+                # rootdirs_next[:, 0].ravel(), rootdirs_next[:, 2].ravel(),  # Next Trajectory Dir
                 local_positions[i].ravel(),  # Joint Pos
                 local_velocities[i].ravel(),  # Joint Vel
             ]))
@@ -302,8 +309,8 @@ def process_data(handler: FeatureExtractor, blender_path):
         "zero_posture": handler.reference_skeleton
     }
 
-    # return np.array(Pc), np.array(Xc), np.array(Yc), dataset_config
-    return np.array(Xc), np.array(Yc), dataset_config
+    return np.array(Pc), np.array(Xc), np.array(Yc), dataset_config
+    # return np.array(Xc), np.array(Yc), dataset_config
 
 
 from mosi_utils_anim.animation_data.utils import quaternion_from_matrix, euler_from_matrix, euler_matrix, \
@@ -372,13 +379,39 @@ handler.window = 60
 ####################################################################################
 # TO DECIDE: phase required or not
 # Pc, Xc, Yc, dataset_config = process_data(handler, blender_path)
-Xc, Yc, dataset_config = process_data(handler, blender_path)
+Pc, Xc, Yc, dataset_config = process_data(handler, blender_path)
 
-pd.DataFrame(Xc).to_csv(
-    "C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Blender Code Snippets/data annotation res/nn_features_input_output_scalar.csv")
+# pd.DataFrame(Xc).to_csv(
+#     "C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Blender Code Snippets/data annotation res/nn_features_input.csv")
+# pd.DataFrame(Yc).to_csv(
+#     "C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Blender Code Snippets/data annotation res/nn_features_output.csv")
+
+output_file_name = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-MOSI-DEV-VINN/mosi_dev_vinn/data/boxing'
+
+# Xun = np.concatenate(Xtrain, axis=0)
+# Yun = np.concatenate(Ytrain, axis=0)
+# Pun = np.concatenate(Ptrain, axis=0)
+
+# print(Xun.shape, Yun.shape, Pun.shape)
+X_train = Xc[:4000,:]
+Y_train = Yc[:4000,:]
+print(X_train.shape)
+print(Y_train.shape)
+np.savez_compressed(output_file_name + "_train", Xun=X_train, Yun=Y_train)
+
+X_test = Xc[4000:,:]
+Y_test = Yc[4000:,:]
+print(X_test.shape)
+print(Y_test.shape)
+np.savez_compressed(output_file_name + "_test", Xun=X_test, Yun=Y_test)
+
+with open(output_file_name + "_config.json", "w") as f:
+    json.dump(dataset_config, f)
+
+
 
 # xslice = slice(((handler.window*2)//10)*10+1, ((handler.window*2)//10)*10+handler.n_joints*3+1, 3)
 # yslice = slice(8+(handler.window//10)*4+1, 8+(handler.window//10)*4+handler.n_joints*3+1, 3)
-# X, Y, P, config = PREPROCESS_FOLDER(data_folder, "data_4D_60fps", handler, process_data, False, xslice, yslice, patches_path)
+# X, Y, P, config = PREPROCES S_FOLDER(data_folder, "data_4D_60fps", handler, process_data, False, xslice, yslice, patches_path)
 
 print("done")
