@@ -1,7 +1,7 @@
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 from matplotlib import animation
-
+import numpy as np
 
 class Plotter():
     """
@@ -88,4 +88,4 @@ class Plotter():
         ax.set_zlim3d([np.min(p[:,2]) , np.min(p[:,2]) + span ])
         return
 
-curr_plotter = Plotter()
+# curr_plotter = Plotter()
