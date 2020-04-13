@@ -4,7 +4,7 @@ import numpy as np
 from .layers.layers import Layer
 
 class FCNetwork:
-	"""		
+	"""
 	FCNetwork is an abstract implementation of a fully connected neural network. 
 	This class should not be directly used, but inherited by other fully connected networks. 
 
@@ -49,7 +49,7 @@ class FCNetwork:
 		self.output_size = output_size
 		self.hidden_size = hidden_size
 		self.norm = norm
-		
+
 		self.layers = []
 
 	def add_layer(self, layer : Layer):
@@ -91,13 +91,23 @@ class FCNetwork:
 		Returns:
 			params{list} -- updated parameter list. 
 		"""
-		if len(params[0]) == 0:
-			params[0] = np.array(self.norm["Xmean"])
-		params[0] = (params[0] - self.norm["Xmean"]) / self.norm["Xstd"]
+		# if len(params[0]) == 0:
+		# 	params[0] = np.array(self.norm["Xmean"])
+		# params[0] = (params[0] - self.norm["Xmean"]) / self.norm["Xstd"]
+		# for l in self.layers:
+		# 	params = l.forward_pass(params)
+		#
+		# params[0] = (params[0] * self.norm["Ystd"]) + self.norm["Ymean"]
+		# return params
+
+		if len(params) == 0:
+			params = np.array(self.norm["Xmean"])
+		params = (params - self.norm["Xmean"]) / self.norm["Xstd"]
 		for l in self.layers:
 			params = l.forward_pass(params)
 
-		params[0] = (params[0] * self.norm["Ystd"]) + self.norm["Ymean"]
+		params = (params * self.norm["Ystd"]) + self.norm["Ymean"]
+		params = np.array(params)
 		return params
 
 
@@ -111,9 +121,9 @@ class FCNetwork:
 		store = {"nlayers":(len(self.layers)),
 				"input_size":(self.input_size),
 				"output_size":(self.output_size),
-				"hidden_size":(self.hidden_size), 
+				"hidden_size":(self.hidden_size),
 				"norm":self.norm}
-		
+
 		for l in range(len(self.layers)):
 			store["layer_%d"%l] = self.layers[l].store()
 
@@ -132,7 +142,7 @@ class FCNetwork:
 			target_file {string} -- path to *.json file. 
 		"""
 		pass
-	
+
 	def train(self, X, Y, epochs, target_path):
 		"""
 		Not implemented in abstract class!
