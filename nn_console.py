@@ -17,16 +17,24 @@ from evaluate_network import evaluate_network
 # tf.enable_eager_execution()
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="This is the main file to run this project from console. You can either train a new network model or execute an existing one.")
-    parser.add_argument("-t", "--train", help="Train a network. Please specify the network type. ", choices=["pfnn", "vinn", "mann"])
-    parser.add_argument("-x", "--execute", help="Execute a pretrained network. ", choices=["pfnn_np", "pfnn_tf", "vinn_tf", "mann_tf"])
+    parser = argparse.ArgumentParser(
+        description="This is the main file to run this project from console. You can either train a new network model or execute an existing one.")
+    parser.add_argument("-t", "--train", help="Train a network. Please specify the network type. ",
+                        choices=["pfnn", "vinn", "mann"])
+    parser.add_argument("-x", "--execute", help="Execute a pretrained network. ",
+                        choices=["pfnn_np", "pfnn_tf", "vinn_tf", "mann_tf"])
     parser.add_argument("-v", "--validate", help="Evaluate a pretrained network on a dataset", choices=["vinn_tf"])
-    parser.add_argument("-d", "--dataset", help="Path to the dataset-description file. The dataset is expected to have the same filename.", required=True)
-    parser.add_argument("-o", "--output", help="Path-to-Network during execution, path to folder where to place the trained networks during training. ", required = True)
+    parser.add_argument("-d", "--dataset",
+                        help="Path to the dataset-description file. The dataset is expected to have the same filename.",
+                        required=True)
+    parser.add_argument("-o", "--output",
+                        help="Path-to-Network during execution, path to folder where to place the trained networks during training. ",
+                        required=True)
     parser.add_argument("-e", "--epochs", help="Numbers of epochs for training. ", type=int, default=50)
     parser.add_argument("-drn", "--dimension_random_noise", type=list, default=-1)
-    parser.add_argument("-par", "--params_random_noise", help="Parameters of Random Noise. ", type=int, default=(0.,0.2))
-    parser.add_argument("-larn", "--layers_add_random_noise", type=list, default=[0,1,2])
+    parser.add_argument("-par", "--params_random_noise", help="Parameters of Random Noise. ", type=int,
+                        default=(0., 0.2))
+    parser.add_argument("-larn", "--layers_add_random_noise", type=list, default=[0, 1, 2])
     parser.add_argument("-sam", "--sample_noise_each_phase", type=list, default=False)
     parser.add_argument("-vrl", "--vinn_replace_layers", type=list, default=[])
     parser.add_argument("-vel", "--vinn_each_layer", type=bool, default=False)
@@ -38,9 +46,9 @@ if __name__ == "__main__":
     print("args: ", args)
     if (args.execute is not None):
         # execute network: 
-		# execute network: 
+        # execute network:
         # execute network: 
-        target_file = args.output #("trained_models/epoch_3.json")
+        target_file = args.output  # ("trained_models/epoch_3.json")
         if args.execute == "pfnn_np":
             pfnn = PFNN.load(target_file)
         elif args.execute == "pfnn_tf":
@@ -51,33 +59,33 @@ if __name__ == "__main__":
             pfnn.start_tf()
         elif args.execute == "pfnn_random":
             pfnn = pfnn_random_layers.load(
-                        target_file, 
-						target_file, 
-                        target_file, 
-                        args.dimension_random_noise, 
-						args.dimension_random_noise, 
-                        args.dimension_random_noise, 
-                        args.layers_add_random_noise,
-                        args.params_random_noise,
-                        args.sample_noise_each_phase
-                    )
+                target_file,
+                target_file,
+                target_file,
+                args.dimension_random_noise,
+                args.dimension_random_noise,
+                args.dimension_random_noise,
+                args.layers_add_random_noise,
+                args.params_random_noise,
+                args.sample_noise_each_phase
+            )
             pfnn.start_tf()
         elif args.execute == "mann_tf":
             pfnn = MANNTF.load(target_file)
             pfnn.start_tf()
 
-        dataset_config_file = args.dataset #"data/dataset.json"
+        dataset_config_file = args.dataset  # "data/dataset.json"
         with open(dataset_config_file, "r") as f:
             config_store = json.load(f)
-            config_store = json.load(f) 
-            config_store = json.load(f) 
+            config_store = json.load(f)
+            config_store = json.load(f)
 
         c = DirectionalController(pfnn, config_store)
 
         if args.multithreaded:
-             CREATE_MULTI_MOTION_SERVER(c)
+            CREATE_MULTI_MOTION_SERVER(c)
         else:
-             CREATE_MOTION_SERVER(c)
+            CREATE_MOTION_SERVER(c)
     elif (args.train is not None):
         if args.train == "pfnn":
             with open(args.dataset) as f:
@@ -100,7 +108,8 @@ if __name__ == "__main__":
             random_number_dim = args.vinn_random_number_dim
             each_layer = args.vinn_each_layer
 
-            VINNTF.from_file(datasetnpz, args.output, args.epochs, config_store, replace_layers = replace_layers, draw_each_layer = each_layer, random_number_dim = random_number_dim)
+            VINNTF.from_file(datasetnpz, args.output, args.epochs, config_store, replace_layers=replace_layers,
+                             draw_each_layer=each_layer, random_number_dim=random_number_dim)
     elif args.validate is not None:
         if args.validate == "vinn_tf":
             target_file = args.output
@@ -119,36 +128,23 @@ if __name__ == "__main__":
                 print("mean var:   ", np.mean(np.var(acc, axis=-1)))
         elif args.validate == "pfnn_random":
             pfnn = pfnn_random_layers.load(
-                        target_file, 
-						target_file, 
-                        target_file, 
-                        args.dimension_random_noise, 
-						args.dimension_random_noise, 
-                        args.dimension_random_noise, 
-                        args.layers_add_random_noise,
-                        args.params_random_noise,
-                        args.sample_noise_each_phase
-                    )
+                target_file,
+                target_file,
+                target_file,
+                args.dimension_random_noise,
+                args.dimension_random_noise,
+                args.dimension_random_noise,
+                args.layers_add_random_noise,
+                args.params_random_noise,
+                args.sample_noise_each_phase
+            )
             pfnn.start_tf()
 
-            dataset_config_file = args.dataset #"data/dataset.json"
+            dataset_config_file = args.dataset  # "data/dataset.json"
             with open(dataset_config_file, "r") as f:
                 config_store = json.load(f)
-                config_store = json.load(f) 
-                config_store = json.load(f) 
+                config_store = json.load(f)
+                config_store = json.load(f)
 
             c = DirectionalController(pfnn, config_store)
             evaluate_network(pfnn, config_store)
-
-        
-
-
-
-
-
-
-
-
-
-
-

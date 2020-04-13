@@ -43,6 +43,6 @@ gating_indices = [
     # Right foot velocities
     start_poses + n_joints + find_joint_index("RightFoot") * 3, start_poses + n_joints + find_joint_index("RightFoot") * 3 + 1, start_poses + n_joints + find_joint_index("RightFoot") * 3 + 2,
     #start_poses + n_joints + find_joint_index("RightToeBase") * 3, start_poses + n_joints + find_joint_index("RightToeBase") * 3 + 1, start_poses + n_joints + find_joint_index("RightToeBase") * 3 + 2,
-
 ]
+
 MANNTF.from_file(datasetnpz, args_output, 50, config_store, gating_indices=gating_indices)
