@@ -1,0 +1,32 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    run: tfx
+  name: tfx
+  namespace: chbh01
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: tfx
+  template:
+    metadata:
+      labels:
+        run: tfx
+    spec:
+      containers:
+      - name: tfx
+        image: tensorflow/tensorflow:1.13.2-gpu-py3-jupyter
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8888
+          name: notebook-port
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /tf
+          name: volume-0-chbh01
+      volumes:
+        - name: volume-0-chbh01
+          persistentVolumeClaim:
+            claimName: chbh01-workspace
