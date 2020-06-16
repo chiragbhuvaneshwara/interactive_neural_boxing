@@ -1,6 +1,8 @@
 import bpy, math
 from mathutils import *
 import pandas as pd
+import matplotlib.pyplot as plt
+
 """left arm instead of shoulder"""
 
 def SetFrame(f):
@@ -19,11 +21,11 @@ class BoxingDetector():
         
         self.type = type
                 
-#        self.max_threshold = 0.55
-        self.max_threshold = 0.52
+        self.max_threshold = 0.55
+        #self.max_threshold = 0.52
         
         self.max_punch_distance = 0
-            
+        self.hand_distances = []
             
     def detectPunches(self, arm):
         '''
@@ -39,24 +41,33 @@ class BoxingDetector():
         #next punch frame and next punch distance
         npf, npd = self.detectNextPunch(arm, self.fs)
         while (npf < self.fe):
+            
+            # Obtain frame and hand distance for hand in starting position of punch
             # start, next punch distance start
-            start, npds = self.detectPunchStart(arm, npf, direction=-1)
+            start, npds = self.detectPunchStart(arm, npf, npd, direction=-1)
             
+            # Obtain frame and hand distance for hand in ending position of punch
             # end, next punch distance end
-            end, npde = self.detectPunchStart(arm, npf, direction=+1)
+            end, npde = self.detectPunchStart(arm, npf, npd, direction=+1)
             
-            if npds > self.max_punch_distance or npde > self.max_punch_distance:
-                if npds > npde:
-                    greater = npds
-                else:
-                    greater = npde
+            
+            if npd > self.max_punch_distance:
+                self.max_punch_distance = npd
+            
+            
+            #if npds > self.max_punch_distance or npde > self.max_punch_distance:
+            #    if npds > npde:
+            #        greater = npds
+            #    else:
+            #        greater = npde
                 
-                self.max_punch_distance = greater 
+            #    self.max_punch_distance = greater 
             
             #print("punch detected")
-            #print("\t", start, npds)
-            #print("\t", npf, npd)
-            #print("\t", end, npde)
+            print("\t", start, npds)
+            print("\t", npf, npd)
+            print("\t", end, npde)
+            print('\n')
             
             # Marking arm stretching out with increasing values of phase i.e from 0 to 1
             for i in range(max(start, self.fs), npf):
@@ -89,12 +100,15 @@ class BoxingDetector():
 
         
     
-    def detectPunchStart(self, arm, punch, direction = -1):
+    def detectPunchStart(self, arm, punch, fextd, direction = -1):
         '''
-        Find min point of punch (least extended arm position)
+        Find min point of punch (least extended arm position) 
+        applicable for punch starting as well as punch ending
+        
         Input:
             arm - self.left or self.right
             punch - max extended frame number
+            fextd - full extension distance
             direction - -1 for backwards, +1 for forwards search
         Output:
             (frame_number, distance)        
@@ -102,21 +116,48 @@ class BoxingDetector():
         SetFrame(punch)    
         lastDistance = (arm[1].head - arm[0].head).length
         # iterate max 100 frames in direction
-        for f in range(punch + direction, punch + direction * 100, direction):
+        for f in range(punch + direction, punch + direction * 50, direction):
             SetFrame(f)
             # calculate hand distance
             handDistance = (arm[1].head - arm[0].head).length
+            diff = fextd - handDistance
             
-            if (handDistance - lastDistance) >= 0.01:
-                # if hand is not moving backwards anymore, we have found the frame
-                return (f, handDistance)
+            if arm == self.left:
+                diff_thresh = 0.27
+                
+            elif arm == self.right:
+                diff_thresh = 0.28
+            
+            if diff >= diff_thresh:
+                return (f, handDistance) 
+            
+            
+            # dir=1 : last - hand >= 0.01 => stop and return
+            # dir=-1 : last - hand <= -0.01 => stop and return
+            
+            #if dir == 1: 
+                #if (lastDistance - handDistance) >= 0.01:
+                    # if hand is not moving backwards anymore, we have found the frame
+                    #return (f, handDistance)
+            #elif dir == -1:
+                # Original Janis cond: if (handDistance - lastDistance) >= 0.01:
+                #if (lastDistance - handDistance) <= -0.01:
+                    # if hand is not moving backwards anymore, we have found the frame
+                    #return (f, handDistance)
+            
             lastDistance = handDistance
-        return(punch + direction*100, lastDistance)
+        
+        print('worst case')
+        return(punch + direction*50, lastDistance)
             
     
     def detectNextPunch(self, arm, start):
         '''
         Detect the next punch frame and distance of hand. 
+        
+        i.e obtain frame for full extension and distance at full extension
+        i.e gives mid point frame of punch duration and hand distance at that frame
+        
         Input:
             arm - self.left or self.right
             start - current start frame from where we should look            
@@ -125,11 +166,16 @@ class BoxingDetector():
         for f in range(start, self.fe):
             SetFrame(f)
             handDistance = (arm[1].head - arm[0].head).length
+            
+            # hand is in punchable area condition
             if handDistance > self.max_threshold:
-                # hand is in punchable area. 
+                
+                # if hand starts moving back
                 if (handDistance - lastDistance) < -0.01:
-                    # if hand starts moving back 
-#                    print(lastDistance)
+                     
+                    #print(lastDistance)
+                    
+                    # return frame and distance where hand was fully extended
                     return (f-1, lastDistance)
             lastDistance = handDistance
             
@@ -137,7 +183,9 @@ class BoxingDetector():
         return (self.fe, lastDistance)
 
 print('\n')
-bd = BoxingDetector(bpy.context.object, 0, 5600)
+# bd = BoxingDetector(bpy.context.object, 0, 5600)
+bd = BoxingDetector(bpy.context.object, 0, 5600, 'tertiary')
+# bd = BoxingDetector(bpy.context.object, 0, 5600, 'binary')
 print("right punches")
 pr = bd.detectPunches(bd.right)
 
@@ -148,7 +196,7 @@ pl = bd.detectPunches(bd.left)
 df = pd.DataFrame({'right punch': pr, 'left punch': pl})
 ##print('\/')
 print(df)
-df.to_csv(r'C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Blender Code Snippets\data annotation res\test1.csv')
+df.to_csv(r'C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Blender Code Snippets\data annotation res\test3.csv')
 #df.to_csv(r'C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Blender Code Snippets\data annotation res\PunchWithMaxDist.csv')
 
 print('done')
