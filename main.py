@@ -1,4 +1,4 @@
-from mosi_utils_anim.preprocessing.NN_Features import FeatureExtractor, retrieve_name
+from mosi_utils_anim_t.preprocessing.NN_Features import FeatureExtractor, retrieve_name
 import numpy as np
 import glob, os, json
 import pandas as pd
@@ -8,21 +8,14 @@ import multiprocessing
 import collections
 
 
-# def prepare_indices_dict(*args):
 def prepare_indices_dict(**args):
-    # keys = list(map(retrieve_name, args))
-    # print('These')
-    # print(keys)
-    # keys = [i[0] for i in keys]
 
-    # indices_dict = {k: len(v) for k, v in zip(list(keys), args)}
     keys = args.keys()
     col_names = []
 
     start = 0
     end = 0
     indices_dict = []
-    # for k, v in zip(keys, args):
     for k, v in zip(keys, args.values()):
         end = len(v) + end
         indices_dict.append((k, [start, end]))
@@ -31,12 +24,9 @@ def prepare_indices_dict(**args):
         col_names.extend(col_names_subset)
         start = end
 
-    print('keys: ',len(keys))
+    # print('keys: ',len(keys))
     print('names: ',len(col_names))
-    print(col_names)
-
-    # indices_dict = [(k, len(v)) for k, v in zip(list(keys), args)]
-    # indices_dict = collections.OrderedDict(indices_dict)
+    # print(col_names)
 
     return indices_dict, col_names
 
@@ -254,9 +244,6 @@ def PREPROCESS_FOLDER(bvh_folder_path, output_file_name, base_handler: FeatureEx
 
 def process_data(handler: FeatureExtractor, punch_p_csv_path):
     bvh_path = handler.bvh_file_path
-    phase_path = bvh_path.replace('.bvh', '.phase')
-    gait_path = bvh_path.replace(".bvh",
-                                 ".gait")  # upload the punch detection csv or numpy here, how to interpret must be
     # decided by you punch_p_csv_path = 'C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Blender Code
     # Snippets\data annotation res\Punch.csv'
     Pc, Xc, Yc = [], [], []
@@ -267,9 +254,6 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path):
 
         # Loading Bvh file into memory
         handler.load_motion(frame_rate_divisor=frame_rate_div, frame_rate_offset=div)
-
-        # gait = handler.load_gait(gait_path, frame_rate_divisor = frame_rate_div, frame_rate_offset=div)
-        # phase, dphase = handler.load_phase(phase_path, frame_rate_divisor = frame_rate_div, frame_rate_offset=div)
 
         # (n_frames, 2) => punch phase right, punch phase left
         punch_phase, punch_dphase = handler.load_punch_phase(punch_p_csv_path, frame_rate_divisor=frame_rate_div,
@@ -420,7 +404,6 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path):
 
             # rootposs_next, left_wrist_pos_next, right_wrist_pos_next, head_pos_next, rootdirs_next, headdirs_next, rootvels_next, left_wristvels_next, right_wristvels_next = handler.get_trajectory(
             #     i + 1, i + 1)
-            #
             # Y_curr_frame = [
             #     root_velocity[i, 0, 0].ravel(),  # Root Vel X, 1D
             #     root_velocity[i, 0, 2].ravel(),  # Root Vel Y, 1D
@@ -439,11 +422,7 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path):
             #     local_positions[i].ravel(),  # Joint Pos
             #     local_velocities[i].ravel(),  # Joint Vel
             # ]
-            #
-            # if not indices_dict_set:
-            #     Y_indices = prepare_indices_dict(Y_curr_frame)
-            #
-            # Yc.append(np.hstack(Y_curr_frame))
+
 
             if not indices_dict_set:
                 # X_indices = prepare_indices_dict(*X_curr_frame)
@@ -524,36 +503,16 @@ bvh_path = "C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Da
 data_folder = "./test_files"
 patches_path = "./test_files/patches.npz"
 
-# Pc_old, Xc_old, Yc_old = old_preprocessing.generate_database(data_folder)
-
-
 handler = FeatureExtractor(bvh_path)
-# handler.set_holden_parameters()
-# handler.set_makehuman_parameters()  #manually set the skeleton parameters by manually checking the bvh files
+#manually set the skeleton parameters by manually checking the bvh files
 handler.set_neuron_parameters()
 handler.window = 25
-# handler.n_joints = 31
-# handler.load_motion()
 
 ####################################################################################
-# TO DECIDE: phase required or not
-# Pc, Xc, Yc, dataset_config = process_data(handler, punch_p_csv_path)
 Pc, Xc, Yc, dataset_config = process_data(handler, punch_phase_path)
-
-# pd.DataFrame(Xc).to_csv(
-#     "C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Blender Code Snippets/data annotation res/nn_features_input.csv")
-# pd.DataFrame(Yc).to_csv(
-#     "C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Blender Code Snippets/data annotation res/nn_features_output.csv")
 
 output_file_name = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-MOSI-DEV-VINN/mosi_dev_vinn/data/boxing'
 
-# Xun = np.concatenate(Xtrain, axis=0)
-# Yun = np.concatenate(Ytrain, axis=0)
-# Pun = np.concatenate(Ptrain, axis=0)
-
-# print(Xun.shape, Yun.shape, Pun.shape)
-# X_train = Xc[:4000,:]
-# Y_train = Yc[:4000,:]
 X_train = Xc
 Y_train = Yc
 print('X_train shape: ', X_train.shape)
@@ -570,13 +529,13 @@ Y_train_df.to_csv(output_file_name+'_Y.csv')
 # print(X_test.shape)
 # print(Y_test.shape)
 # np.savez_compressed(output_file_name + "_test", Xun=X_test, Yun=Y_test)
-#
 # with open(output_file_name + "_config3.json", "w") as f:
 #     json.dump(dataset_config, f)
 
+print("done")
 
 # xslice = slice(((handler.window*2)//10)*10+1, ((handler.window*2)//10)*10+handler.n_joints*3+1, 3)
 # yslice = slice(8+(handler.window//10)*4+1, 8+(handler.window//10)*4+handler.n_joints*3+1, 3)
 # X, Y, P, config = PREPROCES S_FOLDER(data_folder, "data_4D_60fps", handler, process_data, False, xslice, yslice, patches_path)
 
-print("done")
+
