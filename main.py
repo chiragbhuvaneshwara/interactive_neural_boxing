@@ -1,10 +1,44 @@
-from mosi_utils_anim.preprocessing.NN_Features import FeatureExtractor
+from mosi_utils_anim.preprocessing.NN_Features import FeatureExtractor, retrieve_name
 import numpy as np
 import glob, os, json
 import pandas as pd
 
 from joblib import Parallel, delayed
 import multiprocessing
+import collections
+
+
+# def prepare_indices_dict(*args):
+def prepare_indices_dict(**args):
+    # keys = list(map(retrieve_name, args))
+    # print('These')
+    # print(keys)
+    # keys = [i[0] for i in keys]
+
+    # indices_dict = {k: len(v) for k, v in zip(list(keys), args)}
+    keys = args.keys()
+    col_names = []
+
+    start = 0
+    end = 0
+    indices_dict = []
+    # for k, v in zip(keys, args):
+    for k, v in zip(keys, args.values()):
+        end = len(v) + end
+        indices_dict.append((k, [start, end]))
+        col_names_subset = [k]*(end-start)
+        col_names_subset = [var + '_' + str(i) for i, var in enumerate(col_names_subset)]
+        col_names.extend(col_names_subset)
+        start = end
+
+    print('keys: ',len(keys))
+    print('names: ',len(col_names))
+    print(col_names)
+
+    # indices_dict = [(k, len(v)) for k, v in zip(list(keys), args)]
+    # indices_dict = collections.OrderedDict(indices_dict)
+
+    return indices_dict, col_names
 
 
 def PREPROCESS_FOLDER(bvh_folder_path, output_file_name, base_handler: FeatureExtractor, process_data_function,
@@ -218,26 +252,32 @@ def PREPROCESS_FOLDER(bvh_folder_path, output_file_name, base_handler: FeatureEx
     return Xun, Yun, Pun, config
 
 
-def process_data(handler: FeatureExtractor, blender_path):
+def process_data(handler: FeatureExtractor, punch_p_csv_path):
     bvh_path = handler.bvh_file_path
     phase_path = bvh_path.replace('.bvh', '.phase')
     gait_path = bvh_path.replace(".bvh",
                                  ".gait")  # upload the punch detection csv or numpy here, how to interpret must be
-    # decided by you blender_path = 'C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Blender Code
+    # decided by you punch_p_csv_path = 'C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Blender Code
     # Snippets\data annotation res\Punch.csv'
     Pc, Xc, Yc = [], [], []
 
     frame_rate_div = 1
 
     for div in range(frame_rate_div):
+
+        # Loading Bvh file into memory
         handler.load_motion(frame_rate_divisor=frame_rate_div, frame_rate_offset=div)
+
         # gait = handler.load_gait(gait_path, frame_rate_divisor = frame_rate_div, frame_rate_offset=div)
         # phase, dphase = handler.load_phase(phase_path, frame_rate_divisor = frame_rate_div, frame_rate_offset=div)
-        blender_np = handler.load_blender_data(blender_path, frame_rate_divisor=frame_rate_div, frame_rate_offset=div)
-        # right_punch_target, right_action = handler.get_punch_targets(blender_np[:, 0])
-        right_punch_target = handler.get_punch_targets(blender_np[:, 0])
-        # left_punch_target, left_action = handler.get_punch_targets(blender_np[:, 1])
-        left_punch_target = handler.get_punch_targets(blender_np[:, 1])
+
+        # (n_frames, 2) => punch phase right, punch phase left
+        punch_phase, punch_dphase = handler.load_punch_phase(punch_p_csv_path, frame_rate_divisor=frame_rate_div,
+                                                             frame_rate_offset=div)
+
+        right_punch_target = handler.get_punch_targets(punch_phase[:, 0], hand='right', phase_type='detailed')
+        left_punch_target = handler.get_punch_targets(punch_phase[:, 1], hand='left', phase_type='detailed')
+
         #############################################################################################
         # These work but they aren't as accurate as blender
 
@@ -251,62 +291,181 @@ def process_data(handler: FeatureExtractor, blender_path):
         feet_l, feet_r = handler.get_foot_concats()
         #############################################################################################
 
-        for i in range(handler.window, handler.n_frames - handler.window, 1):
-            rootposs, rootdirs = handler.get_trajectory(i)
+        indices_dict_set = False
+        # for i in range(handler.window, handler.n_frames - handler.window, 1):
+        for i in range(handler.window, 100 - handler.window, 1):
+
+            if i % 50 == 0:
+                print('Frames processed: ', i)
+
+            # rootposs, left_wrist_pos, right_wrist_pos, head_pos, rootdirs, headdirs, rootvels, left_wristvels, \
+            # right_wristvels = handler.get_trajectory(i)
+
+            traj_info = handler.get_trajectory(i)
+
             # rootgait = gait[i - handler.window:i+handler.window:10]
-            #
             # Pc.append(phase[i])
 
-            # rows_to_keep = [el for el in range(i - handler.window, i + handler.window, 10)]
-            # print(rows_to_keep)
-            # blender_data = np.take(blender_np, rows_to_keep, axis=0)  # 6 (rows) * 2d (left punch and right punch)
-            blender_data = blender_np[i]
-            # print('#################')
-            # print(i)
-            # print('#################')
+            x_rootposs_tr = traj_info['rootposs']
+            x_rootposs_tr = np.hstack(
+                [x_rootposs_tr[:, 0].ravel(), x_rootposs_tr[:, 2].ravel()])  # Trajectory Pos, 2 * 12d
 
-            Xc.append(np.hstack([
-                # rootposs[:, 0].ravel(), rootposs[:, 2].ravel(),  # Trajectory Pos, 2 * 12d
-                # rootdirs[:, 0].ravel(), rootdirs[:, 2].ravel(),  # Trajectory Dir, 2 * 12d
-                # rootgait[:,0].ravel(), rootgait[:,1].ravel(), # Trajectory Gait, 6 * 12d
-                # rootgait[:,2].ravel(), rootgait[:,3].ravel(),
-                # rootgait[:,4].ravel(), rootgait[:,5].ravel(),
-                blender_data.ravel(),
-                # 2d (left punch phase and right punch phase)  (Only giving how far we are into the punch action. What if we have more actions? _Need an action vector)
-                # right_action[i],
-                # left_action[i],
-                right_punch_target[i].ravel(),
-                left_punch_target[i].ravel(),
-                local_positions[i - 1].ravel(),  # Joint Pos
-                local_velocities[i - 1].ravel(),  # Joint Vel
-            ]))
+            x_rootvels_tr = traj_info['rootvels']
+            x_rootvels_tr = np.hstack(
+                [x_rootvels_tr[:, 0].ravel(), x_rootvels_tr[:, 2].ravel()])  # Trajectory Vels, 2 * 12d
 
-            rootposs_next, rootdirs_next = handler.get_trajectory(i + 1, i + 1)
+            x_right_wrist_pos_tr = traj_info['right_wrist_pos'].ravel()
+            x_left_wrist_pos_tr = traj_info['left_wrist_pos'].ravel()
 
-            Yc.append(np.hstack([
-                root_velocity[i, 0, 0].ravel(),  # Root Vel X, 1D
-                root_velocity[i, 0, 2].ravel(),  # Root Vel Y, 1D
-                # root_rvelocity[i].ravel(),    # Root Rot Vel, 1D
-                root_new_forward[i].ravel(),  # new forward direction in 2D relative to past rotation.
-                # dphase[i],                    # Change in Phase, 1D
-                # right_punch_target.ravel(),
-                # left_punch_target.ravel(),
-                np.concatenate([feet_l[i], feet_r[i]], axis=-1),  # Contacts, 4D
-                # rootposs_next[:, 0].ravel(), rootposs_next[:, 2].ravel(),  # Next Trajectory Pos
-                # rootdirs_next[:, 0].ravel(), rootdirs_next[:, 2].ravel(),  # Next Trajectory Dir
-                local_positions[i].ravel(),  # Joint Pos
-                local_velocities[i].ravel(),  # Joint Vel
-            ]))
+            x_right_wrist_vels_tr = traj_info['right_wristvels'].ravel()
+            x_left_wrist_vels_tr = traj_info['left_wristvels'].ravel()
+
+            x_punch_phase = punch_phase[i].ravel()  # Right punch phase followed by left punch phase
+
+            x_right_punch_target = right_punch_target[i].ravel()
+            x_left_punch_target = left_punch_target[i].ravel()
+
+            x_local_pos = local_positions[i - 1].ravel()
+            x_local_vel = local_velocities[i - 1].ravel()
+
+            X_curr_frame = [
+                x_rootposs_tr,
+                x_rootvels_tr,
+                x_right_wrist_pos_tr,
+                x_left_wrist_pos_tr,
+                x_right_wrist_vels_tr,
+                x_left_wrist_vels_tr,
+                x_punch_phase,
+                x_right_punch_target,
+                x_left_punch_target,
+                x_local_pos,
+                x_local_vel
+            ]
+
+            keys = list(map(retrieve_name, X_curr_frame))
+            kwargs = {k: v for k, v in zip(keys, X_curr_frame)}
+
+            # X_curr_frame = [
+            #     rootposs[:, 0].ravel(), rootposs[:, 2].ravel(),  # Trajectory Pos, 2 * 12d
+            #     # rootdirs[:, 0].ravel(), rootdirs[:, 2].ravel(),  # Trajectory Dir, 2 * 12d
+            #     rootvels[:, 0].ravel(), rootvels[:, 2].ravel(),
+            #     # rootgait[:,0].ravel(), rootgait[:,1].ravel(), # Trajectory Gait, 6 * 12d
+            #     # rootgait[:,2].ravel(), rootgait[:,3].ravel(),
+            #     # rootgait[:,4].ravel(), rootgait[:,5].ravel(),
+            #     right_wrist_pos.ravel(),  # Trajectory Pos of wrist
+            #     left_wrist_pos.ravel(),  # Trajectory Pos of wrist
+            #     right_wristvels.ravel(),  # Trajectory Vels of wrist
+            #     left_wristvels.ravel(),  # Trajectory Vels of wrist
+            #     punch_phase[i].ravel(),  # Right punch phase followed by left punch phase
+            #     right_punch_target[i].ravel(),
+            #     left_punch_target[i].ravel(),
+            #     local_positions[i - 1].ravel(),  # Joint Pos
+            #     local_velocities[i - 1].ravel(),  # Joint Vel
+            # ]
+
+            if not indices_dict_set:
+                # X_indices = prepare_indices_dict(*X_curr_frame)
+                X_indices, X_col_names = prepare_indices_dict(**kwargs)
+                print('curr ',len(np.hstack(X_curr_frame)))
+                print(X_indices)
+
+            Xc.append(np.hstack(X_curr_frame))
+
+            traj_info_next = handler.get_trajectory(i + 1, i + 1)
+
+            y_rootposs_tr = traj_info_next['rootposs']
+            y_rootposs_tr = np.hstack(
+                [y_rootposs_tr[:, 0].ravel(), y_rootposs_tr[:, 2].ravel()])  # Trajectory Pos, 2 * 12d
+
+            y_rootvels_tr = traj_info_next['rootvels']
+            y_rootvels_tr = np.hstack(
+                [y_rootvels_tr[:, 0].ravel(), y_rootvels_tr[:, 2].ravel()])  # Trajectory Vels, 2 * 12d
+
+            y_right_wrist_pos_tr = traj_info_next['right_wrist_pos'].ravel()
+            y_left_wrist_pos_tr = traj_info['left_wrist_pos'].ravel()
+
+            y_right_wrist_vels_tr = traj_info_next['right_wristvels'].ravel()
+            y_left_wrist_vels_tr = traj_info['left_wristvels'].ravel()
+
+            y_punch_phase = punch_phase[i + 1].ravel()  # Right punch phase followed by left punch phase
+
+            y_right_punch_target = right_punch_target[i + 1].ravel()
+            y_left_punch_target = left_punch_target[i + 1].ravel()
+
+            y_local_pos = local_positions[i].ravel()
+            y_local_vel = local_velocities[i].ravel()
+
+            y_root_velocity = np.hstack([root_velocity[i, 0, 0].ravel(), root_velocity[i, 0, 2].ravel()])
+            y_root_new_forward = root_new_forward[i].ravel()
+            y_punch_dphase = punch_dphase[i].ravel()
+            y_foot_contacts = np.concatenate([feet_l[i], feet_r[i]], axis=-1)
+
+            Y_curr_frame = [
+                y_root_velocity,
+                y_root_new_forward,
+                y_punch_dphase,
+                y_foot_contacts,
+                y_rootposs_tr,
+                y_rootvels_tr,
+                y_right_wrist_pos_tr,
+                y_left_wrist_pos_tr,
+                y_right_wrist_vels_tr,
+                y_left_wrist_vels_tr,
+                y_local_pos,
+                y_local_vel
+            ]
+
+            keys = list(map(retrieve_name, Y_curr_frame))
+            kwargs = {k: v for k, v in zip(keys, Y_curr_frame)}
+
+            # rootposs_next, left_wrist_pos_next, right_wrist_pos_next, head_pos_next, rootdirs_next, headdirs_next, rootvels_next, left_wristvels_next, right_wristvels_next = handler.get_trajectory(
+            #     i + 1, i + 1)
+            #
+            # Y_curr_frame = [
+            #     root_velocity[i, 0, 0].ravel(),  # Root Vel X, 1D
+            #     root_velocity[i, 0, 2].ravel(),  # Root Vel Y, 1D
+            #     # root_rvelocity[i].ravel(),    # Root Rot Vel, 1D
+            #     root_new_forward[i].ravel(),  # new forward direction in 2D relative to past rotation.
+            #     punch_dphase[i].ravel(),
+            #     # dphase[i],                    # Change in Phase, 1D
+            #     np.concatenate([feet_l[i], feet_r[i]], axis=-1),  # Contacts, 4D
+            #     rootposs_next[:, 0].ravel(), rootposs_next[:, 2].ravel(),  # Next Trajectory Pos
+            #     # rootdirs_next[:, 0].ravel(), rootdirs_next[:, 2].ravel(),  # Next Trajectory Dir
+            #     rootvels_next[:, 0].ravel(), rootvels_next[:, 2].ravel(),
+            #     right_wrist_pos_next.ravel(),  # Trajectory Pos of wrist
+            #     left_wrist_pos_next.ravel(),  # Trajectory Pos of wrist
+            #     right_wristvels_next.ravel(),  # Trajectory Vels of wrist
+            #     left_wristvels_next.ravel(),  # Trajectory Vels of wrist
+            #     local_positions[i].ravel(),  # Joint Pos
+            #     local_velocities[i].ravel(),  # Joint Vel
+            # ]
+            #
+            # if not indices_dict_set:
+            #     Y_indices = prepare_indices_dict(Y_curr_frame)
+            #
+            # Yc.append(np.hstack(Y_curr_frame))
+
+            if not indices_dict_set:
+                # X_indices = prepare_indices_dict(*X_curr_frame)
+                Y_indices, Y_col_names = prepare_indices_dict(**kwargs)
+                print('curr ',len(np.hstack(Y_curr_frame)))
+                print(Y_indices)
+            Yc.append(np.hstack(Y_curr_frame))
+
+            indices_dict_set = True
 
     dataset_config = {
         "endJoints": 0,
-        "numJoints": 31,
+        # "numJoints": 59,
+        "numJoints": len(handler.joint_indices_dict.keys()), # 59
         "use_rotations": False,
-        "n_gaits": 6,
+        "n_gaits": 1,
         "use_footcontacts": True,
         "foot_left": handler.foot_left,
         "foot_right": handler.foot_right,
-        "zero_posture": handler.reference_skeleton
+        "zero_posture": handler.reference_skeleton,
+        "col_indices": [X_indices, Y_indices],
+        "col_names": [X_col_names, Y_col_names]
     }
 
     return np.array(Pc), np.array(Xc), np.array(Yc), dataset_config
@@ -360,7 +519,7 @@ def rotation_to_target(vecA, vecB):
 
 # print(euler_matrix(math.radians(20.427), math.radians(56.301), math.radians(142.783)))
 
-blender_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Blender Code Snippets/data annotation res/Punch.csv'
+punch_phase_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Blender Code Snippets/data annotation res/Punch.csv'
 bvh_path = "C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Data/MocapBoxing/axis_neuron_processed/5_Punching_AxisNeuronProcessed_Char00.bvh"
 data_folder = "./test_files"
 patches_path = "./test_files/patches.npz"
@@ -372,14 +531,14 @@ handler = FeatureExtractor(bvh_path)
 # handler.set_holden_parameters()
 # handler.set_makehuman_parameters()  #manually set the skeleton parameters by manually checking the bvh files
 handler.set_neuron_parameters()
-handler.window = 60
+handler.window = 25
 # handler.n_joints = 31
 # handler.load_motion()
 
 ####################################################################################
 # TO DECIDE: phase required or not
-# Pc, Xc, Yc, dataset_config = process_data(handler, blender_path)
-Pc, Xc, Yc, dataset_config = process_data(handler, blender_path)
+# Pc, Xc, Yc, dataset_config = process_data(handler, punch_p_csv_path)
+Pc, Xc, Yc, dataset_config = process_data(handler, punch_phase_path)
 
 # pd.DataFrame(Xc).to_csv(
 #     "C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Blender Code Snippets/data annotation res/nn_features_input.csv")
@@ -393,21 +552,27 @@ output_file_name = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-MOSI-DEV-VI
 # Pun = np.concatenate(Ptrain, axis=0)
 
 # print(Xun.shape, Yun.shape, Pun.shape)
-X_train = Xc[:4000,:]
-Y_train = Yc[:4000,:]
-print(X_train.shape)
-print(Y_train.shape)
+# X_train = Xc[:4000,:]
+# Y_train = Yc[:4000,:]
+X_train = Xc
+Y_train = Yc
+print('X_train shape: ', X_train.shape)
+print('Y_train shape: ', Y_train.shape)
 np.savez_compressed(output_file_name + "_train", Xun=X_train, Yun=Y_train)
 
-X_test = Xc[4000:,:]
-Y_test = Yc[4000:,:]
-print(X_test.shape)
-print(Y_test.shape)
-np.savez_compressed(output_file_name + "_test", Xun=X_test, Yun=Y_test)
+X_train_df = pd.DataFrame(data=X_train, columns=dataset_config['col_names'][0])
+X_train_df.to_csv(output_file_name+'_X.csv')
+Y_train_df = pd.DataFrame(data=Y_train, columns=dataset_config['col_names'][1])
+Y_train_df.to_csv(output_file_name+'_Y.csv')
 
-with open(output_file_name + "_config.json", "w") as f:
-    json.dump(dataset_config, f)
-
+# X_test = Xc[4000:,:]
+# Y_test = Yc[4000:,:]
+# print(X_test.shape)
+# print(Y_test.shape)
+# np.savez_compressed(output_file_name + "_test", Xun=X_test, Yun=Y_test)
+#
+# with open(output_file_name + "_config3.json", "w") as f:
+#     json.dump(dataset_config, f)
 
 
 # xslice = slice(((handler.window*2)//10)*10+1, ((handler.window*2)//10)*10+handler.n_joints*3+1, 3)
