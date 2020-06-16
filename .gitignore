@@ -1,1 +1,17 @@
 .idea
+mosi_utils_anim/*.pyc
+mosi_utils_anim/*.pickle
+mosi_utils_anim/*.spyderproject
+mosi_utils_anim/*.spyderworkspace
+mosi_utils_anim/*.idea
+mosi_utils_anim/*.html
+mosi_utils_anim/*.index
+mosi_utils_anim/*.meta
+mosi_utils_anim/*.data-00000-of-00001
+mosi_utils_anim/*.gz
+mosi_utils_anim/*.bin
+mosi_utils_anim/.vscode/*
+mosi_utils_anim/tornado_test*
+mosi_utils_anim/data*
+mosi_utils_anim/texdoc*
+mosi_utils_anim/checkpoint
