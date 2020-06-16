@@ -123,10 +123,10 @@ class BoxingDetector():
             diff = fextd - handDistance
             
             if arm == self.left:
-                diff_thresh = 0.27
+                diff_thresh = 0.26
                 
             elif arm == self.right:
-                diff_thresh = 0.28
+                diff_thresh = 0.29
             
             if diff >= diff_thresh:
                 return (f, handDistance) 
@@ -171,7 +171,7 @@ class BoxingDetector():
             if handDistance > self.max_threshold:
                 
                 # if hand starts moving back
-                if (handDistance - lastDistance) < -0.01:
+                if (handDistance - lastDistance) < -0.008:
                      
                     #print(lastDistance)
                     
@@ -183,9 +183,12 @@ class BoxingDetector():
         return (self.fe, lastDistance)
 
 print('\n')
-# bd = BoxingDetector(bpy.context.object, 0, 5600)
-bd = BoxingDetector(bpy.context.object, 0, 5600, 'tertiary')
-# bd = BoxingDetector(bpy.context.object, 0, 5600, 'binary')
+type = 'tertiary'
+#type = 'binary'
+#type = 'detailed'
+
+bd = BoxingDetector(bpy.context.object, 0, 5600, type)
+
 print("right punches")
 pr = bd.detectPunches(bd.right)
 
@@ -196,7 +199,7 @@ pl = bd.detectPunches(bd.left)
 df = pd.DataFrame({'right punch': pr, 'left punch': pl})
 ##print('\/')
 print(df)
-df.to_csv(r'C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Blender Code Snippets\data annotation res\test3.csv')
+df.to_csv(r'C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Blender Code Snippets\data annotation res\PunchPhase_'+type+'.csv')
 #df.to_csv(r'C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Blender Code Snippets\data annotation res\PunchWithMaxDist.csv')
 
 print('done')
