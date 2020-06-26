@@ -3,11 +3,13 @@ from .layers.layers_tf import TF_FCLayer
 from .fc_networks import FCNetwork
 
 import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 # import tensorflow.compat.v1 as tf
 # tf.disable_v2_behavior()
 import numpy as np
 import sys, os, datetime, json
-
+import pandas as pd
 
 class MANN(FCNetwork):
     """
@@ -251,6 +253,8 @@ class MANN(FCNetwork):
                         sys.stdout.flush()
                     accuracies.append(acc)
                     losses.append(loss_value)
+                    print(loss_value)
+
                 print("end of epoch: ")
                 print("duration: ", (datetime.datetime.now() - start_time).total_seconds() / 60, "min")
                 print("average loss: ", np.mean(losses))
@@ -283,11 +287,12 @@ class MANN(FCNetwork):
         out = self.sess.run(self.network_output, feed_dict={self.x: params})
         # out = np.array(out).reshape(1,362)
         out = np.array(out).ravel()
-        out = out.reshape(1,self.output_size)
+        out = out.reshape(1, self.output_size)
         out = (out * self.norm["Ystd"]) + self.norm["Ymean"]
         out = out.ravel()
         return out
 
+    @staticmethod
     def from_file(dataset, target_path, epochs, config_store, gating_indices=[0, 1, 2]):
         """
         
@@ -316,7 +321,14 @@ class MANN(FCNetwork):
         # w = (60 * 2) // 10
         # j = config_store["numJoints"]
         # gaits = config_store["n_gaits"]
-        #
+
+        joint_indices = config_store['joint_indices']
+        joints_ids_that_dont_matter = [val for key, val in joint_indices.items() if 'RightHand' in key][1:] + [val for key, val in joint_indices.items() if 'LeftHand' in key][1:]
+        joints_keys_that_matter = [k for k, v in joint_indices.items() if
+                                   v not in joints_ids_that_dont_matter]
+        joints_ids_that_matter = [val for key, val in joint_indices.items() if key in joints_keys_that_matter]
+        joint_weights = np.array([1 if val in joints_ids_that_matter else 1e-10 for val in joint_indices.values()])
+
         # joint_weights = np.array([
         #     1,
         #     1e-10, 1, 1, 1, 1,
@@ -325,14 +337,30 @@ class MANN(FCNetwork):
         #     1e-10, 1, 1,
         #     1e-10, 1, 1, 1, 1e-10, 1e-10, 1e-10,
         #     1e-10, 1, 1, 1, 1e-10, 1e-10, 1e-10])
-        #
+
+        x_col_indices = config_store['col_indices'][0]
+        y_col_indices = config_store['col_indices'][1]
+
+        x_tr_col_indices = {k:v for k,v in x_col_indices.items() if '_tr' in k}
+        y_tr_col_indices = {k:v for k,v in y_col_indices.items() if '_tr' in k}
+
+        for k,v in x_tr_col_indices.items():
+            Xstd[v[0]: v[1]] = Xstd[v[0]: v[1]].mean()
+
+
         # Xstd[w * 0:w * 1] = Xstd[w * 0:w * 1].mean()  # Trajectory Pos X
         # Xstd[w * 1:w * 2] = Xstd[w * 1:w * 2].mean()  # Trajectory Pos Y
         # Xstd[w * 2:w * 3] = Xstd[w * 2:w * 3].mean()  # Trajectory Directions X
         # Xstd[w * 3:w * 4] = Xstd[w * 3:w * 4].mean()  # Trajectory Directions Y
         # Xstd[w * 4:w * 4 + w * gaits] = Xstd[w * 4:w * 4 + w * gaits].mean()
+
+        x_local_col_indices = {k:v for k,v in x_col_indices.items() if '_local' in k}
+        y_local_col_indices = {k:v for k,v in y_col_indices.items() if '_local' in k}
+
+        for k, v in x_local_col_indices.items():
+            Xstd[v[0]: v[1]] = Xstd[v[0]: v[1]].mean() / (joint_weights.repeat(3))    # * 0.1)
+
         # start = w * (4 + gaits)
-        #
         # Xstd[start + j * 3 * 0:start + j * 3 * 1] = Xstd[
         #                                             start + j * 3 * 0:start + j * 3 * 1].mean()  # / (joint_weights.repeat(3) * 0.1)  # Pos
         # Xstd[start + j * 3 * 1:start + j * 3 * 2] = Xstd[
@@ -340,34 +368,59 @@ class MANN(FCNetwork):
         # # Xstd[w * start + j * 3 * 2:w * start + j * (3 * 2) + (j)] = Xstd[w * start + j * 3 * 2:w * start + j * (3 * 2) + (j)].mean() / (joint_weights * 0.1)  # twists
         # # start = start + j * 3 * 2
         # # Xstd[start:] = Xstd[start:].mean()
-        # print("mean and std. dev of translation vel: ", Ymean[0:3], Ystd[0:3])
-        # importance_trajectory = 1.0
+
+
+        print("mean and std. dev of translation vel: ", Ymean[0:3], Ystd[0:3])
+        importance_trajectory = 1.0
+
+        y_col_other_indices = {k:v for k,v in y_col_indices.items() if ('_tr' not in k) or ('_local' not in k)}
+
+        r_vel_indices = y_col_other_indices['y_root_velocity']
+        Ystd[r_vel_indices[0]:r_vel_indices[1]] = Ystd[r_vel_indices[0]:r_vel_indices[1]].mean() / importance_trajectory
+        r_new_forward_indices = y_col_other_indices['y_root_new_forward']
+        Ystd[r_new_forward_indices[0]:r_new_forward_indices[1]] = Ystd[r_new_forward_indices[0]:r_new_forward_indices[1]].mean() / importance_trajectory
+        p_dphase_indices = y_col_other_indices['y_punch_dphase']
+        Ystd[p_dphase_indices[0]:p_dphase_indices[0]+1] = Ystd[p_dphase_indices[0]:p_dphase_indices[0]+1].mean() / importance_trajectory
+        Ystd[p_dphase_indices[-1]-1:p_dphase_indices[-1]] = Ystd[p_dphase_indices[0]:p_dphase_indices[0]+1].mean() / importance_trajectory
+
         # Ystd[0:1] = Ystd[0:1].mean() / importance_trajectory
         # Ystd[1:2] = Ystd[1:2].mean() / importance_trajectory  # Translational Velocity
         # Ystd[2:3] = Ystd[2:3].mean() / importance_trajectory  # Rotational Velocity / Dir x
         # Ystd[3:4] = Ystd[3:4].mean() / importance_trajectory  # Change in Phase  / Dir y
         # Ystd[4:5] = Ystd[4:5].mean() / importance_trajectory  # Change in Phase
         # start = 5
-        # if config_store["use_footcontacts"]:
-        #     print("using Footcontacts")
-        #     Ystd[start:start + 4] = Ystd[start:start + 4].mean()  # foot contacts
-        #     start += 4
-        #
+
+        if config_store["use_footcontacts"]:
+            print("using Footcontacts")
+
+            foot_indices = y_col_other_indices['y_foot_contacts']
+            Ystd[foot_indices[0]:foot_indices[1]] = Ystd[foot_indices[0]:foot_indices[1]].mean()    # foot contacts
+
+            # Ystd[start:start + 4] = Ystd[start:start + 4].mean()  # foot contacts
+            # start += 4
+
+        for k,v in y_tr_col_indices.items():
+            Ystd[v[0]: v[1]] = Ystd[v[0]: v[1]].mean()
+
         # Ystd[start + (w // 2) * 0:start + (w // 2) * 1] = Ystd[start + (w // 2) * 0:start + (
-        #             w // 2) * 1].mean()  # Trajectory Future Positions X
+        #         w // 2) * 1].mean()  # Trajectory Future Positions X
         # Ystd[start + (w // 2) * 1:start + (w // 2) * 2] = Ystd[start + (w // 2) * 1:start + (
-        #             w // 2) * 2].mean()  # Trajectory Future Positions Y
+        #         w // 2) * 2].mean()  # Trajectory Future Positions Y
         # Ystd[start + (w // 2) * 2:start + (w // 2) * 3] = Ystd[start + (w // 2) * 2:start + (
-        #             w // 2) * 3].mean()  # Trajectory Future Directions X
+        #         w // 2) * 3].mean()  # Trajectory Future Directions X
         # Ystd[start + (w // 2) * 3:start + (w // 2) * 4] = Ystd[start + (w // 2) * 3:start + (
-        #             w // 2) * 4].mean()  # Trajectory Future Directions Y
-        #
+        #         w // 2) * 4].mean()  # Trajectory Future Directions Y
+
+        for k, v in y_local_col_indices.items():
+            Ystd[v[0]: v[1]] = Ystd[v[0]: v[1]].mean() / (joint_weights.repeat(3))    # * 0.1)
+
         # start = start + (w // 2) * 4
         # Ystd[start + j * 3 * 0:start + j * 3 * 1] = Ystd[start + j * 3 * 0:start + j * 3 * 1].mean()  # Pos
         # Ystd[start + j * 3 * 1:start + j * 3 * 2] = Ystd[start + j * 3 * 1:start + j * 3 * 2].mean()  # Vel
 
-        # Xstd[Xstd == 0] = 1.0
-        # Ystd[Ystd == 0] = 1.0
+        Xstd[Xstd == 0] = 1.0
+        Ystd[Ystd == 0] = 1.0
+
         norm = {"Xmean": Xmean.tolist(),
                 "Ymean": Ymean.tolist(),
                 "Xstd": Xstd.tolist(),
