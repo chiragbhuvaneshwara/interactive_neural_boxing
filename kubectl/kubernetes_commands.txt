@@ -8,7 +8,7 @@ Kubernetes Commands
 - To copy from a pod to local directory: kubectl cp namespace/podname:/path/to/file /local/path
 
 Example: kubectl cp usas01/test:/tf/mosi_dev_vinn/trained_models/mann/epoch_99.json tmp/epoch_99.json
-         kubectl cp chbh01/train-env:/tf/mosi_dev_vinn/mosi_dev_vinn/trained_models/mann/epoch_49.json epoch_49.json
+         kubectl cp chbh01/train-env:/tf/mosi_dev_vinn/mosi_dev_vinn/trained_models/mann/epoch_49.json C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-MOSI-DEV-VINN\mosi_dev_vinn\trained_models\mann\epoch_49.json
 
 Execute this command while being in the local directory and not in the pod itself
 

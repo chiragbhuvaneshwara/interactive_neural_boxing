@@ -86,6 +86,7 @@ class BoxingController(Controller):
 
         # 2. Set new phase as input
         self.input.set_punch_phase(curr_phase)
+        print(curr_phase)
 
         # 3. Set new punch targets (or blend old and new punch targets)
         self.input.set_punch_target(punch_targets)
@@ -256,13 +257,22 @@ class MANNInput(object):
         # Variables marking the start positions of the columns in the input
         # punch target is a vector of size 3 occupying 3 columns
         self.in_root_base = 0
-        self.in_punch_phase_left = self.in_root_base
-        self.in_punch_phase_right = self.in_punch_phase_left + 1
+        # self.in_punch_phase_left = self.in_root_base
+        # self.in_punch_phase_right = self.in_punch_phase_left + 1
+        #
+        # self.in_punch_target_left = self.in_punch_phase_right + 1
+        # self.in_punch_target_right = self.in_punch_target_left + 1 * self.num_coordinate_dims
+        #
+        # self.in_local_pos = self.in_punch_target_right + 1 * self.num_coordinate_dims
 
-        self.in_punch_target_left = self.in_punch_phase_right + 1
-        self.in_punch_target_right = self.in_punch_target_left + 1 * self.num_coordinate_dims
+        self.in_punch_phase_right = self.in_root_base
+        self.in_punch_phase_left = self.in_punch_phase_right + 1
 
-        self.in_local_pos = self.in_punch_target_right + 1 * self.num_coordinate_dims
+        self.in_punch_target_right = self.in_punch_phase_left + 1
+        self.in_punch_target_left = self.in_punch_target_right + 1 * self.num_coordinate_dims
+
+        self.in_local_pos = self.in_punch_target_left + 1 * self.num_coordinate_dims
+
         self.in_local_vel = self.in_local_pos + self.num_coordinate_dims * self.joints
 
     # self.n_gaits = n_gaits
@@ -277,14 +287,18 @@ class MANNInput(object):
     # return
 
     def set_punch_phase(self, curr_phase):
-        self.data[self.in_punch_phase_left] = curr_phase[0]
-        self.data[self.in_punch_phase_right] = curr_phase[1]
+        self.data[self.in_punch_phase_left] = curr_phase[1]
+        self.data[self.in_punch_phase_right] = curr_phase[0]
 
     def set_punch_target(self, targets):
+        # self.data[self.in_punch_target_left: self.in_punch_target_left + self.num_coordinate_dims] = targets[
+        #                                                                                              :self.num_coordinate_dims]
         self.data[self.in_punch_target_left: self.in_punch_target_left + self.num_coordinate_dims] = targets[
-                                                                                                     :self.num_coordinate_dims]
-        self.data[self.in_punch_phase_right: self.in_punch_phase_right + self.num_coordinate_dims] = targets[
                                                                                                      self.num_coordinate_dims:]
+        # self.data[self.in_punch_phase_right: self.in_punch_phase_right + self.num_coordinate_dims] = targets[
+        #                                                                                              self.num_coordinate_dims:]
+        self.data[self.in_punch_phase_right: self.in_punch_phase_right + self.num_coordinate_dims] = targets[
+                                                                                                     :self.num_coordinate_dims]
 
     def set_local_pos(self, pos):
         self.data[self.in_local_pos: self.in_local_pos + self.num_coordinate_dims * self.joints] = pos[:]

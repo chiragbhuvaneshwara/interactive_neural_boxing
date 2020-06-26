@@ -122,8 +122,9 @@ class Character:
             l_dist = compute_arm_dist(self.hand_left, self.shoulder_left)
             r_dist = compute_arm_dist(self.hand_right, self.shoulder_right)
 
-            l_target = punch_targets[0:3]
-            r_target = punch_targets[3:]
+            l_target = punch_targets[3:]
+            r_target = punch_targets[0:3]
+
             no_movement_target = np.array([0.0, 0.0, 0.0])
 
             l_target_dist = np.linalg.norm(l_target - no_movement_target)
@@ -142,12 +143,13 @@ class Character:
             return new_value
 
         acting_arm, dist = get_acting_arm(punch_targets)
-        acting_arm_phase = convert_range(1, 0, self.max_punch_distance, 0, dist)
+        # acting_arm_phase = convert_range(1, 0, self.max_punch_distance, 0.2, dist)  # TO DO
+        acting_arm_phase = convert_range(1, 0, self.max_punch_distance, 0, dist)  # TO DO
 
         if acting_arm == 'left':
-            return np.array([acting_arm_phase, 0])
-        else:
             return np.array([0, acting_arm_phase])
+        else:
+            return np.array([acting_arm_phase, 0])
 
     def compute_foot_sliding(self, joint_positions, joint_velocities, foot_contacts=[0, 0, 0, 0]):
         def compute_foot_movement(j):

@@ -3,7 +3,7 @@ data/*
 trained_models/*
 !trained_models/README.txt
 .vscode/*
-
+.idea
 kubectl/tmp
 
 # Byte-compiled / optimized / DLL files
