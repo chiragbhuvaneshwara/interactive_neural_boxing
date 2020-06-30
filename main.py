@@ -96,4 +96,4 @@ gating_indices = wrist_velocities_indices + \
                  foot_end_effector_velocities
 
 
-MANNTF.from_file(datasetnpz, args_output, 5, config_store, gating_indices=gating_indices)
+MANNTF.from_file(datasetnpz, args_output, 30, config_store, gating_indices=gating_indices)

@@ -24,30 +24,37 @@ class BoxingController(Controller):
         [type] -- [description]
     """
 
-    def __init__(self, network: FCNetwork, config_store):  # xdim, ydim, endJoints = 5, numJoints = 21):
+    def __init__(self, network: FCNetwork, config_store):  # xdim, ydim, end_joints = 5, numJoints = 21):
         self.network = network
 
         self.initial = True
-        self.xdim = network.input_size  # xdim # 222 # 438 #450
-        self.ydim = network.output_size  # ydim #217 # 559
+        self.xdim = network.input_size
+        self.ydim = network.output_size
         # self.hdim = 512
 
         self.precomputed_weights = {}
         self.precomputed_bins = 50
 
-        # self.endJoints = 5
-        # self.joints = 21 + self.endJoints # 59
-        self.endJoints = config_store["endJoints"]
+        # self.end_joints = 5
+        # self.joints = 21 + self.end_joints # 59
+        self.endJoints = config_store["end_joints"]
         self.n_joints = config_store["numJoints"] + self.endJoints
-        self.n_gaits = config_store["n_gaits"]
         self.use_rotations = config_store["use_rotations"]
+        self.n_gaits = config_store["n_gaits"]
         self.use_foot_contacts = config_store["use_footcontacts"]
+        self.traj_window = config_store["window"]
+        self.num_traj_samples = config_store["num_traj_samples"]
+        self.traj_step = config_store["traj_step"]
         self.zero_posture = config_store["zero_posture"]
+        self.joint_indices = config_store["joint_indices"]
+        self.in_col_pos_indices = config_store["col_indices"][0]
+        self.out_col_pos_indices = config_store["col_indices"][1]
 
         input_data = np.array([0.0] * self.xdim)
         out_data = np.array([0.0] * self.ydim)
-        self.input = MANNInput(input_data, self.n_joints, self.n_gaits, self.endJoints, self.use_foot_contacts)
-        self.output = MANNOutput(out_data, self.n_joints, self.endJoints, self.use_foot_contacts)
+        self.input = MANNInput(input_data, self.n_joints, self.endJoints, self.joint_indices, self.in_col_pos_indices)
+        self.output = MANNOutput(out_data, self.n_joints, self.endJoints, self.use_foot_contacts, self.joint_indices,
+                                 self.in_col_pos_indices)
 
         self.lastphase = 0
 
@@ -228,7 +235,7 @@ class BoxingController(Controller):
     ###########################################################################################
 
     # def getEndJointRotations(self):
-    # 	return self.out[self.out_end_joint_rot_base:self.out_end_joint_rot_base + self.endJoints * 3]
+    # 	return self.out[self.out_end_joint_rot_base:self.out_end_joint_rot_base + self.end_joints * 3]
 
     def __update_target_dir_simple(self, direction):
         # Compute target direction from
@@ -248,68 +255,67 @@ class MANNInput(object):
         [type] -- [description]
     """
 
-    def __init__(self, data, joints, n_gaits, endJoints, use_foot_contacts):
+    def __init__(self, data, n_joints, end_joints, joint_indices, in_col_pos_indices):
         self.data = data
-        self.joints = joints
-        # Since we are working in 3 dimensional space
+        self.joints = n_joints + end_joints
+        # 3 dimensional space
         self.num_coordinate_dims = 3
+        self.joint_indices_dict = joint_indices
+        self.col_pos_ids = in_col_pos_indices
 
-        # Variables marking the start positions of the columns in the input
-        # punch target is a vector of size 3 occupying 3 columns
-        self.in_root_base = 0
-        # self.in_punch_phase_left = self.in_root_base
-        # self.in_punch_phase_right = self.in_punch_phase_left + 1
+        # # Variables marking the start positions of the columns in the input
+        # # punch target is a vector of size 3 occupying 3 columns
+        # self.in_root_base = 0
         #
-        # self.in_punch_target_left = self.in_punch_phase_right + 1
-        # self.in_punch_target_right = self.in_punch_target_left + 1 * self.num_coordinate_dims
+        # self.in_punch_phase_right = self.in_root_base
+        # self.in_punch_phase_left = self.in_punch_phase_right + 1
         #
-        # self.in_local_pos = self.in_punch_target_right + 1 * self.num_coordinate_dims
+        # self.in_punch_target_right = self.in_punch_phase_left + 1
+        # self.in_punch_target_left = self.in_punch_target_right + 1 * self.num_coordinate_dims
+        #
+        # self.in_local_pos = self.in_punch_target_left + 1 * self.num_coordinate_dims
+        #
+        # self.in_local_vel = self.in_local_pos + self.num_coordinate_dims * self.joints
 
-        self.in_punch_phase_right = self.in_root_base
-        self.in_punch_phase_left = self.in_punch_phase_right + 1
-
-        self.in_punch_target_right = self.in_punch_phase_left + 1
-        self.in_punch_target_left = self.in_punch_target_right + 1 * self.num_coordinate_dims
-
-        self.in_local_pos = self.in_punch_target_left + 1 * self.num_coordinate_dims
-
-        self.in_local_vel = self.in_local_pos + self.num_coordinate_dims * self.joints
-
-    # self.n_gaits = n_gaits
-    # self.in_traj_pos_base = 0
-    # self.in_traj_dir_base = self.in_traj_pos_base + 2 * 12
-    # self.in_traj_gait_base = self.in_traj_dir_base + 2 * 12
-    # self.in_joint_pos = self.in_traj_gait_base + self.n_gaits * 12
-    # self.in_joint_vel = self.in_joint_pos + 3 * self.joints
-    # self.in_joint_twist = self.in_joint_vel + 3 * self.joints
-    # self.endJoints = endJoints
-
-    # return
+    def __set_data__(self, data_part, id_start, id_end):
+        self.data[id_start: id_end] = data_part
 
     def set_punch_phase(self, curr_phase):
-        self.data[self.in_punch_phase_left] = curr_phase[1]
-        self.data[self.in_punch_phase_right] = curr_phase[0]
+        punch_phase_id = self.col_pos_ids["x_punch_phase"]
+        self.__set_data__(curr_phase, punch_phase_id[0], punch_phase_id[1])
+        # self.data[punch_phase_id[0]: punch_phase_id[1]] = curr_phase
+
+        # self.data[self.in_punch_phase_left] = curr_phase[1]
+        # self.data[self.in_punch_phase_right] = curr_phase[0]
 
     def set_punch_target(self, targets):
+        punch_right_target_id = self.col_pos_ids["x_right_punch_target"]
+        punch_left_target_id = self.col_pos_ids["x_left_punch_target"]
+        punch_both_target_id = [punch_right_target_id[0], punch_left_target_id[1]]
+        self.__set_data__(targets, punch_both_target_id[0], punch_both_target_id[1])
+        # self.data[punch_both_target_id[0]: punch_both_target_id[1]] = targets
+
         # self.data[self.in_punch_target_left: self.in_punch_target_left + self.num_coordinate_dims] = targets[
-        #                                                                                              :self.num_coordinate_dims]
-        self.data[self.in_punch_target_left: self.in_punch_target_left + self.num_coordinate_dims] = targets[
-                                                                                                     self.num_coordinate_dims:]
-        # self.data[self.in_punch_phase_right: self.in_punch_phase_right + self.num_coordinate_dims] = targets[
         #                                                                                              self.num_coordinate_dims:]
-        self.data[self.in_punch_phase_right: self.in_punch_phase_right + self.num_coordinate_dims] = targets[
-                                                                                                     :self.num_coordinate_dims]
+        # self.data[self.in_punch_phase_right: self.in_punch_phase_right + self.num_coordinate_dims] = targets[
+        #                                                                                              :self.num_coordinate_dims]
 
     def set_local_pos(self, pos):
-        self.data[self.in_local_pos: self.in_local_pos + self.num_coordinate_dims * self.joints] = pos[:]
+        local_pos_id = self.col_pos_ids["x_local_pos"]
+        self.__set_data__(pos, local_pos_id[0], local_pos_id[1])
+
+        # self.data[self.in_local_pos: self.in_local_pos + self.num_coordinate_dims * self.joints] = pos[:]
 
     def set_local_vel(self, vel):
-        self.data[self.in_local_vel:self.in_local_vel + self.num_coordinate_dims * self.joints] = vel[:]
+        local_vel_id = self.col_pos_ids["x_local_vel"]
+        self.__set_data__(vel, local_vel_id[0], local_vel_id[1])
+
+        # self.data[self.in_local_vel:self.in_local_vel + self.num_coordinate_dims * self.joints] = vel[:]
 
 
 # def setJointTwist(self, twist):
-#     self.data[self.in_joint_twist:self.in_joint_twist + self.joints - self.endJoints] = np.reshape(twist, [
-#         self.joints - self.endJoints, ])
+#     self.data[self.in_joint_twist:self.in_joint_twist + self.joints - self.end_joints] = np.reshape(twist, [
+#         self.joints - self.end_joints, ])
 #
 # def setTrajPos(self, pos):
 #     self.data[self.in_traj_pos_base:self.in_traj_pos_base + 2 * 12] = pos[:]  # np.reshape(pos, [24])
@@ -382,7 +388,7 @@ class MANNOutput(object):
     # self.out_joint_vel_base = self.out_joint_pos_base + self.joints * 3
     # self.out_joint_rot_base = self.out_joint_vel_base + self.joints * 3
     # # self.out_end_joint_rot_base = self.out_joint_rot_base + self.joints
-    # self.endJoints = endJoints
+    # self.end_joints = end_joints
     # return
 
     def getFootContacts(self):
@@ -419,4 +425,4 @@ class MANNOutput(object):
         return arr
 
 # def getRotations(self):
-# 	return np.array(self.data[self.out_joint_rot_base:self.out_joint_rot_base + 1 * (self.joints - self.endJoints)])
+# 	return np.array(self.data[self.out_joint_rot_base:self.out_joint_rot_base + 1 * (self.joints - self.end_joints)])
