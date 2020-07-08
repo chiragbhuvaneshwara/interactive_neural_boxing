@@ -1,6 +1,7 @@
 from mosi_utils_anim_t.preprocessing.NN_Features import FeatureExtractor, retrieve_name
 import numpy as np
 import pandas as pd
+import json
 
 
 def prepare_indices_dict(**args):
@@ -31,13 +32,14 @@ def prepare_indices_dict(**args):
     return indices_dict, col_names
 
 
-def process_data(handler: FeatureExtractor, punch_p_csv_path):
+def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
     xc, yc = [], []
 
-    frame_rate_div = 1
+    # frame_rate_div = 1
 
     for div in range(frame_rate_div):
-
+    # for div in [1]:
+        print('Processing Blender csv data %s' %frame_rate_div, div)
         # Loading Bvh file into memory
         handler.load_motion(frame_rate_divisor=frame_rate_div, frame_rate_offset=div)
 
@@ -62,8 +64,8 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path):
         #############################################################################################
 
         indices_dict_set = False
-        # for i in range(handler.window, handler.n_frames - handler.window, 1):
-        for i in range(handler.window, 100 - handler.window, 1):
+        for i in range(handler.window, handler.n_frames - handler.window, 1):
+        # for i in range(handler.window, 100 - handler.window, 1):
 
             if i % 50 == 0:
                 print('Frames processed: ', i)
@@ -72,11 +74,13 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path):
 
             x_rootposs_tr = traj_info['rootposs']
             x_rootposs_tr = np.hstack(
-                [x_rootposs_tr[:, 0].ravel(), x_rootposs_tr[:, 2].ravel()])  # Trajectory Pos, 2 * 12d
+                [x_rootposs_tr[:, 0].ravel(), x_rootposs_tr[:, 2].ravel()])  # Trajectory Pos, 2 * 10d
 
+            # TODO FIX trajectory velocities. It currently contains info about all joints. Get only root joint from
+            #  process_file.py
             x_rootvels_tr = traj_info['rootvels']
             x_rootvels_tr = np.hstack(
-                [x_rootvels_tr[:, 0].ravel(), x_rootvels_tr[:, 2].ravel()])  # Trajectory Vels, 2 * 12d
+                [x_rootvels_tr[:, 0].ravel(), x_rootvels_tr[:, 2].ravel()])  # Trajectory Vels, 2 * 10d
 
             x_right_wrist_pos_tr = traj_info['right_wrist_pos'].ravel()
             x_left_wrist_pos_tr = traj_info['left_wrist_pos'].ravel()
@@ -131,7 +135,7 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path):
 
             if not indices_dict_set:
                 x_indices, x_col_names = prepare_indices_dict(**kwargs)
-                print('curr ', len(np.hstack(x_curr_frame)))
+                print('curr frame len ', len(np.hstack(x_curr_frame)))
                 print(x_indices)
                 print('\n')
 
@@ -222,6 +226,9 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path):
         "use_rotations": False,
         "n_gaits": 1,
         "use_footcontacts": True,
+        "window": handler.window,
+        "num_traj_samples": handler.num_traj_sampling_pts,
+        "traj_step": handler.traj_step,
         "foot_left": handler.foot_left,
         "foot_right": handler.foot_right,
         "zero_posture": handler.reference_skeleton,
@@ -233,16 +240,20 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path):
     return np.array(xc), np.array(yc), dataset_config
 
 
-punch_phase_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Blender Code Snippets/data annotation res/Punch.csv'
-bvh_path = "C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Data/MocapBoxing/axis_neuron_processed/5_Punching_AxisNeuronProcessed_Char00.bvh"
+punch_phase_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Blender Code Snippets/data annotation res/PunchPhase_detailed.csv'
+# punch_phase_path = 'C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Blender Code Snippets\data annotation res\PunchPhase_binary.csv'
+# bvh_path = "C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Data/MocapBoxing/axis_neuron_processed/5_Punching_AxisNeuronProcessed_Char00.bvh"
+bvh_path = r"C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Data\MocapBoxing\processed\Scene5_Punches.bvh"
 
-handler = FeatureExtractor(bvh_path)
+forward_direction = np.array([1.0, 0.0, 0.0])       # X axis
+window = 25
+handler = FeatureExtractor(bvh_path, window, forward_dir=forward_direction)
 # manually set the skeleton parameters by manually checking the bvh files
 handler.set_neuron_parameters()
-handler.window = 25
 
 ####################################################################################
-Xc, Yc, Dataset_Config = process_data(handler, punch_phase_path)
+frame_rate_div = 2   # if 2, Reduces fps from 120fps to 60fps
+Xc, Yc, Dataset_Config = process_data(handler, punch_phase_path, frame_rate_div)
 
 output_file_name = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-MOSI-DEV-VINN/mosi_dev_vinn/data/boxing'
 
@@ -256,5 +267,8 @@ X_train_df = pd.DataFrame(data=X_train, columns=Dataset_Config['col_names'][0])
 X_train_df.to_csv(output_file_name + '_X.csv')
 Y_train_df = pd.DataFrame(data=Y_train, columns=Dataset_Config['col_names'][1])
 Y_train_df.to_csv(output_file_name + '_Y.csv')
+
+with open(output_file_name + "_config_updated.json", "w") as f:
+    json.dump(Dataset_Config, f)
 
 print("done")
