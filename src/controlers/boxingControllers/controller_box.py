@@ -53,11 +53,11 @@ class BoxingController(Controller):
 
         self.lastphase = 0
 
-        num_coordinate_dims = 3
-        num_targets = 2  # one for each hand
+        self.num_coordinate_dims = 3
+        self.num_targets = 2  # one for each hand
 
         self.max_punch_distance = 0.4482340219788639
-        self.punch_targets = np.array([0.0] * num_coordinate_dims * num_targets)
+        self.punch_targets = np.array([0.0] * self.num_coordinate_dims * self.num_targets)
 
         self.target_vel = np.array((0.0, 0.0, 0.0))
         self.target_dir = np.array((0.0, 0.0, 0.0))
@@ -67,7 +67,7 @@ class BoxingController(Controller):
         self.config_store = config_store
         self.__initialize()
 
-    def pre_render(self, direction, phase, punch_targets):
+    def pre_render(self, punch_phase, punch_targets):
         """
         This function is called before rendering. It prepares character and trajectory to be rendered.
 
@@ -84,24 +84,35 @@ class BoxingController(Controller):
             start_time = time.time()
 
         # 1. Update target dir and vel based on input
-        #TODO understand
-        # 1.Why there is a factor of 2.5
-        # 2.Why is target:vel being mixed with direction? => direction is a unit vector and velocity is a vector os vel magnitude * dir gives velocity
-        target_vel_speed = 2.5 * np.linalg.norm(direction)
-        # (1-0.9) * self.target_vel + 0.9 * target_vel_speed * direction => More importance to new vel
-        self.target_vel = utils.glm_mix(self.target_vel, target_vel_speed * direction, 0.9)
+        # #TO DO understand
+        # # 1.Why there is a factor of 2.5
+        # # 2.Why is target:vel being mixed with direction? => direction is a unit vector and velocity is a vector os vel magnitude * dir gives velocity
+        # target_vel_speed = 2.5 * np.linalg.norm(direction)
+        # # (1-0.9) * self.target_vel + 0.9 * target_vel_speed * direction => More importance to new vel
+        # self.target_vel = utils.glm_mix(self.target_vel, target_vel_speed * direction, 0.9)
+        #
+        # # if velocity is very less, use previous target_dir else calculate new from default
+        # vel_magnitude_condition = utils.euclidian_length(self.target_vel) < 1e-05
+        # target_vel_dir_default = utils.normalize(self.target_vel)
+        # target_vel_dir = self.target_dir if vel_magnitude_condition else target_vel_dir_default
+        #
+        # self.target_dir = utils.mix_directions(self.target_dir, target_vel_dir, 0.9)
+        #
+        # if DEBUG:
+        #     print("updated target_dir: ", self.target_vel, self.target_dir)
 
-        # if velocity is very less, use previous target_dir else calculate new from default
-        vel_magnitude_condition = utils.euclidian_length(self.target_vel) < 1e-05
-        target_vel_dir_default = utils.normalize(self.target_vel)
-        target_vel_dir = self.target_dir if vel_magnitude_condition else target_vel_dir_default
+        # 2. Set new punch_phase and new punch target based on input
+        right_p_ph = punch_phase[0]
+        left_p_ph = punch_phase[1]
+        self.input.set_punch_phase(right_p_ph, left_p_ph)
 
-        self.target_dir = utils.mix_directions(self.target_dir, target_vel_dir, 0.9)
+        right_p_target = punch_targets[:self.num_coordinate_dims]
+        left_p_target = punch_targets[self.num_coordinate_dims:]
+        self.input.set_punch_target(right_p_target, left_p_target)
 
-        if DEBUG:
-            print("updated target_dir: ", self.target_vel, self.target_dir)
+        # 3. Update/calculate trajectory based on input
+        self.traj.compute_future_wrist_trajectory()
 
-        # 2. Update/calculate trajectory based on input
         # 3. Set Trajectory input
         # 4. Prepare and Set Joint Input
         # Steps 3 and 4 will update MANN Input completely to the NN's current input
@@ -114,7 +125,7 @@ class BoxingController(Controller):
         This function has to be called after rendering to prepare the next frame.
 
         Returns:
-            float -- changed phase depending on user output.
+            float -- changed punch_phase depending on user output.
         """
         if DEBUG:
             print("\n\n############## POST RENDER ###########")
@@ -125,9 +136,9 @@ class BoxingController(Controller):
         # 1. update and smooth trajectory
         self.traj.update_from_predict(self.output.getNextTraj())
         if DEBUG:
-            print("phase computation: ", stand_amount, self.output.getdDPhase(), self.lastphase, "")
+            print("punch_phase computation: ", stand_amount, self.output.getdDPhase(), self.lastphase, "")
 
-        # 2. update phase
+        # 2. update punch_phase
         self.lastphase = (self.lastphase + (stand_amount) * self.output.getdDPhase()) % (1.0)
         if DEBUG_TIMING:
             print("post_predict: %f" % (time.time() - start_time))
@@ -256,7 +267,8 @@ class MANNInput(object):
         # left_wrist_vels_ids = self.col_names_ids["x_left_wrist_vels_tr"]
         # self.__set_data__(wrist_vels_traj, right_wrist_vels_ids[0], left_wrist_vels_ids[1])
 
-    def set_punch_phase(self, curr_phase):
+    def set_punch_phase(self, right_phase, left_phase):
+        curr_phase = np.array([right_phase, left_phase])
         self.__set_data__("x_punch_phase", curr_phase)
 
         # punch_phase_id = self.col_names_ids["x_punch_phase"]
