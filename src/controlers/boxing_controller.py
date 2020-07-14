@@ -37,7 +37,7 @@ class BoxingController(Controller):
 
         # self.end_joints = 5
         # self.joints = 21 + self.end_joints # 59
-        self.endJoints = config_store["end_joints"]
+        self.endJoints = config_store["endJoints"]
         self.n_joints = config_store["numJoints"] + self.endJoints
         self.use_rotations = config_store["use_rotations"]
         self.n_gaits = config_store["n_gaits"]
@@ -87,6 +87,21 @@ class BoxingController(Controller):
             print("input punch targets: ", punch_targets, "")
         if DEBUG_TIMING:
             start_time = time.time()
+
+        # 1. Update target dir and vel based on input
+        # #TO DO understand
+        # # 1.Why there is a factor of 2.5
+        # # 2.Why is target:vel being mixed with direction? => direction is a unit vector and velocity is a vector os vel magnitude * dir gives velocity
+        # target_vel_speed = 2.5 * np.linalg.norm(direction)
+        # # (1-0.9) * self.target_vel + 0.9 * target_vel_speed * direction => More importance to new vel
+        # self.target_vel = utils.glm_mix(self.target_vel, target_vel_speed * direction, 0.9)
+        #
+        # # if velocity is very less, use previous target_dir else calculate new from default
+        # vel_magnitude_condition = utils.euclidian_length(self.target_vel) < 1e-05
+        # target_vel_dir_default = utils.normalize(self.target_vel)
+        # target_vel_dir = self.target_dir if vel_magnitude_condition else target_vel_dir_default
+        #
+        # self.target_dir = utils.mix_directions(self.target_dir, target_vel_dir, 0.9)
 
         # 1. Compute Punch Phase for both hands w.r.t maximum punch distance from dataset
         curr_phase = self.char.compute_punch_phase(punch_targets)

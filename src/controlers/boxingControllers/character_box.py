@@ -75,13 +75,13 @@ class Character:
         self.last_joint_positions = np.array(self.joint_positions)
 
         for j in range(0, self.joints):
-            # local_pos = np.array(
-            #     [joint_positions[j * 3 + 0], joint_positions[j * 3 + 1], joint_positions[j * 3 + 2]]).reshape(3, )
-            local_pos = np.array(joint_positions[j]).reshape(3, )
+            local_pos = np.array(
+                [joint_positions[j * 3 + 0], joint_positions[j * 3 + 1], joint_positions[j * 3 + 2]], dtype=np.float64).reshape(3, )
+            # local_pos = np.array(joint_positions[j]).reshape(3, )
             pos = utils.rot_around_z_3d(local_pos, self.root_rotation) + self.root_position
-            # local_vel = np.array(
-            #     [joint_velocities[j * 3 + 0], joint_velocities[j * 3 + 1], joint_velocities[j * 3 + 2]]).reshape(3, )
-            local_vel = np.array(joint_velocities[j]).reshape(3, )
+            local_vel = np.array(
+                [joint_velocities[j * 3 + 0], joint_velocities[j * 3 + 1], joint_velocities[j * 3 + 2]], dtype=np.float64).reshape(3, )
+            # local_vel = np.array(joint_velocities[j]).reshape(3, )
             vel = utils.rot_around_z_3d(local_vel, self.root_rotation)
 
             self.joint_positions[j] = utils.glm_mix(self.joint_positions[j] + vel, pos,
@@ -98,7 +98,7 @@ class Character:
         def compute_global_positions(j):
             # j = self.hand_left
             # joint_positions
-            local_pos = np.array(joint_positions[j]).reshape(3, )
+            local_pos = np.array(joint_positions[j], dtype=np.float64).reshape(3, )
             pos = utils.rot_around_z_3d(local_pos, self.root_rotation) + self.root_position
             return pos
 
@@ -147,17 +147,17 @@ class Character:
         acting_arm_phase = convert_range(1, 0, self.max_punch_distance, 0, dist)  # TO DO
 
         if acting_arm == 'left':
-            return np.array([0, acting_arm_phase])
+            return np.array([0, acting_arm_phase], dtype=np.float64)
         else:
-            return np.array([acting_arm_phase, 0])
+            return np.array([acting_arm_phase, 0], dtype=np.float64)
 
     def compute_foot_sliding(self, joint_positions, joint_velocities, foot_contacts=[0, 0, 0, 0]):
         def compute_foot_movement(j):
             local_pos = np.array(
-                [joint_positions[j * 3 + 0], joint_positions[j * 3 + 1], joint_positions[j * 3 + 2]]).reshape(3, )
+                [joint_positions[j * 3 + 0], joint_positions[j * 3 + 1], joint_positions[j * 3 + 2]], dtype=np.float64).reshape(3, )
             pos = utils.rot_around_z_3d(local_pos, self.root_rotation) + self.root_position
             local_vel = np.array(
-                [joint_velocities[j * 3 + 0], joint_velocities[j * 3 + 1], joint_velocities[j * 3 + 2]]).reshape(3, )
+                [joint_velocities[j * 3 + 0], joint_velocities[j * 3 + 1], joint_velocities[j * 3 + 2]], dtype=np.float64).reshape(3, )
             vel = utils.rot_around_z_3d(local_vel, self.root_rotation)
             return self.joint_positions[j] - utils.glm_mix(self.joint_positions[j] + vel, pos, 0.5)
 
@@ -179,8 +179,8 @@ class Character:
         return global_foot_drift
 
     def getLocalJointPosVel(self, prev_root_pos, prev_root_rot):
-        joint_pos = np.array([0.0] * (self.joints * 3))
-        joint_vel = np.array([0.0] * (self.joints * 3))
+        joint_pos = np.array([0.0] * (self.joints * 3), dtype=np.float64)
+        joint_vel = np.array([0.0] * (self.joints * 3), dtype=np.float64)
 
         for i in range(0, self.joints):
             # get previous joint position

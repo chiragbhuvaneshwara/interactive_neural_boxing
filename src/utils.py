@@ -15,6 +15,7 @@ def cubic(y0, y1, y2, y3, mu):
             (y1))
 
 
+# TODO verify why overflow occurs here. Test with np built in distance calculation.
 def euclidian_length(v):
     s = 0.0
     for a in v:
@@ -53,6 +54,7 @@ def mix_directions(v1, v2, a):
     return normalize(slerp)
 
 
+# TODO verify what rot around z is doing
 # Angle in radians
 def rot_around_z_3d(vector, angle, inverse=False):
     mat = np.array([
@@ -90,3 +92,7 @@ def mat_to_quat(m):
 
 def global_to_local_pos(pos, root_pos, root_rot):
     return rot_around_z_3d(pos - root_pos, root_rot, inverse=True)  # self.char.joint_positions[i]#
+
+# TODO Give a better name
+def convert_to_zero_y_3d(arr, axis=None):
+    return np.insert(arr, 1, 0, axis)

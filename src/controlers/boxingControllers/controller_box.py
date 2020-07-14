@@ -26,13 +26,15 @@ class BoxingController(Controller):
 
     def __init__(self, network: FCNetwork, config_store):  # xdim, ydim, end_joints = 5, numJoints = 21):
         self.network = network
-        self.xdim = network.input_size
-        self.ydim = network.output_size
+        # self.xdim = network.input_size
+        self.xdim = network.input_dim
+        # self.ydim = network.output_size
+        self.ydim = network.output_dim
 
         # self.precomputed_weights = {}
         # self.precomputed_bins = 50
 
-        self.endJoints = config_store["end_joints"]
+        self.endJoints = config_store["endJoints"]
         self.n_joints = config_store["numJoints"] + self.endJoints
         self.use_rotations = config_store["use_rotations"]
         self.n_gaits = config_store["n_gaits"]
@@ -41,7 +43,7 @@ class BoxingController(Controller):
         self.num_traj_samples = config_store["num_traj_samples"]
         self.traj_step = config_store["traj_step"]
         self.zero_posture = config_store["zero_posture"]
-        self.joint_names_ids = config_store["joint_names_ids"]
+        self.joint_names_ids = config_store["joint_indices"]
         self.in_col_names_ids = config_store["col_indices"][0]
         self.out_col_names_ids = config_store["col_indices"][1]
 
@@ -51,12 +53,14 @@ class BoxingController(Controller):
         self.output = MANNOutput(out_data, self.n_joints, self.endJoints, self.use_foot_contacts, self.joint_names_ids,
                                  self.out_col_names_ids)
 
-        self.lastphase = 0
+        self.previous_punch_phase = {'left': 0, 'right': 0}
+        self.previous_joint_pos = np.array([[0.0, 0.0, 0.0]] * self.n_joints)
+        self.previous_joint_vel = np.array([[0.0, 0.0, 0.0]] * self.n_joints)
 
         self.num_coordinate_dims = 3
         self.num_targets = 2  # one for each hand
 
-        self.max_punch_distance = 0.4482340219788639
+        # self.max_punch_distance = 0.4482340219788639
         self.punch_targets = np.array([0.0] * self.num_coordinate_dims * self.num_targets)
 
         self.target_vel = np.array((0.0, 0.0, 0.0))
@@ -67,7 +71,8 @@ class BoxingController(Controller):
         self.config_store = config_store
         self.__initialize()
 
-    def pre_render(self, punch_phase, punch_targets):
+    # def pre_render(self, punch_phase, punch_targets):
+    def pre_render(self, punch_targets):
         """
         This function is called before rendering. It prepares character and trajectory to be rendered.
 
@@ -83,42 +88,66 @@ class BoxingController(Controller):
         if DEBUG_TIMING:
             start_time = time.time()
 
-        # 1. Update target dir and vel based on input
-        # #TO DO understand
-        # # 1.Why there is a factor of 2.5
-        # # 2.Why is target:vel being mixed with direction? => direction is a unit vector and velocity is a vector os vel magnitude * dir gives velocity
-        # target_vel_speed = 2.5 * np.linalg.norm(direction)
-        # # (1-0.9) * self.target_vel + 0.9 * target_vel_speed * direction => More importance to new vel
-        # self.target_vel = utils.glm_mix(self.target_vel, target_vel_speed * direction, 0.9)
-        #
-        # # if velocity is very less, use previous target_dir else calculate new from default
-        # vel_magnitude_condition = utils.euclidian_length(self.target_vel) < 1e-05
-        # target_vel_dir_default = utils.normalize(self.target_vel)
-        # target_vel_dir = self.target_dir if vel_magnitude_condition else target_vel_dir_default
-        #
-        # self.target_dir = utils.mix_directions(self.target_dir, target_vel_dir, 0.9)
-        #
-        # if DEBUG:
-        #     print("updated target_dir: ", self.target_vel, self.target_dir)
-
         # 2. Set new punch_phase and new punch target based on input
-        right_p_ph = punch_phase[0]
-        left_p_ph = punch_phase[1]
-        self.input.set_punch_phase(right_p_ph, left_p_ph)
+        # right_p_ph = punch_phase[0]
+        # left_p_ph = punch_phase[1]
+        # self.input.set_punch_phase(right_p_ph, left_p_ph)
 
         right_p_target = punch_targets[:self.num_coordinate_dims]
         left_p_target = punch_targets[self.num_coordinate_dims:]
         self.input.set_punch_target(right_p_target, left_p_target)
 
         # 3. Update/calculate trajectory based on input
-        self.traj.compute_future_wrist_trajectory()
+        right_pos_traj_target, left_pos_traj_target = self.output.get_wrist_pos_traj()
+        right_vels_traj_target, left_vels_traj_target = self.output.get_wrist_vels_traj()
+        self.traj.compute_future_wrist_trajectory(right_pos_traj_target, right_vels_traj_target, left_pos_traj_target,
+                                                  left_vels_traj_target)
+
+        pred_pos_traj = self.output.get_root_pos_traj()
+        pred_vels_traj = self.output.get_root_vel_traj()
+        pred_fwd_dir_target = self.output.get_root_new_forward()
+        self.traj.compute_root_future_trajectory(pred_pos_traj, pred_vels_traj, pred_fwd_dir_target)
 
         # 3. Set Trajectory input
+        input_root_pos, input_root_vels, input_right_wrist_pos, input_right_wrist_vels, \
+        input_left_wrist_pos, input_left_wrist_vels = self.traj.get_input(
+            self.char.root_position, self.char.root_rotation, self.n_gaits)
+        self.input.set_rootpos_traj(input_root_pos)
+        self.input.set_rootvel_traj(input_root_vels)
+        self.input.set_wrist_pos_tr(input_right_wrist_pos, input_left_wrist_pos)
+        self.input.set_wrist_vels_tr(input_right_wrist_vels, input_left_wrist_vels)
+
         # 4. Prepare and Set Joint Input
-        # Steps 3 and 4 will update MANN Input completely to the NN's current input
+        # Steps 3 and 4 will update MANNInput Class completely to the NN's required input for current frame
+        punch_phase_r, punch_phase_l = self.get_previous_punch_phase()
+        self.input.set_punch_phase(punch_phase_r, punch_phase_l)
+        joint_pos, joint_vel = self.get_previous_local_joint_pos_vel()
+        self.input.set_local_pos(joint_pos.ravel())
+        self.input.set_local_vel(joint_vel.ravel())
+
         # 5. Predict: Get MANN Output
+        input_data = self.input.data.reshape(1, len(self.input.data))
+        output_data = self.network.forward_pass(self.network, input_data, self.network.norm)
+        self.output.data = output_data.numpy().ravel()
+        # self.output.data = self.network.forward_pass(self.input.data)
+        # print('#######################   PRE RENDER ###########################')
+        # print("PRE RENDER In")
+        # print(self.input.data)
+        # print("PRE RENDER Out")
+        # print(self.output.data)
+        # print('#######################   PRE RENDER ###########################')
+
         # 6. Process Prediction i.e. apply rotations and set traj foot drifting
+        joint_positions = self.output.get_local_pos()
+        joint_velocities = self.output.get_local_vel()
+
         # 7. Set character's new pose
+        joint_rotations = []
+        self.char.set_pose(joint_positions, joint_velocities, joint_rotations)
+
+        # TODO: Check if to apply before or after set_pose
+        self.char.root_rotation += self.output.get_root_rotation_velocity()  # [-2*pi, +2*pi]
+        self.char.root_position += utils.convert_to_zero_y_3d(self.output.get_root_vel())  # inserting 0 to Y axis
 
     def post_render(self):
         """
@@ -131,18 +160,37 @@ class BoxingController(Controller):
             print("\n\n############## POST RENDER ###########")
         if DEBUG_TIMING:
             start_time = time.time()
-        stand_amount = self.traj.step_forward(self.output.getRotVel())
+
+        self.traj.step_forward(self.output.get_root_vel(), self.output.get_root_new_forward())
+        # self.traj.step_forward(self.output.get_rotational_vel())
 
         # 1. update and smooth trajectory
-        self.traj.update_from_predict(self.output.getNextTraj())
-        if DEBUG:
-            print("punch_phase computation: ", stand_amount, self.output.getdDPhase(), self.lastphase, "")
+        self.traj.update_from_predict(self.output.get_next_traj())
 
-        # 2. update punch_phase
-        self.lastphase = (self.lastphase + (stand_amount) * self.output.getdDPhase()) % (1.0)
+        # 2. update variables that'll be used for next input frame
+        if DEBUG:
+            # pass
+
+            print("punch_phase computation: ", self.output.get_punch_change_in_phase(), self.output.get_local_pos(),
+                  self.output.get_local_vel())
+
+        pred_d_ph = self.output.get_punch_change_in_phase()
+        for hand in ['right', 'left']:
+            self.previous_punch_phase[hand] = (self.previous_punch_phase[hand] + pred_d_ph[hand]) % 1.0
+        self.previous_joint_pos = self.output.get_local_pos()
+        self.previous_joint_vel = self.output.get_local_vel()
+
         if DEBUG_TIMING:
             print("post_predict: %f" % (time.time() - start_time))
-        return self.lastphase
+        #
+        # print('#######################   POST RENDER ###########################')
+        # print("POST RENDER In")
+        # print(self.input.data)
+        # print("POST RENDER Out")
+        # print(self.output.data)
+        # print('#######################   POST RENDER ###########################')
+
+        return self.previous_punch_phase, self.previous_joint_pos, self.previous_joint_vel
 
     def reset(self, start_location, start_orientation, start_direction):
         """
@@ -175,7 +223,7 @@ class BoxingController(Controller):
         """
 
         # root_pos, root_rot = self.traj.getWorldPosRot()
-        root_pos, root_rot = np.array(self.char.root_position), np.array(self.char.root_rotation)
+        root_pos, root_rot = np.array(self.char.root_position, dtype=np.float64), np.array(self.char.root_rotation, dtype=np.float64)
         pos, vel = self.char.getLocalJointPosVel(root_pos, root_rot)
         return np.reshape(pos, (self.char.joints, 3))
 
@@ -186,8 +234,8 @@ class BoxingController(Controller):
         # self.output.data = np.array(self.network.norm["Ymean"])  # * self.network.norm["Ystd"] + self.network.norm["Ymean"]
         # self.input.data = np.array(self.network.norm["Xmean"])  # * self.network.norm["Xstd"] + self.network.norm["Xmean"]
 
-        self.input.data = np.array(self.network.norm["Xmean"])
-        self.output.data = np.array(self.network.norm["Ymean"])
+        self.input.data = np.array(self.network.norm["Xmean"], dtype=np.float64)
+        self.output.data = np.array(self.network.norm["Ymean"], dtype=np.float64)
         # od = self.network.forward_pass(self.input.data)
 
         ###################################################################
@@ -207,8 +255,15 @@ class BoxingController(Controller):
         self.char.set_pose(joint_positions, joint_velocities, joint_rotations)
 
         # TODO: Check if to apply before or after set_pose
-        self.char.root_rotation += self.output.getRootRotationVelocity()  # [-2*pi, +2*pi]
-        self.char.root_position += self.output.getRootVelocity()
+        self.char.root_rotation += self.output.get_root_rotation_velocity()  # [-2*pi, +2*pi]
+        self.char.root_position += utils.convert_to_zero_y_3d(self.output.get_root_vel())
+
+    def get_previous_local_joint_pos_vel(self):
+        return self.previous_joint_pos, self.previous_joint_vel
+
+    def get_previous_punch_phase(self):
+        return self.previous_punch_phase['right'], self.previous_punch_phase['left']
+
 
 ###########################################################################################
 
@@ -268,7 +323,7 @@ class MANNInput(object):
         # self.__set_data__(wrist_vels_traj, right_wrist_vels_ids[0], left_wrist_vels_ids[1])
 
     def set_punch_phase(self, right_phase, left_phase):
-        curr_phase = np.array([right_phase, left_phase])
+        curr_phase = np.array([right_phase, left_phase], dtype=np.float64)
         self.__set_data__("x_punch_phase", curr_phase)
 
         # punch_phase_id = self.col_names_ids["x_punch_phase"]
@@ -330,8 +385,19 @@ class MANNOutput(object):
     def get_root_new_forward(self):
         return self.__get_data__('y_root_new_forward')
 
+    def get_rotational_vel(self):
+        root_vel = self.get_root_vel()
+        root_new_fwd_dir = self.get_root_new_forward()
+        return np.concatenate((root_vel, root_new_fwd_dir))
+
+    def get_root_rotation_velocity(self):
+        root_new_fwd_x_z = self.get_root_new_forward()
+        root_new_fwd_3d = utils.convert_to_zero_y_3d(root_new_fwd_x_z)
+        return utils.z_angle(root_new_fwd_3d)
+
     def get_punch_change_in_phase(self):
-        return self.__get_data__('y_punch_dphase')
+        d_ph_r, d_ph_l = self.__get_data__('y_punch_dphase')
+        return {'right': d_ph_r, 'left': d_ph_l}
 
     def get_foot_contacts(self):
         return self.__get_data__('y_foot_contacts')
@@ -357,3 +423,12 @@ class MANNOutput(object):
 
     def get_local_vel(self):
         return self.__get_data__('y_local_vel')
+
+    def get_next_traj(self):
+        rp_tr = self.get_root_pos_traj()
+        rv_tr = self.get_root_vel_traj()
+        rwp_tr, lwp_tr = self.get_wrist_pos_traj()
+        rwv_tr, lwv_tr = self.get_wrist_vels_traj()
+        pred_dir = self.get_root_new_forward()
+
+        return rp_tr, rv_tr, rwp_tr, lwp_tr, rwv_tr, lwv_tr, pred_dir
