@@ -1,16 +1,26 @@
+import json
 from src.controlers.boxingControllers.controller_box import BoxingController
-from src.nn.fc_models.mann_tf import *
-from src.nn.fc_models.mann_tf import MANN as MANNTF
+from src.nn.keras_mods.mann_keras import MANN as MANNTF
 from src.controlers.character import *
 from simple_plotter import simple_matplotlib_plotter
 from pathlib import Path, PureWindowsPath
 import numpy as np
 
+# TODO Clean up this script
+# TODO Clean up folder structure
+# TODO Write an init README
+# TODO Prepare the new env i.e mann_tf2
 target_file = PureWindowsPath(
     # r"C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-MOSI-DEV-VINN\mosi_dev_vinn\trained_models\mann\epoch_30.json")
-    r"C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-MOSI-DEV-VINN\mosi_dev_vinn\trained_models\mann\epoch_5.json")
-target_file = Path(target_file)
-mann = MANNTF.load(target_file)
+    # r"C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-MOSI-DEV-VINN\mosi_dev_vinn\trained_models\mann\epoch_5.json")
+    r"C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-MOSI-DEV-VINN\mosi_dev_vinn\trained_models\mann\model")
+
+mann_config_path = r'C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-MOSI-DEV-VINN\mosi_dev_vinn\mann_config.json'
+with open(mann_config_path) as json_file:
+    mann_config = json.load(json_file)
+
+mann = MANNTF(mann_config)
+mann.load_discrete_weights(target_file)
 args_dataset = "./data/boxing_config_updated.json"
 
 with open(args_dataset) as f:
@@ -40,7 +50,7 @@ b = find_joint_index('RightHand')
 c = find_joint_index('LeftShoulder')
 d = find_joint_index('LeftHand')
 
-mann.start_tf()
+# mann.start_tf()
 bc = BoxingController(mann, config_store)
 # c = Character(config_store)
 test_dataset = args_dataset.split('_')[0] + '_test.npz'
