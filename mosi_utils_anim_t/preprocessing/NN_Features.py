@@ -692,7 +692,8 @@ class FeatureExtractor():
         head_directions = self.get_head_directions()
 
         # todo: verify if root_vel already contains wrist vel
-        root_vel = self.get_root_local_joint_velocities()
+        # root_vel = self.get_root_local_joint_velocities()
+        root_vel = np.squeeze(self.get_root_velocity())
 
         left_wrist_vel = self.get_wrist_velocity(type_hand='left')
         right_wrist_vel = self.get_wrist_velocity(type_hand='right')
@@ -730,7 +731,7 @@ class FeatureExtractor():
             rootposs[j] = root_rotations[frame] * rootposs[j]
             rootdirs[j] = root_rotations[frame] * rootdirs[j]
             # todo: verify if rootvels has to be multiplied with root_rotations
-            # rootvels[j] = root_rotations[frame] * rootvels[j]
+            rootvels[j] = root_rotations[frame] * rootvels[j]
             headdirs[j] = root_rotations[frame] * headdirs[j]
 
         return_items = [rootposs, left_wrist_pos, right_wrist_pos, head_pos, rootdirs, headdirs, rootvels,

@@ -153,10 +153,10 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
                 [y_rootvels_tr[:, 0].ravel(), y_rootvels_tr[:, 2].ravel()])  # Trajectory Vels, 2 * 12d
 
             y_right_wrist_pos_tr = traj_info_next['right_wrist_pos'].ravel()
-            y_left_wrist_pos_tr = traj_info['left_wrist_pos'].ravel()
+            y_left_wrist_pos_tr = traj_info_next['left_wrist_pos'].ravel()
 
             y_right_wrist_vels_tr = traj_info_next['right_wristvels'].ravel()
-            y_left_wrist_vels_tr = traj_info['left_wristvels'].ravel()
+            y_left_wrist_vels_tr = traj_info_next['left_wristvels'].ravel()
 
             y_punch_phase = punch_phase[i + 1].ravel()  # Right punch phase followed by left punch phase
 
