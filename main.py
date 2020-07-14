@@ -1,15 +1,12 @@
-from src.controlers.directional_controller import DirectionalController
-from src.nn.fc_models.pfnn_np import PFNN
-from src.nn.fc_models.pfnn_tf import PFNN as PFNNTF
-from src.nn.fc_models.mann_tf import MANN as MANNTF
-from src.nn.fc_models.vinn_tf import VINN as VINNTF
-# from src.servers.simpleThriftServer.simpleThriftServer import CREATE_MOTION_SERVER
-# from src.servers.MultiThriftServer.MultiThriftServer import CREATE_MOTION_SERVER as CREATE_MULTI_MOTION_SERVER
-import numpy as np
+# from src.nn.fc_models.mann_tf import MANN as MANNTF
+import os
+
+from src.nn.keras_mods.mann_keras import MANN as MANNTF
 import json
 
 args_dataset = "./data/boxing_config_updated.json"
-args_output = "./trained_models/mann/"
+# args_output = "./trained_models/mann/"
+args_output = "./trained_models/mann/model"
 
 with open(args_dataset) as f:
     config_store = json.load(f)
@@ -95,5 +92,16 @@ gating_indices = wrist_velocities_indices + \
                  punch_target_indices + \
                  foot_end_effector_velocities
 
+X, Y, norm = MANNTF.prepare_mann_data(datasetnpz, config_store)
+mann_config = MANNTF.train_mann(X, Y, norm, gating_indices, args_output)
 
-MANNTF.from_file(datasetnpz, args_output, 30, config_store, gating_indices=gating_indices)
+mann_config_path = r'C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-MOSI-DEV-VINN\mosi_dev_vinn\mann_config.json'
+with open(mann_config_path, 'w') as outfile:
+    json.dump(mann_config, outfile)
+
+norm_path = r"C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-MOSI-DEV-VINN\mosi_dev_vinn\data"
+
+with open(os.path.join(norm_path, 'norm.json'), 'w') as outfile:
+    json.dump(norm, outfile)
+
+# MANNTF.from_file(datasetnpz, args_output, 30, config_store, gating_indices=gating_indices)
