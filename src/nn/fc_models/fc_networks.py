@@ -102,7 +102,6 @@ class FCNetwork:
 
 		if len(params) == 0:
 			params = np.array(self.norm["Xmean"])
-
 		params = (params - self.norm["Xmean"]) / self.norm["Xstd"]
 		for l in self.layers:
 			params = l.forward_pass(params)

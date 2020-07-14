@@ -441,7 +441,8 @@ class MANN(FCNetwork):
 
         print('################################')
         print(X.shape)
+        print(X[1])
         print(Y.shape)
-
+        print(Y[1])
         mann = MANN(input_dim, output_dim, 512, norm, gating_indices=gating_indices)
         mann.train(X, Y, epochs, target_path)
