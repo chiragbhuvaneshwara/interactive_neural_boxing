@@ -186,7 +186,8 @@ class FeatureExtractor():
         self.foot_right = [3, 3]
         self.head = 12
         self.n_joints = 59
-        self.to_meters = 100
+        # self.to_meters = 100
+        self.to_meters = 1
 
     def set_makehuman_parameters(self):
         """
@@ -198,6 +199,14 @@ class FeatureExtractor():
         self.foot_right = [29, 30]
         self.to_meters = 1
         self.head = 16  # check this!
+
+    def set_awinda_parameters(self):
+        self.shoulder_joints = [8, 12]
+        self.hip_joints = [15, 19]
+        self.foot_left = [21, 21]
+        self.foot_right = [17, 17]
+        self.to_meters = 1
+        self.head = 6  # check this!
 
     def load_punch_phase(self, punch_phase_csv_path, frame_rate_divisor=2, frame_rate_offset=0):
 
@@ -495,10 +504,12 @@ class FeatureExtractor():
         """
 
         if hand == 'right':
-            hand_joint = self.joint_indices_dict['RightHand']
+            # hand_joint = self.joint_indices_dict['RightHand']
+            hand_joint = self.joint_indices_dict['RightWrist']
 
         elif hand == 'left':
-            hand_joint = self.joint_indices_dict['LeftHand']
+            # hand_joint = self.joint_indices_dict['LeftHand']
+            hand_joint = self.joint_indices_dict['LeftWrist']
 
         punch_target_array = np.array(self.__global_positions[:, hand_joint])
 
@@ -555,6 +566,8 @@ class FeatureExtractor():
 
         # Converting to local positions i.e local co-ordinate system
         punch_target_array[:, 0] = punch_target_array[:, 0] - self.__global_positions[:, 0, 0]
+        # todo: local co-ordinate for Y axis as well
+        punch_target_array[:, 1] = punch_target_array[:, 1] - self.__global_positions[:, 0, 1]
         punch_target_array[:, 2] = punch_target_array[:, 2] - self.__global_positions[:, 0, 2]
 
         root_rotations = self.get_root_rotations()
@@ -584,7 +597,7 @@ class FeatureExtractor():
             # root_velocity[i,0] /= np.linalg.norm(root_velocity[i,0])
             root_velocity[i, 0] = root_rotations[i] * root_velocity[i, 0]
 
-        root_velocity = root_velocity
+        # root_velocity = root_velocity
         return root_velocity
 
     def get_wrist_velocity(self, type_hand):
@@ -597,11 +610,13 @@ class FeatureExtractor():
         root_rotations = self.get_root_rotations()
 
         if type_hand == 'left':
-            hand_joint = self.joint_indices_dict['LeftHand']
+            # hand_joint = self.joint_indices_dict['LeftHand']
+            hand_joint = self.joint_indices_dict['LeftWrist']
         elif type_hand == 'right':
-            hand_joint = self.joint_indices_dict['LeftHand']
+            # hand_joint = self.joint_indices_dict['LeftHand']
+            hand_joint = self.joint_indices_dict['RightWrist']
 
-        root_velocity = (global_positions[1:, hand_joint:hand_joint + 1] - global_positions[:-1,
+        hand_velocity = (global_positions[1:, hand_joint:hand_joint + 1] - global_positions[:-1,
                                                                            hand_joint:hand_joint + 1]).copy()
 
         for i in range(self.n_frames - 1):
@@ -609,10 +624,10 @@ class FeatureExtractor():
             # root_velocity[i, 0][1] = 0
             # root_velocity[i,0] /= np.linalg.norm(root_velocity[i,0])
 
-            root_velocity[i, 0] = root_rotations[i] * root_velocity[i, 0]
+            hand_velocity[i, 0] = root_rotations[i] * hand_velocity[i, 0]
 
-        root_velocity = root_velocity
-        return root_velocity
+        # hand_velocity = hand_velocity
+        return hand_velocity
 
     def get_rotational_velocity(self):
         """
@@ -691,12 +706,12 @@ class FeatureExtractor():
         forward = self.get_forward_directions()
         head_directions = self.get_head_directions()
 
-        # todo: verify if root_vel already contains wrist vel
+        # todo: verify if root_vel already contains wrist vel => Solved
         # root_vel = self.get_root_local_joint_velocities()
         root_vel = np.squeeze(self.get_root_velocity())
 
-        left_wrist_vel = self.get_wrist_velocity(type_hand='left')
-        right_wrist_vel = self.get_wrist_velocity(type_hand='right')
+        left_wrist_vel = np.squeeze(self.get_wrist_velocity(type_hand='left'))
+        right_wrist_vel = np.squeeze(self.get_wrist_velocity(type_hand='right'))
 
         root_rotations = self.get_root_rotations()
 
@@ -705,34 +720,52 @@ class FeatureExtractor():
 
         step = self.traj_step
 
+        # todo: verify if window should be same for punch and walk
         rootposs = np.array(
             global_positions[start_from:frame + self.window:step, 0] - global_positions[frame:frame + 1, 0])
-
+        # print('rp:', rootposs.shape)
         left_wrist_pos = np.array(
-            global_positions[start_from:frame + self.window:step, self.joint_indices_dict['LeftHand']]
-            - global_positions[frame:frame + 1, self.joint_indices_dict['LeftHand']])
+            # global_positions[start_from:frame + self.window:step, self.joint_indices_dict['LeftHand']]
+            global_positions[start_from:frame + self.window:step, self.joint_indices_dict['LeftWrist']]
+            - global_positions[frame:frame + 1, 0])
+            # - global_positions[frame:frame + 1, self.joint_indices_dict['LeftHand']])
+
         right_wrist_pos = np.array(
-            global_positions[start_from:frame + self.window:step, self.joint_indices_dict['RightHand']]
-            - global_positions[frame:frame + 1, self.joint_indices_dict['RightHand']])
+            # global_positions[start_from:frame + self.window:step, self.joint_indices_dict['RightHand']]
+            global_positions[start_from:frame + self.window:step, self.joint_indices_dict['RightWrist']]
+            - global_positions[frame:frame + 1, 0])
+            # - global_positions[frame:frame + 1, self.joint_indices_dict['RightHand']])
+
         head_pos = np.array(
             global_positions[start_from:frame + self.window:step, self.joint_indices_dict['Head']]
-            - global_positions[frame:frame + 1, self.joint_indices_dict['Head']])
+            - global_positions[frame:frame + 1, 0])
+            # - global_positions[frame:frame + 1, self.joint_indices_dict['Head']])
 
         rootdirs = np.array(forward[start_from:frame + self.window:step])
 
         headdirs = np.array(head_directions[start_from:frame + self.window:step])
 
         rootvels = np.array(root_vel[start_from:frame + self.window:step])
+        # print('rv:', rootvels.shape)
 
         left_wristvels = np.array(left_wrist_vel[start_from:frame + self.window:step])
         right_wristvels = np.array(right_wrist_vel[start_from:frame + self.window:step])
 
         for j in range(len(rootposs)):
+            # todo apply root rotation to wrist as well
             rootposs[j] = root_rotations[frame] * rootposs[j]
             rootdirs[j] = root_rotations[frame] * rootdirs[j]
-            # todo: verify if rootvels has to be multiplied with root_rotations
-            rootvels[j] = root_rotations[frame] * rootvels[j]
+            left_wrist_pos[j] = root_rotations[frame] * left_wrist_pos[j]
+            right_wrist_pos[j] = root_rotations[frame] * right_wrist_pos[j]
+            # Done: required! verify if rootvels has to be multiplied with root_rotations
+            # rootvels[j] = root_rotations[frame] * rootvels[j]
             headdirs[j] = root_rotations[frame] * headdirs[j]
+            # left_wristvels[j] = root_rotations[frame] * left_wristvels[j]
+            # right_wristvels[j] = root_rotations[frame] * right_wristvels[j]
+
+        # todo explain why you need it or not
+        left_wrist_pos = left_wrist_pos - left_wrist_pos[len(left_wrist_pos)//2]
+        right_wrist_pos = right_wrist_pos - right_wrist_pos[len(right_wrist_pos)//2]
 
         return_items = [rootposs, left_wrist_pos, right_wrist_pos, head_pos, rootdirs, headdirs, rootvels,
                         left_wristvels, right_wristvels]

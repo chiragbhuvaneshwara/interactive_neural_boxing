@@ -1,3 +1,5 @@
+import math
+
 from mosi_utils_anim_t.preprocessing.NN_Features import FeatureExtractor, retrieve_name
 import numpy as np
 import pandas as pd
@@ -8,7 +10,8 @@ def prepare_indices_dict(**args):
     """
     :param args: all the variables that can be possibly used as part of X or Y
     :return:
-
+    indices_dict: dict of joint names with stat_idx and end_idx
+    col_names: list of col names with for ex position marked as position_0, position_1, position_2 for x,y,z co-ordinates
     """
     keys = args.keys()
     col_names = []
@@ -25,9 +28,7 @@ def prepare_indices_dict(**args):
         col_names.extend(col_names_subset)
         start = end
 
-    # print('keys: ',len(keys))
     print('col names len: ', len(col_names))
-    # print(col_names)
 
     return indices_dict, col_names
 
@@ -35,11 +36,8 @@ def prepare_indices_dict(**args):
 def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
     xc, yc = [], []
 
-    # frame_rate_div = 1
-
     for div in range(frame_rate_div):
-    # for div in [1]:
-        print('Processing Blender csv data %s' %frame_rate_div, div)
+        print('Processing Blender csv data %s' % frame_rate_div, div)
         # Loading Bvh file into memory
         handler.load_motion(frame_rate_divisor=frame_rate_div, frame_rate_offset=div)
 
@@ -52,7 +50,6 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
 
         #############################################################################################
         # These work but they aren't as accurate as blender
-
         local_positions = handler.get_root_local_joint_positions()
         local_velocities = handler.get_root_local_joint_velocities()
 
@@ -64,8 +61,7 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
         #############################################################################################
 
         indices_dict_set = False
-        for i in range(handler.window, handler.n_frames - handler.window, 1):
-        # for i in range(handler.window, 100 - handler.window, 1):
+        for i in range(handler.window, handler.n_frames - handler.window - 1, 1):
 
             if i % 50 == 0:
                 print('Frames processed: ', i)
@@ -77,7 +73,7 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
                 [x_rootposs_tr[:, 0].ravel(), x_rootposs_tr[:, 2].ravel()])  # Trajectory Pos, 2 * 10d
 
             # TODO FIX trajectory velocities. It currently contains info about all joints. Get only root joint from
-            #  process_file.py
+            #  process_file.py  => Solved
             x_rootvels_tr = traj_info['rootvels']
             x_rootvels_tr = np.hstack(
                 [x_rootvels_tr[:, 0].ravel(), x_rootvels_tr[:, 2].ravel()])  # Trajectory Vels, 2 * 10d
@@ -139,6 +135,7 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
                 print(x_indices)
                 print('\n')
 
+            # print('x shape: ', np.hstack(x_curr_frame).shape)
             xc.append(np.hstack(x_curr_frame))
 
             ############################################################################
@@ -216,8 +213,10 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
                 print(y_indices)
                 print('\n')
 
+            # print('y shape: ', np.hstack(y_curr_frame).shape)
             yc.append(np.hstack(y_curr_frame))
 
+            # todo check yc contents
             indices_dict_set = True
 
     dataset_config = {
@@ -240,27 +239,33 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
     return np.array(xc), np.array(yc), dataset_config
 
 
-punch_phase_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Blender Code Snippets/data annotation res/PunchPhase_detailed.csv'
-# punch_phase_path = 'C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Blender Code Snippets\data annotation res\PunchPhase_binary.csv'
-# bvh_path = "C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Data/MocapBoxing/axis_neuron_processed/5_Punching_AxisNeuronProcessed_Char00.bvh"
-bvh_path = r"C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Data\MocapBoxing\processed\Scene5_Punches.bvh"
-
-forward_direction = np.array([1.0, 0.0, 0.0])       # X axis
-window = 25
+# punch_phase_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Blender Code Snippets/data annotation res/PunchPhase_right_hand_coordinate_system_detailed.csv'
+punch_phase_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Blender Code Snippets/data annotation res/new_data/tertiary/boxing_2_tertiary.csv'
+# bvh_path = r"C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Data\MocapBoxing\processed\Scene5_Punches.bvh"
+# bvh_path = r"C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Data\MocapBoxing\processed\Scene5_Punches_right_hand_coordinate_system.bvh"
+bvh_path = r"C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Data\boxing_chirag\processed\boxing_2.bvh"
+# Todo Rotate the bvh mocap data to right hand co-ordinate system i.e. y up and z forward
+####################################################################################
+frame_rate_div = 1  # if 2, Reduces fps from 120fps to 60fps
+# forward_direction = np.array([1.0, 0.0, 0.0])  # X axis
+forward_direction = np.array([0.0, 0.0, 1.0])  # Z axis
+# Todo verify working with setting adaptible window w.r.t frame_rate_div
+window = math.ceil(25 / frame_rate_div)
 handler = FeatureExtractor(bvh_path, window, forward_dir=forward_direction)
 # manually set the skeleton parameters by manually checking the bvh files
-handler.set_neuron_parameters()
-
-####################################################################################
-frame_rate_div = 2   # if 2, Reduces fps from 120fps to 60fps
+# handler.set_neuron_parameters()
+handler.set_awinda_parameters()
 Xc, Yc, Dataset_Config = process_data(handler, punch_phase_path, frame_rate_div)
 
-output_file_name = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-MOSI-DEV-VINN/mosi_dev_vinn/data/boxing'
+output_file_name = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-MOSI-DEV-VINN/mosi_dev_vinn/data/boxing_fr_' + str(
+    frame_rate_div) + '_' + str(window)
 
 X_train = Xc
 Y_train = Yc
 print('X_train shape: ', X_train.shape)
+print('X_train mean: ', X_train.mean())
 print('Y_train shape: ', Y_train.shape)
+print('Y_train mean: ', Y_train.mean())
 np.savez_compressed(output_file_name + "_train", Xun=X_train, Yun=Y_train)
 
 X_train_df = pd.DataFrame(data=X_train, columns=Dataset_Config['col_names'][0])
