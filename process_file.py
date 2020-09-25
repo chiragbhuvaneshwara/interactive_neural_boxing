@@ -10,8 +10,8 @@ def prepare_indices_dict(**args):
     """
     :param args: all the variables that can be possibly used as part of X or Y
     :return:
-    indices_dict: dict of joint names with stat_idx and end_idx
-    col_names: list of col names with for ex position marked as position_0, position_1, position_2 for x,y,z co-ordinates
+    indices_dict: dict of joint names with start_idx and end_idx
+    col_names: list of col names with for example position marked as position_0, position_1, position_2 for x,y,z co-ordinates
     """
     keys = args.keys()
     col_names = []
@@ -175,12 +175,11 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
             # print('y shape: ', np.hstack(y_curr_frame).shape)
             yc.append(np.hstack(y_curr_frame))
 
-            # todo check yc contents
             indices_dict_set = True
 
     dataset_config = {
         "endJoints": 0,
-        "numJoints": len(handler.joint_indices_dict.keys()),  # 59
+        "numJoints": len(handler.joint_indices_dict.keys()),
         "use_rotations": False,
         "n_gaits": 1,
         "use_footcontacts": True,
