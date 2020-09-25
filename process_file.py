@@ -109,26 +109,6 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
             keys = list(map(retrieve_name, x_curr_frame))
             kwargs = {k: v for k, v in zip(keys, x_curr_frame)}
 
-            # rootposs, left_wrist_pos, right_wrist_pos, head_pos, rootdirs, headdirs, rootvels, left_wristvels, \
-            # right_wristvels = handler.get_trajectory(i)
-            # x_curr_frame = [
-            #     rootposs[:, 0].ravel(), rootposs[:, 2].ravel(),  # Trajectory Pos, 2 * 12d
-            #     # rootdirs[:, 0].ravel(), rootdirs[:, 2].ravel(),  # Trajectory Dir, 2 * 12d
-            #     rootvels[:, 0].ravel(), rootvels[:, 2].ravel(),
-            #     # rootgait[:,0].ravel(), rootgait[:,1].ravel(), # Trajectory Gait, 6 * 12d
-            #     # rootgait[:,2].ravel(), rootgait[:,3].ravel(),
-            #     # rootgait[:,4].ravel(), rootgait[:,5].ravel(),
-            #     right_wrist_pos.ravel(),  # Trajectory Pos of wrist
-            #     left_wrist_pos.ravel(),  # Trajectory Pos of wrist
-            #     right_wristvels.ravel(),  # Trajectory Vels of wrist
-            #     left_wristvels.ravel(),  # Trajectory Vels of wrist
-            #     punch_phase[i].ravel(),  # Right punch phase followed by left punch phase
-            #     right_punch_target[i].ravel(),
-            #     left_punch_target[i].ravel(),
-            #     local_positions[i - 1].ravel(),  # Joint Pos
-            #     local_velocities[i - 1].ravel(),  # Joint Vel
-            # ]
-
             if not indices_dict_set:
                 x_indices, x_col_names = prepare_indices_dict(**kwargs)
                 print('curr frame len ', len(np.hstack(x_curr_frame)))
@@ -186,27 +166,6 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
             keys = list(map(retrieve_name, y_curr_frame))
             kwargs = {k: v for k, v in zip(keys, y_curr_frame)}
 
-            # rootposs_next, left_wrist_pos_next, right_wrist_pos_next, head_pos_next, rootdirs_next, headdirs_next, rootvels_next, left_wristvels_next, right_wristvels_next = handler.get_trajectory(
-            #     i + 1, i + 1)
-            # y_curr_frame = [
-            #     root_velocity[i, 0, 0].ravel(),  # Root Vel X, 1D
-            #     root_velocity[i, 0, 2].ravel(),  # Root Vel Y, 1D
-            #     # root_rvelocity[i].ravel(),    # Root Rot Vel, 1D
-            #     root_new_forward[i].ravel(),  # new forward direction in 2D relative to past rotation.
-            #     punch_dphase[i].ravel(),
-            #     # dphase[i],                    # Change in Phase, 1D
-            #     np.concatenate([feet_l[i], feet_r[i]], axis=-1),  # Contacts, 4D
-            #     rootposs_next[:, 0].ravel(), rootposs_next[:, 2].ravel(),  # Next Trajectory Pos
-            #     # rootdirs_next[:, 0].ravel(), rootdirs_next[:, 2].ravel(),  # Next Trajectory Dir
-            #     rootvels_next[:, 0].ravel(), rootvels_next[:, 2].ravel(),
-            #     right_wrist_pos_next.ravel(),  # Trajectory Pos of wrist
-            #     left_wrist_pos_next.ravel(),  # Trajectory Pos of wrist
-            #     right_wristvels_next.ravel(),  # Trajectory Vels of wrist
-            #     left_wristvels_next.ravel(),  # Trajectory Vels of wrist
-            #     local_positions[i].ravel(),  # Joint Pos
-            #     local_velocities[i].ravel(),  # Joint Vel
-            # ]
-
             if not indices_dict_set:
                 y_indices, y_col_names = prepare_indices_dict(**kwargs)
                 print('curr frame len ', len(np.hstack(y_curr_frame)))
@@ -241,13 +200,11 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
 
 # punch_phase_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Blender Code Snippets/data annotation res/PunchPhase_right_hand_coordinate_system_detailed.csv'
 punch_phase_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Blender Code Snippets/data annotation res/new_data/tertiary/boxing_2_tertiary.csv'
-# bvh_path = r"C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Data\MocapBoxing\processed\Scene5_Punches.bvh"
 # bvh_path = r"C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Data\MocapBoxing\processed\Scene5_Punches_right_hand_coordinate_system.bvh"
 bvh_path = r"C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Data\boxing_chirag\processed\boxing_2.bvh"
 # Todo Rotate the bvh mocap data to right hand co-ordinate system i.e. y up and z forward
 ####################################################################################
 frame_rate_div = 1  # if 2, Reduces fps from 120fps to 60fps
-# forward_direction = np.array([1.0, 0.0, 0.0])  # X axis
 forward_direction = np.array([0.0, 0.0, 1.0])  # Z axis
 # Todo verify working with setting adaptible window w.r.t frame_rate_div
 window = math.ceil(25 / frame_rate_div)
