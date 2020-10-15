@@ -1,5 +1,6 @@
+import glob
+import os
 import math
-
 from mosi_utils_anim_t.preprocessing.NN_Features import FeatureExtractor, retrieve_name
 import numpy as np
 import pandas as pd
@@ -40,13 +41,15 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
         print('Processing Blender csv data %s' % frame_rate_div, div)
         # Loading Bvh file into memory
         handler.load_motion(frame_rate_divisor=frame_rate_div, frame_rate_offset=div)
-
+        # manually set the skeleton parameters by manually checking the bvh files
+        handler.set_awinda_parameters()
         # (n_frames, 2) => punch phase right, punch phase left
         punch_phase, punch_dphase = handler.load_punch_phase(punch_p_csv_path, frame_rate_divisor=frame_rate_div,
                                                              frame_rate_offset=div)
 
-        right_punch_target = handler.get_punch_targets(punch_phase[:, 0], hand='right', phase_type='detailed')
-        left_punch_target = handler.get_punch_targets(punch_phase[:, 1], hand='left', phase_type='detailed')
+        # TODO Only implemented for phase type tertiary currently
+        right_punch_target = handler.get_punch_targets(punch_phase[:, 0], hand='right', phase_type='tertiary')
+        left_punch_target = handler.get_punch_targets(punch_phase[:, 1], hand='left', phase_type='tertiary')
 
         #############################################################################################
         # These work but they aren't as accurate as blender
@@ -59,24 +62,19 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
 
         feet_l, feet_r = handler.get_foot_concats()
         #############################################################################################
-
-        indices_dict_set = False
+        indices_dict_set = False  # just to print out useful info
         for i in range(handler.window, handler.n_frames - handler.window - 1, 1):
-
+        # for i in range(handler.window, 100 - handler.window - 1, 1):
             if i % 50 == 0:
                 print('Frames processed: ', i)
 
             traj_info = handler.get_trajectory(i)
 
             x_rootposs_tr = traj_info['rootposs']
-            x_rootposs_tr = np.hstack(
-                [x_rootposs_tr[:, 0].ravel(), x_rootposs_tr[:, 2].ravel()])  # Trajectory Pos, 2 * 10d
+            x_rootposs_tr = np.delete(x_rootposs_tr, 1, 1).ravel()  # Trajectory Pos, 2 * 10d
 
-            # TODO FIX trajectory velocities. It currently contains info about all joints. Get only root joint from
-            #  process_file.py  => Solved
             x_rootvels_tr = traj_info['rootvels']
-            x_rootvels_tr = np.hstack(
-                [x_rootvels_tr[:, 0].ravel(), x_rootvels_tr[:, 2].ravel()])  # Trajectory Vels, 2 * 10d
+            x_rootvels_tr = np.delete(x_rootvels_tr, 1, 1).ravel()
 
             x_right_wrist_pos_tr = traj_info['right_wrist_pos'].ravel()
             x_left_wrist_pos_tr = traj_info['left_wrist_pos'].ravel()
@@ -93,15 +91,15 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
             x_local_vel = local_velocities[i - 1].ravel()
 
             x_curr_frame = [
-                x_rootposs_tr,
+                x_rootposs_tr,              # local wrt r in mid frame
                 x_rootvels_tr,
-                x_right_wrist_pos_tr,
-                x_left_wrist_pos_tr,
+                x_right_wrist_pos_tr,       # local wrt r in mid frame then wrt wrist in mid frame
+                x_left_wrist_pos_tr,        # local wrt r in mid frame then wrt wrist in mid frame
                 x_right_wrist_vels_tr,
                 x_left_wrist_vels_tr,
                 x_punch_phase,
-                x_right_punch_target,
-                x_left_punch_target,
+                x_right_punch_target,       # local wrt r in mid frame
+                x_left_punch_target,        # local wrt r in mid frame
                 x_local_pos,
                 x_local_vel
             ]
@@ -115,19 +113,17 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
                 print(x_indices)
                 print('\n')
 
-            # print('x shape: ', np.hstack(x_curr_frame).shape)
             xc.append(np.hstack(x_curr_frame))
 
             ############################################################################
+
             traj_info_next = handler.get_trajectory(i + 1, i + 1)
 
             y_rootposs_tr = traj_info_next['rootposs']
-            y_rootposs_tr = np.hstack(
-                [y_rootposs_tr[:, 0].ravel(), y_rootposs_tr[:, 2].ravel()])  # Trajectory Pos, 2 * 12d
+            y_rootposs_tr = np.delete(y_rootposs_tr, 1, 1).ravel()
 
             y_rootvels_tr = traj_info_next['rootvels']
-            y_rootvels_tr = np.hstack(
-                [y_rootvels_tr[:, 0].ravel(), y_rootvels_tr[:, 2].ravel()])  # Trajectory Vels, 2 * 12d
+            y_rootvels_tr = np.delete(y_rootvels_tr, 1, 1).ravel()
 
             y_right_wrist_pos_tr = traj_info_next['right_wrist_pos'].ravel()
             y_left_wrist_pos_tr = traj_info_next['left_wrist_pos'].ravel()
@@ -145,13 +141,17 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
 
             y_root_velocity = np.hstack([root_velocity[i, 0, 0].ravel(), root_velocity[i, 0, 2].ravel()])
             y_root_new_forward = root_new_forward[i].ravel()
+
+            # Taking i because length of phase is l and length of dphase is l-1
             y_punch_dphase = punch_dphase[i].ravel()
+
             y_foot_contacts = np.concatenate([feet_l[i], feet_r[i]], axis=-1)
 
             y_curr_frame = [
                 y_root_velocity,
                 y_root_new_forward,
-                y_punch_dphase,
+                # y_punch_dphase,
+                y_punch_phase,
                 y_foot_contacts,
                 y_rootposs_tr,
                 y_rootvels_tr,
@@ -172,7 +172,6 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
                 print(y_indices)
                 print('\n')
 
-            # print('y shape: ', np.hstack(y_curr_frame).shape)
             yc.append(np.hstack(y_curr_frame))
 
             indices_dict_set = True
@@ -183,12 +182,13 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
         "use_rotations": False,
         "n_gaits": 1,
         "use_footcontacts": True,
+        "frd": frame_rate_div,
         "window": handler.window,
         "num_traj_samples": handler.num_traj_sampling_pts,
         "traj_step": handler.traj_step,
-        "foot_left": handler.foot_left,
-        "foot_right": handler.foot_right,
-        "zero_posture": handler.reference_skeleton,
+        # "foot_left": handler.foot_left,
+        # "foot_right": handler.foot_right,
+        # "zero_posture": handler.reference_skeleton,
         "joint_indices": handler.joint_indices_dict,
         "col_indices": [x_indices, y_indices],
         "col_names": [x_col_names, y_col_names]
@@ -197,24 +197,29 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
     return np.array(xc), np.array(yc), dataset_config
 
 
-# punch_phase_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Blender Code Snippets/data annotation res/PunchPhase_right_hand_coordinate_system_detailed.csv'
-punch_phase_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Blender Code Snippets/data annotation res/new_data/tertiary/boxing_2_tertiary.csv'
-# bvh_path = r"C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Data\MocapBoxing\processed\Scene5_Punches_right_hand_coordinate_system.bvh"
-bvh_path = r"C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Data\boxing_chirag\processed\boxing_2.bvh"
-# Todo Rotate the bvh mocap data to right hand co-ordinate system i.e. y up and z forward
+input_base_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor'
+punch_phase_path = input_base_path + '/Blender Code Snippets/data annotation res/new_data/tertiary/boxing_2_tertiary.csv'
+bvh_path = input_base_path + "/Data/boxing_chirag/processed/boxing_2.bvh"
 ####################################################################################
-frame_rate_div = 1  # if 2, Reduces fps from 120fps to 60fps
+frame_rate_div = 1  # if 2, Reduces fps from 120fps to 60fps for Axis Neuron bvh
+# Ensure: Rotated the bvh mocap data to right hand co-ordinate system i.e. y up and z forward
 forward_direction = np.array([0.0, 0.0, 1.0])  # Z axis
-# Todo verify working with setting adaptible window w.r.t frame_rate_div
 window = math.ceil(25 / frame_rate_div)
 handler = FeatureExtractor(bvh_path, window, forward_dir=forward_direction)
-# manually set the skeleton parameters by manually checking the bvh files
-# handler.set_neuron_parameters()
-handler.set_awinda_parameters()
 Xc, Yc, Dataset_Config = process_data(handler, punch_phase_path, frame_rate_div)
 
-output_file_name = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-MOSI-DEV-VINN/mosi_dev_vinn/data/boxing_fr_' + str(
-    frame_rate_div) + '_' + str(window)
+output_base_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-MOSI-DEV-VINN/mosi_dev_vinn/data/'
+frd_win = 'boxing_fr_' + str(frame_rate_div) + '_' + str(window)
+if frd_win not in os.listdir(output_base_path):
+    print('Creating new output dir:', frd_win)
+    os.mkdir(os.path.join(output_base_path, frd_win))
+    out_dir = os.path.join(output_base_path, frd_win)
+else:
+    print('Emptying output dir:', frd_win)
+    files = glob.glob(os.path.join(output_base_path, frd_win, '*'))
+    for f in files:
+        os.remove(f)
+    out_dir = os.path.join(output_base_path, frd_win)
 
 X_train = Xc
 Y_train = Yc
@@ -222,14 +227,14 @@ print('X_train shape: ', X_train.shape)
 print('X_train mean: ', X_train.mean())
 print('Y_train shape: ', Y_train.shape)
 print('Y_train mean: ', Y_train.mean())
-np.savez_compressed(output_file_name + "_train", Xun=X_train, Yun=Y_train)
+np.savez_compressed(os.path.join(out_dir, "train"), Xun=X_train, Yun=Y_train)
 
 X_train_df = pd.DataFrame(data=X_train, columns=Dataset_Config['col_names'][0])
-X_train_df.to_csv(output_file_name + '_X.csv')
+X_train_df.to_csv(os.path.join(out_dir, "X.csv"))
 Y_train_df = pd.DataFrame(data=Y_train, columns=Dataset_Config['col_names'][1])
-Y_train_df.to_csv(output_file_name + '_Y.csv')
+Y_train_df.to_csv(os.path.join(out_dir, "Y.csv"))
 
-with open(output_file_name + "_config_updated.json", "w") as f:
+with open(os.path.join(out_dir, "config.json"), "w") as f:
     json.dump(Dataset_Config, f)
 
 print("done")

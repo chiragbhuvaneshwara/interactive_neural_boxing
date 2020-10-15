@@ -1,27 +1,11 @@
 import numpy as np
 import pandas as pd
-import collections
-import os
-import glob
-import sys
-import scipy.interpolate as interpolate
 import scipy.ndimage.filters as filters
-
-from joblib import Parallel, delayed
-import multiprocessing
 
 from ..animation_data.utils import convert_euler_frames_to_cartesian_frames, quaternion_from_matrix, quaternion_inverse, \
     quaternion_multiply, quaternion_matrix
-# from ..animation_data.utils import convert_euler_frames_to_cartesian_frames, \
-#    convert_quat_frames_to_cartesian_frames, rotate_cartesian_frames_to_ref_dir, get_rotation_angles_for_vectors, \
-#    rotation_cartesian_frames, cartesian_pose_orientation, pose_orientation_euler, rotate_around_y_axis
-from ..utilities import write_to_json_file, load_json_file
-from ..utilities.motion_plane import Plane
-
 from ..animation_data import BVHReader, Skeleton, SkeletonBuilder
 from ..animation_data.quaternion import Quaternion
-from .Learning import RBF
-import json
 import inspect
 
 
@@ -32,7 +16,6 @@ def retrieve_name(var):
         if var_val is var:
             reqd_var_name = var_name
     return reqd_var_name
-    # return [var_name for var_name, var_val in callers_local_vars if var_val is var]
 
 
 def get_rotation_to_ref_direction(dir_vecs, ref_dir):
@@ -197,15 +180,25 @@ class FeatureExtractor():
         self.head = 16  # check this!
 
     def set_awinda_parameters(self):
-        self.shoulder_joints = [8, 12]
-        self.hip_joints = [15, 19]
-        self.foot_left = [21, 21]
-        self.foot_right = [17, 17]
+        # self.shoulder_joints = [8, 12]
+        # self.hip_joints = [15, 19]
+        # self.foot_left = [21, 21]
+        # self.foot_right = [17, 17]
+        # self.to_meters = 1
+        # self.head = 6  # check this!
+        jd = self.joint_indices_dict
+
+        self.shoulder_joints = [jd['RightShoulder'], jd['LeftShoulder']]
+        self.hip_joints = [jd['RightHip'], jd['LeftHip']]
+        self.foot_left = [jd['LeftAnkle'], jd['LeftToe']]
+        self.foot_right = [jd['RightAnkle'], jd['RightToe']]
+        self.head = jd['Head']
+        self.hand_left = jd['LeftWrist']
+        self.hand_right = jd['RightWrist']
         self.to_meters = 1
-        self.head = 6  # check this!
 
     @staticmethod
-    def load_punch_phase(self, punch_phase_csv_path, frame_rate_divisor=2, frame_rate_offset=0):
+    def load_punch_phase(punch_phase_csv_path, frame_rate_divisor=2, frame_rate_offset=0):
 
         punch_phase_df = pd.read_csv(punch_phase_csv_path)
         total_frames = len(punch_phase_df.index)
@@ -443,9 +436,98 @@ class FeatureExtractor():
         _, lv = self.__root_local_transform()
         return lv
 
-    def get_punch_targets(self, punch_phase, hand, phase_type):
+    # def get_punch_targets(self, punch_phase, hand, space):
+    #     """
+    #         CURRENTLY SET UP FOR DETAILED PUNCH PHASE ONLY
+    #
+    #         punch_phase: np.array(n_frame)
+    #         hand: str, 'left' or 'right'
+    #         :return punch_target_array (np.array(n_frame, 3))
+    #     """
+    #
+    #     if hand == 'right':
+    #         # hand_joint = self.joint_indices_dict['RightHand']
+    #         hand_joint = self.joint_indices_dict['RightWrist']
+    #
+    #     elif hand == 'left':
+    #         # hand_joint = self.joint_indices_dict['LeftHand']
+    #         hand_joint = self.joint_indices_dict['LeftWrist']
+    #
+    #     punch_target_array = np.array(self.__global_positions[:, hand_joint])
+    #
+    #     next_target = (0.0, 0.0, 0.0)
+    #     target_pos = []
+    #
+    #     # tracker will store the previous punch phase i.e i-1 th punch phase
+    #     tracker = 0
+    #
+    #     for i in range(len(punch_phase)):
+    #         # -1.0 is considered for the tertiary space
+    #         # -1.0 indicates that the hand is returning back to the rest position which is marked by (0,0,0)
+    #         if punch_phase[i] == 0.0 or -1.0:
+    #             # TODO Can set punch target to be next target when hand is retreating i.e phase is -1
+    #             # Does setting target as (0,0,0) help with punches? Coz the hands are always held up in front of the
+    #             # face
+    #             next_target = np.array([0.0, 0.0, 0.0])
+    #
+    #         elif punch_phase[i] == 1.0:
+    #             next_target = punch_target_array[i]
+    #
+    #             prev_mag = 0
+    #             if space == 'binary':
+    #                 for j in range(i, len(punch_phase)):
+    #                     curr_mag = np.linalg.norm(punch_target_array[i] - punch_target_array[j])
+    #
+    #                     # current mag is increasing ==> hand is still moving forward
+    #                     if curr_mag > prev_mag:
+    #                         next_target = punch_target_array[j]
+    #                         prev_mag = curr_mag
+    #                     elif curr_mag <= prev_mag:
+    #                         break
+    #
+    #         elif 0.0 < punch_phase[i] < 1.0:
+    #             curr_dir = punch_phase[i] - tracker
+    #             # if curr_dir is positive, hand is moving forward towards target so set target to next location
+    #             # where punch phase will become 1.0
+    #             if curr_dir > 0:
+    #                 for j in range(i, len(punch_phase)):
+    #                     if punch_phase[j] == 1.0:
+    #                         next_target = punch_target_array[j]
+    #                         break
+    #
+    #             # else if hand is moving back to rest position, set target to rest position
+    #             else:  # curr_dir <= 0
+    #                 next_target = np.array([0.0, 0.0, 0.0])
+    #
+    #         tracker = punch_phase[i]
+    #         target_pos.append(next_target)
+    #
+    #     punch_target_array = np.array(target_pos)
+    #
+    #     # normalize the position
+    #     # root_positions = self.__global_positions[:, 0:1, 0], self.__global_positions[:, 0:1, 2] # [idx_1, idx_2, idx_3]
+    #
+    #     # Converting to local positions i.e local co-ordinate system
+    #     punch_target_array[:, 0] = punch_target_array[:, 0] - self.__global_positions[:, 0, 0]
+    #     # todo: local co-ordinate for Y axis as well
+    #     punch_target_array[:, 1] = punch_target_array[:, 1] - self.__global_positions[:, 0, 1]
+    #     punch_target_array[:, 2] = punch_target_array[:, 2] - self.__global_positions[:, 0, 2]
+    #
+    #     root_rotations = self.get_root_rotations()
+    #
+    #     for f in range(self.n_frames - 1):
+    #         punch_target_array[f] = root_rotations[f] * punch_target_array[f]
+    #
+    #     punch_target_array[punch_phase == 0.0] = [0.0, 0.0, 0.0]
+    #
+    #     if space == 'tertiary':
+    #         punch_target_array[punch_phase == -1.0] = [0.0, 0.0, 0.0]
+    #
+    #     return punch_target_array
+
+    def get_punch_targets(self, punch_phase, hand, space='local'):
         """
-            CURRENTLY SET UP FOR DETAILED PUNCH PHASE ONLY
+            CURRENTLY SET UP FOR TERTIARY PUNCH PHASE ONLY
 
             punch_phase: np.array(n_frame)
             hand: str, 'left' or 'right'
@@ -454,81 +536,78 @@ class FeatureExtractor():
 
         if hand == 'right':
             # hand_joint = self.joint_indices_dict['RightHand']
-            hand_joint = self.joint_indices_dict['RightWrist']
+            hand_joint = self.hand_right
 
         elif hand == 'left':
             # hand_joint = self.joint_indices_dict['LeftHand']
-            hand_joint = self.joint_indices_dict['LeftWrist']
+            hand_joint = self.hand_left
 
         punch_target_array = np.array(self.__global_positions[:, hand_joint])
 
-        next_target = (0.0, 0.0, 0.0)
-        target_pos = []
+        next_target = [0.0, 0.0, 0.0]
+        target_pos = np.zeros((punch_phase.shape[0], 3))
 
-        # tracker will store the previous punch phase i.e i-1 th punch phase
-        tracker = 0
+        # for i in range(len(punch_phase)):
+        i = 0
+        while i < len(punch_phase):
 
-        for i in range(len(punch_phase)):
-            # -1.0 is considered for the tertiary phase_type
-            # -1.0 indicates that the hand is returning back to the rest position which is marked by (0,0,0)
-            if punch_phase[i] == 0.0 or -1.0:
-                # TODO Can set punch target to be next target when hand is retreating i.e phase is -1
-                # Does setting target as (0,0,0) help with punches? Coz the hands are always held up in front of the
-                # face
-                next_target = np.array([0.0, 0.0, 0.0])
+            if punch_phase[i] == 0.0:
+                # next_target = np.array([0.0, 0.0, 0.0])
+                target_pos[i] = np.array([0.0, 0.0, 0.0])
+
+            elif punch_phase[i] == -1.0:
+                # set punch target to be next target when hand is retreating i.e phase is -1
+                # -1.0 is considered for the tertiary space
+                # -1.0 indicates that the hand is returning back to the rest position
+                next_target = []
+                for j in range(i, len(punch_phase)):
+                    if punch_phase[j] == 1.0:
+                        for k in range(j, len(punch_phase)):
+                            if punch_phase[k] == -1.0:
+                                next_target = punch_target_array[k-1]
+                                target_pos[i:j] = next_target
+                                break
+                        i = j-1
+                        break
+                    elif punch_phase[j] == 0.0:
+                        next_target = np.array([0.0, 0.0, 0.0])
+                        target_pos[i:j] = next_target
+                        i = j-1
+                        break
+
+                if len(next_target) == 0:
+                    print('-1 phase set to target 0 vector')
+                    next_target = np.array([0.0, 0.0, 0.0])
+                    target_pos[i:] = next_target
 
             elif punch_phase[i] == 1.0:
-                next_target = punch_target_array[i]
+                next_target = []
+                for j in range(i, len(punch_phase)):
+                    if punch_phase[j] == -1.0:
+                        next_target = punch_target_array[j-1]
+                        target_pos[i:j] = next_target
+                        i = j-1
+                        break
 
-                prev_mag = 0
-                if phase_type == 'binary':
-                    for j in range(i, len(punch_phase)):
-                        curr_mag = np.linalg.norm(punch_target_array[i] - punch_target_array[j])
-
-                        # current mag is increasing ==> hand is still moving forward
-                        if curr_mag > prev_mag:
-                            next_target = punch_target_array[j]
-                            prev_mag = curr_mag
-                        elif curr_mag <= prev_mag:
-                            break
-
-            elif 0.0 < punch_phase[i] < 1.0:
-                curr_dir = punch_phase[i] - tracker
-                # if curr_dir is positive, hand is moving forward towards target so set target to next location
-                # where punch phase will become 1.0
-                if curr_dir > 0:
-                    for j in range(i, len(punch_phase)):
-                        if punch_phase[j] == 1.0:
-                            next_target = punch_target_array[j]
-                            break
-
-                # else if hand is moving back to rest position, set target to rest position
-                else:  # curr_dir <= 0
+                if len(next_target) == 0:
+                    print('1 phase set to target 0 vector')
                     next_target = np.array([0.0, 0.0, 0.0])
+                    target_pos[i:] = next_target
 
-            tracker = punch_phase[i]
-            target_pos.append(next_target)
+            i += 1
+            # target_pos.append(next_target)
 
         punch_target_array = np.array(target_pos)
 
-        # normalize the position
-        # root_positions = self.__global_positions[:, 0:1, 0], self.__global_positions[:, 0:1, 2] # [idx_1, idx_2, idx_3]
-
-        # Converting to local positions i.e local co-ordinate system
-        punch_target_array[:, 0] = punch_target_array[:, 0] - self.__global_positions[:, 0, 0]
-        # todo: local co-ordinate for Y axis as well
-        punch_target_array[:, 1] = punch_target_array[:, 1] - self.__global_positions[:, 0, 1]
-        punch_target_array[:, 2] = punch_target_array[:, 2] - self.__global_positions[:, 0, 2]
+        if space == 'local':
+            # Converting to local positions i.e local co-ordinate system
+            punch_target_array[:, 0] = punch_target_array[:, 0] - self.__global_positions[:, 0, 0]
+            punch_target_array[:, 1] = punch_target_array[:, 1] - self.__global_positions[:, 0, 1]
+            punch_target_array[:, 2] = punch_target_array[:, 2] - self.__global_positions[:, 0, 2]
 
         root_rotations = self.get_root_rotations()
-
         for f in range(self.n_frames - 1):
             punch_target_array[f] = root_rotations[f] * punch_target_array[f]
-
-        punch_target_array[punch_phase == 0.0] = [0.0, 0.0, 0.0]
-
-        if phase_type == 'tertiary':
-            punch_target_array[punch_phase == -1.0] = [0.0, 0.0, 0.0]
 
         return punch_target_array
 
@@ -561,22 +640,20 @@ class FeatureExtractor():
 
         if type_hand == 'left':
             # hand_joint = self.joint_indices_dict['LeftHand']
-            hand_joint = self.joint_indices_dict['LeftWrist']
+            hand_joint = self.hand_left
         elif type_hand == 'right':
             # hand_joint = self.joint_indices_dict['LeftHand']
-            hand_joint = self.joint_indices_dict['RightWrist']
+            hand_joint = self.hand_right
 
-        hand_velocity = (global_positions[1:, hand_joint:hand_joint + 1] - global_positions[:-1,
-                                                                           hand_joint:hand_joint + 1]).copy()
+        hand_velocity = (global_positions[1:, hand_joint:hand_joint + 1]
+                         - global_positions[:-1, hand_joint:hand_joint + 1]).copy()
 
         for i in range(self.n_frames - 1):
             # todo: verify if y component for each frame should be set to zero. Doesnt make sense to set to zero as hand also moves in y direction
             # root_velocity[i, 0][1] = 0
             # root_velocity[i,0] /= np.linalg.norm(root_velocity[i,0])
-
             hand_velocity[i, 0] = root_rotations[i] * hand_velocity[i, 0]
 
-        # hand_velocity = hand_velocity
         return hand_velocity
 
     def get_rotational_velocity(self):
@@ -656,8 +733,6 @@ class FeatureExtractor():
         forward = self.get_forward_directions()
         head_directions = self.get_head_directions()
 
-        # todo: verify if root_vel already contains wrist vel => Solved
-        # root_vel = self.get_root_local_joint_velocities()
         root_vel = np.squeeze(self.get_root_velocity())
 
         left_wrist_vel = np.squeeze(self.get_wrist_velocity(type_hand='left'))
@@ -676,27 +751,23 @@ class FeatureExtractor():
         # print('rp:', rootposs.shape)
         left_wrist_pos = np.array(
             # global_positions[start_from:frame + self.window:step, self.joint_indices_dict['LeftHand']]
-            global_positions[start_from:frame + self.window:step, self.joint_indices_dict['LeftWrist']]
+            global_positions[start_from:frame + self.window:step, self.hand_left]
             - global_positions[frame:frame + 1, 0])
-        # - global_positions[frame:frame + 1, self.joint_indices_dict['LeftHand']])
 
         right_wrist_pos = np.array(
             # global_positions[start_from:frame + self.window:step, self.joint_indices_dict['RightHand']]
-            global_positions[start_from:frame + self.window:step, self.joint_indices_dict['RightWrist']]
+            global_positions[start_from:frame + self.window:step, self.hand_right]
             - global_positions[frame:frame + 1, 0])
-        # - global_positions[frame:frame + 1, self.joint_indices_dict['RightHand']])
 
         head_pos = np.array(
-            global_positions[start_from:frame + self.window:step, self.joint_indices_dict['Head']]
+            global_positions[start_from:frame + self.window:step, self.head]
             - global_positions[frame:frame + 1, 0])
-        # - global_positions[frame:frame + 1, self.joint_indices_dict['Head']])
 
         rootdirs = np.array(forward[start_from:frame + self.window:step])
 
         headdirs = np.array(head_directions[start_from:frame + self.window:step])
 
         rootvels = np.array(root_vel[start_from:frame + self.window:step])
-        # print('rv:', rootvels.shape)
 
         left_wristvels = np.array(left_wrist_vel[start_from:frame + self.window:step])
         right_wristvels = np.array(right_wrist_vel[start_from:frame + self.window:step])
