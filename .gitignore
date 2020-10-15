@@ -12,3 +12,7 @@ Blender Code Snippets/saved_vis_data/*
 .idea
 
 Notebooks/.ipynb_checkpoints/LoadVars-checkpoint.ipynb
+
+Blender Code Snippets/data annotation res/new_data/binary/*
+Blender Code Snippets/data annotation res/new_data/tertiary/*
+Blender Code Snippets/data annotation res/new_data/detailed/*

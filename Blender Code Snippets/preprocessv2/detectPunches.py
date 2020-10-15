@@ -24,6 +24,7 @@ class BoxingDetector():
         self.left = [self.o.pose.bones["LeftShoulder"], self.o.pose.bones["LeftWrist"]]
         self.right = [self.o.pose.bones["RightShoulder"], self.o.pose.bones["RightWrist"]]
         self.neck = self.o.pose.bones["Neck"]
+        self.head = self.o.pose.bones["Head"]
 #        self.max_threshold = 0.13
         self.max_threshold = 0.4
         
@@ -200,7 +201,8 @@ class BoxingDetector():
             SetFrame(f)
             handDistance = (arm[1].head - arm[0].head).length
             handHeight = arm[1].tail.y
-            heightThreshold = (self.neck.head.y + self.neck.tail.y)/2
+#            heightThreshold = (self.neck.head.y + self.neck.tail.y)/2
+            heightThreshold = (self.head.head.y + self.head.tail.y)/2
             
             # hand is in punchable area condition
             if handDistance > self.max_threshold:
@@ -246,13 +248,14 @@ print("Start.")
 base_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Data/boxing_chirag/processed'
 #base_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Data/boxing_chirag/'
 df_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Blender Code Snippets/data annotation res/new_data'
-type = 'tertiary'
-#type = 'binary'
+#type = 'tertiary'
+type = 'binary'
 #type = 'detailed'
 
 #base_path = r'C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Data\boxing_chirag\processed'
 dir_files = os.listdir(base_path)
-for file in dir_files[3:4]:
+#for file in dir_files[3:4]:
+for file in dir_files:
 #    file = 'boxing_2_temp.bvh'
     print(os.path.join(base_path,file))
     o, b = load_bvh(os.path.join(base_path,file))
@@ -270,14 +273,14 @@ for file in dir_files[3:4]:
     df = pd.DataFrame({'right punch': pr, 'left punch': pl})
     ##print('\/')
     print(df)
-    df.to_csv(os.path.join(df_path, file.split('.')[0]+'_'+type+'.csv'))
+    df.to_csv(os.path.join(df_path, type, file.split('.')[0]+'_'+type+'.csv'))
     #df.to_csv(r'C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Blender Code Snippets\data annotation res\PunchWithMaxDist.csv')
 
     print('done with ', file)
     print('\n')    
     
     
-#    bpy.ops.object.select_all(action='DESELECT')
-#    bpy.data.objects[file.split('.')[0]].select_set(True)    
-#    bpy.ops.object.delete() 
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.data.objects[file.split('.')[0]].select_set(True)    
+    bpy.ops.object.delete() 
 
