@@ -9,7 +9,7 @@ tf.disable_v2_behavior()
 # tf.disable_v2_behavior()
 import numpy as np
 import sys, os, datetime, json
-import pandas as pd
+# import pandas as pd
 
 class MANN(FCNetwork):
     """
@@ -279,15 +279,14 @@ class MANN(FCNetwork):
         params = params.ravel()
         if len(params) == 0:
             params = np.array(self.norm["Xmean"])
-        # params = params.reshape(1, 362)
         params = params.reshape(1, self.input_size)
-        # params = params.ravel()
-        params = (params - self.norm["Xmean"]) / self.norm["Xstd"]
+
+        X_mean = np.array(self.norm["Xmean"])
+        X_std = np.array(self.norm["Xstd"])
+        params = (params - X_mean) / X_std
 
         out = self.sess.run(self.network_output, feed_dict={self.x: params})
-        # out = np.array(out).reshape(1,362)
-        out = np.array(out).ravel()
-        out = out.reshape(1, self.output_size)
+        out = out.reshape((self.network_output.shape[0], self.network_output.shape[1]))
         out = (out * self.norm["Ystd"]) + self.norm["Ymean"]
         out = out.ravel()
         return out
@@ -439,10 +438,14 @@ class MANN(FCNetwork):
 
         # X = np.concatenate([X, P[:, np.newaxis]], axis=-1)
 
+        X = data["Xun"]
+        Y = data["Yun"]
         print('################################')
         print(X.shape)
-        print(X[1])
+        # print(X[1])
+        print(np.isnan(X).any())
         print(Y.shape)
-        print(Y[1])
+        # print(Y[1])
+        print(np.isnan(Y).any())
         mann = MANN(input_dim, output_dim, 512, norm, gating_indices=gating_indices)
         mann.train(X, Y, epochs, target_path)

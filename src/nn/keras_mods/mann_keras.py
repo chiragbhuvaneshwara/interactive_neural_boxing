@@ -4,6 +4,7 @@ import numpy as np
 from tensorflow.keras import layers, models
 
 from src.nn.keras_mods.network_instantiater import TrainNetwork, InstantiateNetworkFromConfig
+from sklearn import preprocessing
 
 from zipfile import ZipFile
 
@@ -224,18 +225,14 @@ class MANN(tf.keras.Model):
         Xstd = np.std(X, axis=0)
         Ystd = np.std(Y, axis=0)
 
-        joint_indices = config_store['joint_indices']
-        joints_ids_that_dont_matter = [val for key, val in joint_indices.items() if 'RightHand' in key][1:] + [val for
-                                                                                                               key, val
-                                                                                                               in
-                                                                                                               joint_indices.items()
-                                                                                                               if
-                                                                                                               'LeftHand' in key][
-                                                                                                              1:]
-        joints_keys_that_matter = [k for k, v in joint_indices.items() if
-                                   v not in joints_ids_that_dont_matter]
-        joints_ids_that_matter = [val for key, val in joint_indices.items() if key in joints_keys_that_matter]
-        joint_weights = np.array([1 if val in joints_ids_that_matter else 1e-10 for val in joint_indices.values()])
+        # joint_indices = config_store['joint_indices']
+        # joints_ids_that_dont_matter = [val for key, val in joint_indices.items() if 'RightHand' in key][1:] + \
+        #                               [val for key, val in joint_indices.items() if 'LeftHand' in key][1:]
+        # joints_keys_that_matter = [k for k, v in joint_indices.items() if
+        #                            v not in joints_ids_that_dont_matter]
+        # joints_ids_that_matter = [val for key, val in joint_indices.items() if key in joints_keys_that_matter]
+        # joint_weights = np.array([1 if val in joints_ids_that_matter else 1e-10 for val in joint_indices.values()])
+        # joint_weights = np.array([1] * len(joint_indices.values()))
 
         x_col_indices = config_store['col_indices'][0]
         y_col_indices = config_store['col_indices'][1]
@@ -250,23 +247,25 @@ class MANN(tf.keras.Model):
         y_local_col_indices = {k: v for k, v in y_col_indices.items() if '_local' in k}
 
         for k, v in x_local_col_indices.items():
-            Xstd[v[0]: v[1]] = Xstd[v[0]: v[1]].mean() / (joint_weights.repeat(3))  # * 0.1)
+            Xstd[v[0]: v[1]] = Xstd[v[0]: v[1]].mean() # * (joint_weights.repeat(3))  # * 0.1)
 
-        # print("mean and std. dev of translation vel: ", Ymean[0:3], Ystd[0:3])
         importance_trajectory = 1.0
 
         y_col_other_indices = {k: v for k, v in y_col_indices.items() if ('_tr' not in k) or ('_local' not in k)}
 
         r_vel_indices = y_col_other_indices['y_root_velocity']
-        Ystd[r_vel_indices[0]:r_vel_indices[1]] = Ystd[r_vel_indices[0]:r_vel_indices[1]].mean() / importance_trajectory
+        Ystd[r_vel_indices[0]:r_vel_indices[1]] = Ystd[r_vel_indices[0]:r_vel_indices[1]].mean() # / importance_trajectory
+
         r_new_forward_indices = y_col_other_indices['y_root_new_forward']
         Ystd[r_new_forward_indices[0]:r_new_forward_indices[1]] = Ystd[r_new_forward_indices[0]:r_new_forward_indices[
-            1]].mean() / importance_trajectory
-        p_dphase_indices = y_col_other_indices['y_punch_dphase']
-        Ystd[p_dphase_indices[0]:p_dphase_indices[0] + 1] = Ystd[p_dphase_indices[0]:p_dphase_indices[
-                                                                                         0] + 1].mean() / importance_trajectory
-        Ystd[p_dphase_indices[-1] - 1:p_dphase_indices[-1]] = Ystd[p_dphase_indices[0]:p_dphase_indices[
-                                                                                           0] + 1].mean() / importance_trajectory
+            1]].mean() # / importance_trajectory
+
+        # p_dphase_indices = y_col_other_indices['y_punch_dphase']
+        p_dphase_indices = y_col_other_indices['y_punch_phase']
+        Ystd[p_dphase_indices[0]:p_dphase_indices[0] + 1] = \
+            Ystd[p_dphase_indices[0]:p_dphase_indices[0] + 1].mean() # / importance_trajectory
+        Ystd[p_dphase_indices[-1] - 1:p_dphase_indices[-1]] = \
+            Ystd[p_dphase_indices[0]:p_dphase_indices[0] + 1].mean() # / importance_trajectory
 
         if config_store["use_footcontacts"]:
             print("using Footcontacts")
@@ -278,7 +277,7 @@ class MANN(tf.keras.Model):
             Ystd[v[0]: v[1]] = Ystd[v[0]: v[1]].mean()
 
         for k, v in y_local_col_indices.items():
-            Ystd[v[0]: v[1]] = Ystd[v[0]: v[1]].mean() / (joint_weights.repeat(3))  # * 0.1)
+            Ystd[v[0]: v[1]] = Ystd[v[0]: v[1]].mean() #* (joint_weights.repeat(3))  # * 0.1)
 
         Xstd[Xstd == 0] = 1.0
         Ystd[Ystd == 0] = 1.0
@@ -287,18 +286,25 @@ class MANN(tf.keras.Model):
                 "Ymean": Ymean.tolist(),
                 "Xstd": Xstd.tolist(),
                 "Ystd": Ystd.tolist()}
-        # norm = {"Xmean": Xmean,
-        #         "Ymean": Ymean,
-        #         "Xstd": Xstd,
-        #         "Ystd": Ystd}
+
+        # eps = 1e-100
+        # X = (X - Xmean) / (Xstd + eps)
+        # Y = (Y - Ymean) / (Ystd + eps)
+
+        #todo which vals are 0
 
         X = (X - Xmean) / Xstd
         Y = (Y - Ymean) / Ystd
+        print(X.mean())
+        print(Y.mean())
+
+        raise_nan_exception(X)
+        raise_nan_exception(Y)
 
         return X, Y, norm
 
     @staticmethod
-    def train_mann(normalized_X, normalized_Y, norm, gating_indices, model_path):
+    def train_mann(normalized_X, normalized_Y, norm, gating_indices, model_path, epochs):
         """
 
         This constant function loads a *.npz numpy stored dataset, builds the network and trains it.
@@ -313,16 +319,13 @@ class MANN(tf.keras.Model):
             target_path {string} -- path to target folder, in which networks should be stored.
             epochs {int} -- Training duration in epochs
         """
-
-
+        #TODO check tensorboard to see if MANN is working correctly
         input_dim = normalized_X.shape[1]
         output_dim = normalized_Y.shape[1]
 
         print('################################')
         print(normalized_X.shape)
-        # print(normalized_X[1])
         print(normalized_Y.shape)
-        # print(normalized_Y[1])
 
         mann_config = {"n_controls": 4, "input_dim": input_dim, "output_dim": output_dim, "dropout_rate": 0.6,
                        "hidden_dim": 512, "gating_indices": gating_indices, "gating_hidden_dim": 32, "norm": norm}
@@ -331,33 +334,48 @@ class MANN(tf.keras.Model):
 
         train_config = {
             "optimizer": "Adam",
-            "learning_rate": 0.0001,
-            "epochs": 1,
-            "batchsize": 32,
+            "learning_rate": 0.00001,
+            # "learning_rate": 3e-4,
+            "epochs": epochs,
+            # "batchsize": 32,
+            "batchsize": 64,
             "loss": "mse"
         }
-
 
         TrainNetwork(mann, normalized_X, normalized_Y, train_config)
         mann.export_discrete_weights(model_path)
         return mann_config
+
     @staticmethod
     def forward_pass(mann, X, norm):
 
-        # norm = mann.get_norm()
         Xmean = np.array(norm['Xmean'], dtype=np.float64)
         Xstd = np.array(norm['Xstd'], dtype=np.float64)
         Ymean = np.array(norm['Ymean'], dtype=np.float64)
         Ystd = np.array(norm['Ystd'], dtype=np.float64)
-        print("############  INPUT  ############")
-        print(X)
-        # batchsize = 100
+        # eps = 1e-100
+        # input = (X - Xmean) / (Xstd + eps)
         input = (X - Xmean) / Xstd
 
+        # Using the standardized input is leading to NaNs
         Y_prediction = mann(input)
-        Y_prediction = Y_prediction * Ystd + Ymean
+        if np.isnan(Y_prediction).any():
+            raise Exception('Nans found')
 
-        print("\n")
-        print("############  OUTPUT  ############")
-        print(Y_prediction)
+        # Y_prediction = mann(X)
+        # if np.isnan(Y_prediction).any():
+        #     raise Exception('Nans found')
+
+        # Y_prediction = Y_prediction.numpy()
+        Y_prediction = Y_prediction * Ystd + Ymean
+        # print(Y_prediction.numpy()[4:6])
+
+        if np.isnan(Y_prediction).any():
+            raise Exception('Nans found')
+
         return Y_prediction
+
+
+def raise_nan_exception(arr):
+    if np.isnan(arr).any():
+        raise Exception('Nans found in: ', np.argwhere(np.isnan(arr)))

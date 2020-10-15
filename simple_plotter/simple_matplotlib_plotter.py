@@ -74,9 +74,16 @@ class Plotter():
                 aux_x = 0.2 * axis[:, i, 0] + p[:, 0]
                 aux_y = 0.2 * axis[:, i, 1] + p[:, 1]
                 aux_z = 0.2 * axis[:, i, 2] + p[:, 2]
+
+                aux_x_2 = 0.2 * axis[:, i, 0] + p[16, 0]
+                aux_y_2 = 0.2 * axis[:, i, 1] + p[16, 1]
+                aux_z_2 = 0.2 * axis[:, i, 2] + p[16, 2]
                 ax.scatter(aux_x, aux_y, aux_z, marker=".", c=color[i])
+                ax.scatter(aux_x_2, aux_y_2, aux_z_2, marker="*", c=color[i])
                 for j in range(len(aux_x)):
                     ax.plot([p[0, j], aux_x[j]], [p[1, j], aux_y[j]], zs=[p[2, j], aux_z[j]], c=color[i])
+                    if j == 16:
+                        ax.plot([p[0, j], aux_x_2[j]], [p[1, j], aux_y_2[j]], zs=[p[2, j], aux_z_2[j]], c=color[i])
 
         span_x = np.max(p[:, 0]) - np.min(p[:, 0])
         span_y = np.max(p[:, 1]) - np.min(p[:, 1])
@@ -87,5 +94,8 @@ class Plotter():
         ax.set_xlim3d([np.min(p[:, 0]) - 0.5 * span, np.min(p[:, 0]) + 0.5 * span])
         ax.set_ylim3d([np.min(p[:, 1]) - 0.5 * span, np.min(p[:, 1]) + 0.5 * span])
         ax.set_zlim3d([np.min(p[:, 2]), np.min(p[:, 2]) + span])
+        ax.set_xlabel('X axis')
+        ax.set_ylabel('Y axis')
+        ax.set_zlabel('Z axis')
         return
 

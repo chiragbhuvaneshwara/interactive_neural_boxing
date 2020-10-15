@@ -17,15 +17,18 @@ def cubic(y0, y1, y2, y3, mu):
 
 # TODO verify why overflow occurs here. Test with np built in distance calculation.
 def euclidian_length(v):
-    s = 0.0
-    for a in v:
-        s += a * a
-    return math.sqrt(s)
-
+    # s = 0.0
+    # for a in v:
+    #     print(a*a)
+    #     s += a * a
+    # return math.sqrt(s)
+    return np.linalg.norm(v)
 
 # helpers:
 def normalize(a):
-    length = euclidian_length(a)
+    length = np.linalg.norm(a)
+    # normal_array = an_array / norm
+    # length = euclidian_length(a)
     if length < 0.000001:
         return np.array([0, 0, 0])
     return a / length
@@ -54,7 +57,6 @@ def mix_directions(v1, v2, a):
     return normalize(slerp)
 
 
-# TODO verify what rot around z is doing
 # Angle in radians
 def rot_around_z_3d(vector, angle, inverse=False):
     mat = np.array([

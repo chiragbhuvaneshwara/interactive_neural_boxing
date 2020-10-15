@@ -1,13 +1,9 @@
 import tensorflow as tf
 import os
-# import numpy as np
-# from src.nn.keras_mods.mann_keras import MANN
 from tensorflow.keras import optimizers, Model, losses, datasets
-
+from tensorflow.keras.callbacks import ModelCheckpoint
 import json
 from termcolor import colored
-
-from zipfile import ZipFile
 
 
 def InstantiateNetworkFromConfig(config_file_path, network):
@@ -71,6 +67,7 @@ def TrainNetwork(network: tf.keras.Model, normalized_x, normalized_y, config):
             if config["optimizer"] == "Adam":
                 lr = config["learning_rate"]
                 optimizer = optimizers.Adam(lr)
+                # optimizer = optimizers.SGD(lr)
         else:
             optimizer = config["optimzier"]
 
@@ -79,4 +76,7 @@ def TrainNetwork(network: tf.keras.Model, normalized_x, normalized_y, config):
     batchsize = config["batchsize"]
 
     network.compile(optimizer=optimizer, loss=loss)
-    network.fit(X, Y, epochs=epochs, batch_size=batchsize)
+    # checkpoint = ModelCheckpoint("best_model.hdf5", monitor='loss', verbose=1,
+    #                              save_best_only=True, mode='auto', period=1)
+    network.fit(X, Y, epochs=epochs, batch_size=batchsize, shuffle=True)
+                # , callbacks=[checkpoint])
