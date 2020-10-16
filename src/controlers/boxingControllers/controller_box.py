@@ -3,9 +3,7 @@ import numpy as np
 import math, time
 
 from src.nn.keras_mods.mann_keras import MANN
-from ...nn.fc_models.fc_networks import FCNetwork
 from ..controller import Controller
-# from .trajectory_box import Trajectory
 from .trajectory_2 import Trajectory
 from .character_box import Character
 from ... import utils
@@ -28,9 +26,7 @@ class BoxingController(Controller):
     # def __init__(self, network: FCNetwork, config_store):  # xdim, ydim, end_joints = 5, numJoints = 21):
     def __init__(self, network: MANN, config_store):  # xdim, ydim, end_joints = 5, numJoints = 21):
         self.network = network
-        # self.xdim = network.input_size
         self.xdim = network.input_dim
-        # self.ydim = network.output_size
         self.ydim = network.output_dim
 
         self.endJoints = config_store["endJoints"]
@@ -41,7 +37,6 @@ class BoxingController(Controller):
         self.traj_window = config_store["window"]
         self.num_traj_samples = config_store["num_traj_samples"]
         self.traj_step = config_store["traj_step"]
-        # self.zero_posture = config_store["zero_posture"]
         self.joint_names_ids = config_store["joint_indices"]
         self.in_col_names_ids = config_store["col_indices"][0]
         self.out_col_names_ids = config_store["col_indices"][1]
@@ -71,7 +66,6 @@ class BoxingController(Controller):
         self.config_store = config_store
         self.__initialize()
 
-    # def pre_render(self, punch_phase, punch_targets):
     def pre_render(self, punch_targets):
         """
         This function is called before rendering. It prepares character and trajectory to be rendered.
@@ -85,9 +79,9 @@ class BoxingController(Controller):
         # User input direction but for simplicity using predicted direction
         direction = self.output.get_root_new_forward()
         direction = utils.convert_to_zero_y_3d(direction)
-        # target_vel_speed = 2.5 * np.linalg.norm(direction)
-        # self.target_vel = utils.glm_mix(self.target_vel, target_vel_speed * direction, 0.9)
-        self.target_vel = utils.convert_to_zero_y_3d(self.output.get_root_vel())
+        target_vel_speed = 2.5 * np.linalg.norm(direction)
+        self.target_vel = utils.glm_mix(self.target_vel, target_vel_speed * direction, 0.9)
+        # self.target_vel = utils.convert_to_zero_y_3d(self.output.get_root_vel())
         target_vel_dir = self.target_dir if utils.euclidian_length(self.target_vel) \
                                             < 1e-05 else utils.normalize(self.target_vel)
         self.target_dir = utils.mix_directions(self.target_dir, target_vel_dir, 0.9)
@@ -126,7 +120,6 @@ class BoxingController(Controller):
 
         prev_root_pos, prev_root_rot = self.traj.getPreviousPosRot()
         joint_pos, joint_vel = self.char.getLocalJointPosVel(prev_root_pos, prev_root_rot)
-        # joint_pos, joint_vel = self.get_previous_local_joint_pos_vel()
         self.input.set_local_pos(joint_pos.ravel())
         self.input.set_local_vel(joint_vel.ravel())
 
@@ -177,7 +170,6 @@ class BoxingController(Controller):
 
         self.traj.step_forward(self.output.get_root_vel(), self.output.get_root_new_forward(),
                                self.output.get_wrist_vels_traj())
-        # self.traj.step_forward(self.output.get_rotational_vel())
 
         # 1. update and smooth trajectory
         self.traj.update_from_predict(self.output.get_next_traj())
@@ -191,6 +183,7 @@ class BoxingController(Controller):
         pred_ph = self.output.get_punch_phase()
         for hand in ['right', 'left']:
             self.previous_punch_phase[hand] = pred_ph[hand]
+        print(self.previous_punch_phase)
 
         self.previous_joint_pos = self.output.get_local_pos()
         self.previous_joint_vel = self.output.get_local_vel()

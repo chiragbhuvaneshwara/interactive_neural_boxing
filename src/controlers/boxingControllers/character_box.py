@@ -32,13 +32,13 @@ class Character:
 
         # Indices from dataset_config json
         # Janis says indices from dataset_config
-        self.foot_left = [4, 5]
-        self.foot_right = [9, 10]
-
-        self.shoulder_left = 36
-        self.hand_left = 39
-        self.shoulder_right = 13
-        self.hand_right = 16
+        # self.foot_left = [4, 5]
+        # self.foot_right = [9, 10]
+        #
+        # self.shoulder_left = 36
+        # self.hand_left = 39
+        # self.shoulder_right = 13
+        # self.hand_right = 16
 
         ########################################################################################################################
         self.max_punch_distance = 0.4482340219788639

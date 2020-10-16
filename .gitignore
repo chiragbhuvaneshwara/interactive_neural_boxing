@@ -131,3 +131,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 /mann_config.json
+
+src/controlers/boxingControllers/controller_in_out/*
