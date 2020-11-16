@@ -48,8 +48,10 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
                                                              frame_rate_offset=div)
 
         # TODO Only implemented for phase type tertiary currently
-        right_punch_target = handler.get_punch_targets(punch_phase[:, 0], hand='right', phase_type='tertiary')
-        left_punch_target = handler.get_punch_targets(punch_phase[:, 1], hand='left', phase_type='tertiary')
+        # right_punch_target = handler.get_punch_targets(punch_phase[:, 0], hand='right', phase_type='tertiary')
+        # left_punch_target = handler.get_punch_targets(punch_phase[:, 1], hand='left', phase_type='tertiary')
+        right_punch_target = handler.get_punch_targets(punch_phase[:, 0], hand='right')
+        left_punch_target = handler.get_punch_targets(punch_phase[:, 1], hand='left')
 
         #############################################################################################
         # These work but they aren't as accurate as blender

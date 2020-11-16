@@ -649,9 +649,6 @@ class FeatureExtractor():
                          - global_positions[:-1, hand_joint:hand_joint + 1]).copy()
 
         for i in range(self.n_frames - 1):
-            # todo: verify if y component for each frame should be set to zero. Doesnt make sense to set to zero as hand also moves in y direction
-            # root_velocity[i, 0][1] = 0
-            # root_velocity[i,0] /= np.linalg.norm(root_velocity[i,0])
             hand_velocity[i, 0] = root_rotations[i] * hand_velocity[i, 0]
 
         return hand_velocity
@@ -773,16 +770,21 @@ class FeatureExtractor():
         right_wristvels = np.array(right_wrist_vel[start_from:frame + self.window:step])
 
         for j in range(len(rootposs)):
-            # todo apply root rotation to wrist as well
+            # multiplying by root_rotation is rotating vectors to point to forward direction
+            # by multiplying the inverse of the quaternion (taken care of internally ==> multiplication
+            # handles only inverse rotation)
             rootposs[j] = root_rotations[frame] * rootposs[j]
             rootdirs[j] = root_rotations[frame] * rootdirs[j]
             left_wrist_pos[j] = root_rotations[frame] * left_wrist_pos[j]
             right_wrist_pos[j] = root_rotations[frame] * right_wrist_pos[j]
             headdirs[j] = root_rotations[frame] * headdirs[j]
+            rootvels[j] = root_rotations[frame] * rootvels[j]
+            left_wristvels[j] = root_rotations[frame] * left_wristvels[j]
+            right_wristvels[j] = root_rotations[frame] * right_wristvels[j]
 
         # todo explain why you need it or not
-        left_wrist_pos = left_wrist_pos - left_wrist_pos[len(left_wrist_pos) // 2]
-        right_wrist_pos = right_wrist_pos - right_wrist_pos[len(right_wrist_pos) // 2]
+        # left_wrist_pos = left_wrist_pos - left_wrist_pos[len(left_wrist_pos) // 2]
+        # right_wrist_pos = right_wrist_pos - right_wrist_pos[len(right_wrist_pos) // 2]
 
         return_items = [rootposs, left_wrist_pos, right_wrist_pos, head_pos, rootdirs, headdirs, rootvels,
                         left_wristvels, right_wristvels]
