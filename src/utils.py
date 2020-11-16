@@ -64,6 +64,11 @@ def rot_around_z_3d(vector, angle, inverse=False):
         [0, 1, 0],
         [-math.sin(angle), 0, math.cos(angle)]
     ])
+    # mat = np.array([
+    #     [math.cos(angle), -math.sin(angle), 0],
+    #     [math.sin(angle), math.cos(angle), 0],
+    #     [0, 0, 1],
+    # ])
     if inverse:
         mat = np.linalg.inv(mat)
     # mat = mat.transpose()

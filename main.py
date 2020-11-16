@@ -24,6 +24,7 @@ def save_json(path, data):
 epochs = 20
 frd = 1
 window = 25
+#TODO Check norm used
 frd_win = 'boxing_fr_' + str(frd) + '_' + str(window)
 args_dataset = os.path.join("data", frd_win, "config.json")
 with open(args_dataset) as f:

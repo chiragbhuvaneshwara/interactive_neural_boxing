@@ -1,7 +1,7 @@
-"""author: Janis Sprenger """
+"""author: Chirag Bhuvaneshwara """
 import numpy as np
 import math, time
-
+import pandas as pd
 from src.nn.keras_mods.mann_keras import MANN
 from ..controller import Controller
 from .trajectory_2 import Trajectory
@@ -17,14 +17,18 @@ np.set_printoptions(linewidth=120)
 
 class BoxingController(Controller):
     """
-    This is a controller for directional input.
+    This is a controller for punch target input.
 
     Returns:
         [type] -- [description]
     """
 
-    # def __init__(self, network: FCNetwork, config_store):  # xdim, ydim, end_joints = 5, numJoints = 21):
     def __init__(self, network: MANN, config_store):  # xdim, ydim, end_joints = 5, numJoints = 21):
+
+        # jd = config_store['joint_indices']
+        # self.hand_left = jd['LeftWrist']
+        # self.hand_right = jd['RightWrist']
+
         self.network = network
         self.xdim = network.input_dim
         self.ydim = network.output_dim
@@ -77,18 +81,17 @@ class BoxingController(Controller):
 
         """
         # User input direction but for simplicity using predicted direction
-        direction = self.output.get_root_new_forward()
+        # direction = self.output.get_root_new_forward()
+        direction = np.array([0, 1])
         direction = utils.convert_to_zero_y_3d(direction)
-        target_vel_speed = 2.5 * np.linalg.norm(direction)
+        target_vel_speed = .00025 * np.linalg.norm(direction)
         self.target_vel = utils.glm_mix(self.target_vel, target_vel_speed * direction, 0.9)
         # self.target_vel = utils.convert_to_zero_y_3d(self.output.get_root_vel())
         target_vel_dir = self.target_dir if utils.euclidian_length(self.target_vel) \
                                             < 1e-05 else utils.normalize(self.target_vel)
         self.target_dir = utils.mix_directions(self.target_dir, target_vel_dir, 0.9)
-        # self.target_dir = utils.mix_directions(self.target_dir, self.target_vel, 0.9)
 
         # 2. Set new punch_phase and new punch target based on input
-
         right_p_target = punch_targets[:self.n_dims]
         left_p_target = punch_targets[self.n_dims:]
         self.input.set_punch_target(right_p_target, left_p_target)
@@ -107,7 +110,7 @@ class BoxingController(Controller):
         # 3. Set Trajectory input
         input_root_pos, input_root_vels, input_right_wrist_pos, input_right_wrist_vels, \
         input_left_wrist_pos, input_left_wrist_vels = self.traj.get_input(
-            self.char.root_position, self.char.root_rotation, self.n_gaits)
+            self.char.root_position, self.char.root_rotation)
         self.input.set_rootpos_traj(input_root_pos)
         self.input.set_rootvel_traj(input_root_vels)
         self.input.set_wrist_pos_tr(input_right_wrist_pos, input_left_wrist_pos)
@@ -124,6 +127,10 @@ class BoxingController(Controller):
         self.input.set_local_vel(joint_vel.ravel())
 
         # 5. Predict: Get MANN Output
+        in_data_df = pd.read_csv(r'C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-MOSI-DEV-VINN\mosi_dev_vinn\data\boxing_fr_1_25\X.csv')
+        input_data = in_data_df.iloc[[164]].values
+        input_data = np.delete(input_data, 0, 1)
+        # self.input.data = input_data.ravel()
         input_data = self.input.data.reshape(1, len(self.input.data))
         output_data = self.network.forward_pass(self.network, input_data, self.network.norm)
         if np.isnan(output_data).any():
@@ -144,14 +151,7 @@ class BoxingController(Controller):
         joint_rotations = []
         # TODO: Check if to apply before or after set_pose
         # self.char.root_rotation = self.output.get_root_rotation_velocity()  # [-2*pi, +2*pi]
-        # print(self.char.root_rotation)
-        # if self.char.root_rotation < -2*math.pi or self.char.root_rotation > 2*math.pi:
-        #     raise ValueError
         # self.char.root_position += utils.convert_to_zero_y_3d(self.output.get_root_vel())  # inserting 0 to Y axis
-
-        # self.char.update_pos_rot(utils.convert_to_zero_y_3d(self.output.get_root_vel()),
-        #                          self.output.get_root_rotation_velocity())
-
         self.char.set_pose(joint_positions, joint_velocities, joint_rotations)
 
         return self.input.data.ravel(), self.output.data.ravel()
@@ -182,6 +182,7 @@ class BoxingController(Controller):
 
         pred_ph = self.output.get_punch_phase()
         for hand in ['right', 'left']:
+            # self.previous_punch_phase[hand] = self.fix_phase(pred_ph[hand])
             self.previous_punch_phase[hand] = pred_ph[hand]
         print(self.previous_punch_phase)
 
@@ -248,13 +249,16 @@ class BoxingController(Controller):
         self.previous_joint_pos = self.output.get_local_pos()
         self.previous_joint_vel = self.output.get_local_vel()
 
-        # 7. set new character pose
-        # TODO: Check if to apply before or after set_pose
-        self.char.root_rotation = self.output.get_root_rotation_velocity()  # [-2*pi, +2*pi]
-        # self.char.root_rotation = self.output.get_root_rotation_velocity()  # [-2*pi, +2*pi]
+        self.char.set_pose(joint_positions, joint_velocities, joint_rotations, init=True)
+        self.post_render()
 
-        self.char.root_position += utils.convert_to_zero_y_3d(self.output.get_root_vel())
-        self.char.set_pose(joint_positions, joint_velocities, joint_rotations)
+        # # 7. set new character pose
+        # # TODO: Check if to apply before or after set_pose
+        # self.char.root_rotation = self.output.get_root_rotation_velocity()  # [-2*pi, +2*pi]
+        # # self.char.root_rotation = self.output.get_root_rotation_velocity()  # [-2*pi, +2*pi]
+        #
+        # self.char.root_position += utils.convert_to_zero_y_3d(self.output.get_root_vel())
+        # self.char.set_pose(joint_positions, joint_velocities, joint_rotations)
 
     def get_previous_local_joint_pos_vel(self):
         return self.previous_joint_pos, self.previous_joint_vel
@@ -443,3 +447,5 @@ class MANNOutput(object):
         pred_dir = self.get_root_new_forward()
 
         return rp_tr, rv_tr, rwp_tr, lwp_tr, rwv_tr, lwv_tr, pred_dir
+
+    # def get_local_wrist_pos_curr_fr(self, left_wr_id, right_wrist_id):

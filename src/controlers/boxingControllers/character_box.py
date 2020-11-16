@@ -30,42 +30,19 @@ class Character:
         self.joint_velocities = np.array([[0.0, 0.0, 0.0]] * self.joints)
         self.last_joint_positions = np.array(self.joint_positions)
 
-        # Indices from dataset_config json
-        # Janis says indices from dataset_config
-        # self.foot_left = [4, 5]
-        # self.foot_right = [9, 10]
-        #
-        # self.shoulder_left = 36
-        # self.hand_left = 39
-        # self.shoulder_right = 13
-        # self.hand_right = 16
-
-        ########################################################################################################################
-        self.max_punch_distance = 0.4482340219788639
-        ########################################################################################################################
-
         self.local_joint_positions = np.array(self.joint_positions)
         self.joint_rotations = np.array([0.0] * self.joints)
 
         # angle of rotation around up axis -> utils.z_angle(new_forward_dir) + old_root_rotation --> [-2*pi, + 2* pi]
         self.root_rotation = 0.0
-        self.running = 0.0
         # root position projected to ground (y-axis = 0)
         self.root_position = np.array([0.0, 0.0, 0.0])
 
     def reset(self, root_position, start_orientation):
         self.root_position = root_position
         self.root_rotation = start_orientation
-        self.running = 0.0
 
-    def update_pos_rot(self, rp, rr):
-        grp = self.convert_local_to_global(rp.reshape(1, 3), type='pos').ravel()
-        grr = rr
-
-        self.root_position = grp
-        self.root_rotation = grr
-
-    def set_pose(self, joint_positions, joint_velocities, joint_rotations, foot_contacts=[0, 0, 0, 0]):
+    def set_pose(self, joint_positions, joint_velocities, joint_rotations, foot_contacts=[0, 0, 0, 0], init= False):
         """
         Sets a new pose after prediction.
 
@@ -91,8 +68,12 @@ class Character:
                 dtype=np.float64).reshape(1, 3)
             vel = self.convert_local_to_global(local_vel, type='vels').ravel()
 
-            # mix positions and velocities.
-            self.joint_positions[j] = utils.glm_mix(self.joint_positions[j] + vel, pos, 0.5)
+            if not init:
+                # mix positions and velocities.
+                self.joint_positions[j] = utils.glm_mix(self.joint_positions[j] + vel, pos, 0.5)
+            elif init:
+                self.joint_positions[j] = pos
+
             self.joint_velocities[j] = vel
 
         # prediction is finished and post processed. Pose can be rendered!
@@ -201,33 +182,22 @@ class Character:
             curr_joint_pos = self.convert_global_to_local(curr_joint_pos, prp, prr, type='pos')
             joint_pos[i * 3: i * 3 + 3] = curr_joint_pos.ravel()
 
-            curr_joint_vel = self.joint_positions[i]
+            curr_joint_vel = self.joint_velocities[i]
             curr_joint_vel = curr_joint_vel.reshape(1, len(curr_joint_vel))
             curr_joint_vel = self.convert_global_to_local(curr_joint_vel, prp, prr, type='vels')
             joint_vel[i * 3:i * 3 + 3] = curr_joint_vel.ravel()
-
-            # # pos = utils.rot_around_z_3d(self.char.joint_positions[i] - prev_root_pos, prev_root_rot, inverse=True)  # self.char.joint_positions[i]#
-            # pos = utils.rot_around_z_3d(self.joint_positions[i] - prev_root_pos,
-            #                             -prev_root_rot)  # self.char.joint_positions[i]#
-            # joint_pos[i * 3 + 0] = pos[0]
-            # joint_pos[i * 3 + 1] = pos[1]
-            # joint_pos[i * 3 + 2] = pos[2]
-            #
-            # # get previous joint velocity
-            # # vel = utils.rot_around_z_3d(self.char.joint_velocities[i], prev_root_rot,inverse=True)  # self.char.joint_velocities[i] #
-            # vel = utils.rot_around_z_3d(self.joint_velocities[i], -prev_root_rot)  # self.char.joint_velocities[i] #
-            # joint_vel[i * 3 + 0] = vel[0]
-            # joint_vel[i * 3 + 1] = vel[1]
-            # joint_vel[i * 3 + 2] = vel[2]
 
         return (joint_pos, joint_vel)
 
     def convert_global_to_local(self, arr, root_pos, root_rot, type='pos'):
         for i in range(len(arr)):
-            curr_point = arr[i]
+            # curr_point = arr[i]
             if type == 'pos':
-                curr_point -= root_pos
-            arr[i] = utils.rot_around_z_3d(curr_point, root_rot)
+                # curr_point -= root_pos
+                arr[i] -= root_pos
+            # arr[i] = utils.rot_around_z_3d(arr[i], root_rot)
+            arr[i] = utils.rot_around_z_3d(arr[i], root_rot, inverse=True)
+
         return arr
 
     def convert_local_to_global(self, arr, type='pos'):
@@ -235,7 +205,8 @@ class Character:
         root_pos = self.root_position
         root_rot = self.root_rotation
         for i in range(len(arr)):
-            arr[i] = utils.rot_around_z_3d(arr[i], root_rot, inverse=True)
+            # arr[i] = utils.rot_around_z_3d(arr[i], -root_rot)
+            arr[i] = utils.rot_around_z_3d(arr[i], root_rot)
             if type == 'pos':
                 arr[i] = arr[i] + root_pos
         return arr

@@ -37,9 +37,11 @@ bc = BoxingController(mann, config_store)
 my_plotter = simple_matplotlib_plotter.Plotter()
 # right target coordinates, left target coordinates
 # Neutral Postion
-target = [0.401022691,	-5.128026,	1.101998588,	0.401022691,	-5.128026,	1.101998588]
+# target = [0.401022691,	-5.128026,	1.101998588,	0.401022691,	-5.128026,	1.101998588]
+# target = [0.302732434,	-5.116577,	1.096424532,	0.302732434,	-5.116577,	1.096424532]
 # Left Punch
 # target = [0.557932576,	-4.381198,	0.96235335,	-0.216751668,	-1.127927336,	-1.13160189]
+target = [0.267201945,	-1.783858,	0.958687371,	-0.212572447,	-1.056275163,	-1.190664312]
 # X_csv_path = "data/boxing_fr_"+str(frd)+"_"+str(window)+"/X.csv"
 # X_csv = pd.read_csv(X_csv_path)
 # reqd_cols = ['x_right_punch_target_0', 'x_right_punch_target_1', 'x_right_punch_target_2', 'x_left_punch_target_0',
@@ -48,8 +50,8 @@ target = [0.401022691,	-5.128026,	1.101998588,	0.401022691,	-5.128026,	1.1019985
 in_data_collection = []
 out_data_collection = []
 poses = []
-# for f in range(100):
-for f in range(2):
+for f in range(100):
+# for f in range(2):
 # for f in range(3):
 # for target in targets[200:300]:
     ## [start:end] contains both left and right punches in X_csv
@@ -60,9 +62,9 @@ for f in range(2):
     bc.post_render()
 
 X_df = pd.DataFrame(data=in_data_collection, columns=config_store['col_names'][0])
-X_df.to_csv(os.path.join(controller_in_out_dir, "X.csv"))
+X_df.to_csv(os.path.join(controller_in_out_dir, "X_controller.csv"))
 Y_df = pd.DataFrame(data=out_data_collection, columns=config_store['col_names'][1])
-Y_df.to_csv(os.path.join(controller_in_out_dir, "Y.csv"))
+Y_df.to_csv(os.path.join(controller_in_out_dir, "Y_controller.csv"))
 
 # Removing unwanted finger joints
 # right_unwanted_ids = [i for i in range(17, 36)]
