@@ -37,8 +37,8 @@ def get_punch_count(df, hand, punch_val):
     return count_array
 
 
-# data_dir = "Blender Code Snippets/data annotation res/new_data/tertiary"
-data_dir = "Blender Code Snippets/data annotation res/new_data/binary"
+data_dir = "Blender Code Snippets/data annotation res/new_data/tertiary"
+# data_dir = "Blender Code Snippets/data annotation res/new_data/binary"
 countrf = np.array([])
 countrr = np.array([])
 countlf = np.array([])
@@ -47,14 +47,14 @@ for file in os.listdir(data_dir):
     filename = os.path.join(data_dir, file)
     punch_phase_df = pd.read_csv(filename)
     countrf = np.append(countrf, get_punch_count(punch_phase_df, 'right punch', 1.0))
-    # countrr = np.append(countrr, get_punch_count(punch_phase_df, 'right punch', -1.0))
+    countrr = np.append(countrr, get_punch_count(punch_phase_df, 'right punch', -1.0))
     print('###############################################################################')
     countlf = np.append(countlf, get_punch_count(punch_phase_df, 'left punch', 1.0))
-    # countlr = np.append(countlr, get_punch_count(punch_phase_df, 'left punch', -1.0))
+    countlr = np.append(countlr, get_punch_count(punch_phase_df, 'left punch', -1.0))
     print('******************************************************************************')
 
-# for i in [countrf, countrr, countlf, countlr]:
-for i in [countrf, countlf]:
+for i in [countrf, countrr, countlf, countlr]:
+# for i in [countrf, countlf]:
     i = np.array(i)
     print(len(i), i.mean())
 

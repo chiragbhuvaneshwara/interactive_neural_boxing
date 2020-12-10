@@ -24,7 +24,6 @@ class BoxingDetector():
         self.left = [self.o.pose.bones["LeftShoulder"], self.o.pose.bones["LeftWrist"]]
         self.right = [self.o.pose.bones["RightShoulder"], self.o.pose.bones["RightWrist"]]
         self.neck = self.o.pose.bones["Neck"]
-        self.head = self.o.pose.bones["Head"]
 #        self.max_threshold = 0.13
         self.max_threshold = 0.4
         
@@ -43,7 +42,10 @@ class BoxingDetector():
             arm - self.left or self.right
         '''
         
-        punch_labels = [0.0] * (self.fe - self.fs +1)
+        punch_labels = [0.0] * (self.fe - self.fs + 1)
+        print(len(punch_labels))
+        print(self.fs)
+        print(self.fe)
         
         next_start = self.fs
         
@@ -80,10 +82,10 @@ class BoxingDetector():
             prev_end = end
                     
 #            print("punch detected")
-            print("\t", start, npds)
-            print("\t", npf, npd)
-            print("\t", end, npde)
-            print('\n')
+#            print("\t", start, npds)
+#            print("\t", npf, npd)
+#            print("\t", end, npde)
+#            print('\n')
             
             # Marking arm stretching out with increasing values of phase i.e from 0 to 1
             for i in range(max(start, self.fs), npf):
@@ -100,6 +102,7 @@ class BoxingDetector():
             
             # Marking arm stretching back to OG pos with decreasing values of phase i.e from .9 to 0
             for i in range(npf +1, min(end, self.fe)):
+                print(i, end, self.fe)
                 punch_labels[i] = 1 - (i - npf) / (end - npf)
                 punch_labels[i] = -1
                 
@@ -176,7 +179,7 @@ class BoxingDetector():
                     return(f, curr_punch_height)  
             
         
-        print('worst case')
+#        print('worst case')
         punch_start = punch + direction*25
         
         
@@ -201,8 +204,7 @@ class BoxingDetector():
             SetFrame(f)
             handDistance = (arm[1].head - arm[0].head).length
             handHeight = arm[1].tail.y
-#            heightThreshold = (self.neck.head.y + self.neck.tail.y)/2
-            heightThreshold = (self.head.head.y + self.head.tail.y)/2
+            heightThreshold = (self.neck.head.y + self.neck.tail.y)/2
             
             # hand is in punchable area condition
             if handDistance > self.max_threshold:
@@ -248,21 +250,24 @@ print("Start.")
 base_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Data/boxing_chirag/processed'
 #base_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Data/boxing_chirag/'
 df_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Blender Code Snippets/data annotation res/new_data'
-#type = 'tertiary'
-type = 'binary'
+type = 'tertiary'
+#type = 'binary'
 #type = 'detailed'
+df_path = df_path +'/'+type
 
 #base_path = r'C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Data\boxing_chirag\processed'
 dir_files = os.listdir(base_path)
 #for file in dir_files[3:4]:
+#for file in dir_files[:1]:
 for file in dir_files:
 #    file = 'boxing_2_temp.bvh'
     print(os.path.join(base_path,file))
     o, b = load_bvh(os.path.join(base_path,file))
+    print(b)
     bpy.context.view_layer.objects.active = o
 #    bpy.data.objects[file].select_set(True)
     print(bpy.data.objects)
-    bd = BoxingDetector(bpy.context.object, 1, b, type)
+    bd = BoxingDetector(bpy.context.object, 1, b-1, type)
     print("right punches")
     pr = bd.detectPunches(bd.right)
 
@@ -272,8 +277,8 @@ for file in dir_files:
 
     df = pd.DataFrame({'right punch': pr, 'left punch': pl})
     ##print('\/')
-    print(df)
-    df.to_csv(os.path.join(df_path, type, file.split('.')[0]+'_'+type+'.csv'))
+#    print(df)
+    df.to_csv(os.path.join(df_path, file.split('.')[0]+'_'+type+'.csv'))
     #df.to_csv(r'C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Blender Code Snippets\data annotation res\PunchWithMaxDist.csv')
 
     print('done with ', file)
