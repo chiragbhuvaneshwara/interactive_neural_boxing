@@ -1,7 +1,11 @@
-# run this file with: 
-# conda install --file requirements.txt
+h5py==2.10.0
+Keras-Preprocessing==1.1.2
+matplotlib==3.2.2
 numpy
-tensorflow
-tensorflow-gpu
-pylint
-thrift
+pandas==1.0.5
+scikit-learn
+scipy
+tensorboard==2.2.2
+tensorboard-plugin-wit==1.7.0
+tensorflow==2.2.0
+tensorflow-estimator==2.2.0

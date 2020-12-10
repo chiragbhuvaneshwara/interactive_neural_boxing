@@ -328,7 +328,10 @@ class MANN(tf.keras.Model):
         print(normalized_Y.shape)
 
         mann_config = {"n_controls": 4, "input_dim": input_dim, "output_dim": output_dim, "dropout_rate": 0.6,
-                       "hidden_dim": 512, "gating_indices": gating_indices, "gating_hidden_dim": 32, "norm": norm}
+                       # TODO : maybe reduce h_dims
+                       "hidden_dim": 512,
+
+                       "gating_indices": gating_indices, "gating_hidden_dim": 32, "norm": norm}
 
         mann, config = InstantiateNetworkFromConfig(mann_config, MANN)
 
@@ -336,9 +339,10 @@ class MANN(tf.keras.Model):
             "optimizer": "Adam",
             "learning_rate": 0.00001,
             # "learning_rate": 3e-4,
+            #TODO 100 epochs
             "epochs": epochs,
-            # "batchsize": 32,
-            "batchsize": 64,
+            "batchsize": 32,
+            # "batchsize": 64,
             "loss": "mse"
         }
 

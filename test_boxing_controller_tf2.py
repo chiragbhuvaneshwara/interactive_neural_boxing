@@ -9,39 +9,39 @@ import pandas as pd
 
 # TODO Write an init README
 frd = 1
-window = 25
-epochs = 20
+# window = 25
+window = 15
+epochs = 60
 controller_in_out_dir = 'src/controlers/boxingControllers/controller_in_out'
 frd_win_epochs = 'boxing_fr_' + str(frd) + '_' + str(window) + '_' + str(epochs)
 trained_base_path = 'trained_models/mann_tf2/' + frd_win_epochs
 target_file = os.path.join(trained_base_path, 'model_weights_std_in_out.zip')
-# target_file = PureWindowsPath(
-#     r"C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-MOSI-DEV-VINN\mosi_dev_vinn\trained_models\mann_tf2\model_20_weights_std_in_out")
-
-# mann_config_path = r'C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-MOSI-DEV-VINN\mosi_dev_vinn\mann_config_fr_1_20.json'
 mann_config_path = os.path.join(trained_base_path, 'mann_config.json')
 with open(mann_config_path) as json_file:
     mann_config = json.load(json_file)
 
 mann = MANNTF(mann_config)
 mann.load_discrete_weights(target_file)
-# dataset_config = "./data/boxing_fr_1_25_config_updated.json"
 dataset_config = "data/boxing_fr_"+str(frd)+"_"+str(window)+"/config.json"
 
 with open(dataset_config) as f:
     config_store = json.load(f)
 
-# mann.start_tf()
 bc = BoxingController(mann, config_store)
 
 my_plotter = simple_matplotlib_plotter.Plotter()
 # right target coordinates, left target coordinates
 # Neutral Postion
-# target = [0.401022691,	-5.128026,	1.101998588,	0.401022691,	-5.128026,	1.101998588]
-# target = [0.302732434,	-5.116577,	1.096424532,	0.302732434,	-5.116577,	1.096424532]
+# target = [0.312219549,	-5.135918,	1.105719129,	0.312219549,	-5.135918,	1.105719129]
+# target = [0.317314766,	-5.138619,	1.10436228,	    0.317314766,	-5.138619,	1.10436228]
 # Left Punch
-# target = [0.557932576,	-4.381198,	0.96235335,	-0.216751668,	-1.127927336,	-1.13160189]
-target = [0.267201945,	-1.783858,	0.958687371,	-0.212572447,	-1.056275163,	-1.190664312]
+# target = [0.267201945,	-1.783858,	0.958687371,	-0.212572447,	-1.056275163,	-1.190664312]
+# target = [0.48645876,	-4.699789,	1.029539222,	-0.07795768,	-1.259803896,	-1.021392921]
+# Right Punch
+# target = [0.172554145,	-1.164023857,	-0.527272225,	0.199894633,	-0.756384,	0.982723578]
+target = [0.172554145,	-1.164023857,	-0.527272225,	0.199894633,	-0.756384,	0.982723578]
+
+
 # X_csv_path = "data/boxing_fr_"+str(frd)+"_"+str(window)+"/X.csv"
 # X_csv = pd.read_csv(X_csv_path)
 # reqd_cols = ['x_right_punch_target_0', 'x_right_punch_target_1', 'x_right_punch_target_2', 'x_left_punch_target_0',

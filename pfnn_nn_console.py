@@ -12,7 +12,7 @@ import numpy as np
 import json
 import tensorflow as tf
 
-from evaluate_network import evaluate_network
+from pfnn_evaluate_network import evaluate_network
 
 # tf.enable_eager_execution()
 

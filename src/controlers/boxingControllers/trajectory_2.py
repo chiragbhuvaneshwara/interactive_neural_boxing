@@ -252,22 +252,23 @@ class Trajectory:
         """
         # computing future trajectory
         # print('######################################')
+        pred_samples_dims = self.n_tr_samples //2
 
         for hand in ['left', 'right']:
             if hand == 'left':
                 traj_pos_blend = np.array(self.traj_left_wrist_positions, dtype=np.float64)
                 traj_vels_blend = np.array(self.traj_left_wrist_vels, dtype=np.float64)
                 target_wrist_pos = self.convert_local_to_global(
-                    target_left_wrist_pos.reshape(self.traj_step, self.n_dims), arm=hand)
+                    target_left_wrist_pos.reshape(pred_samples_dims, self.n_dims), arm=hand)
                 target_wrist_vels = self.convert_local_to_global(
-                    target_left_wrist_vels.reshape(self.traj_step, self.n_dims), arg_type='vels')
+                    target_left_wrist_vels.reshape(pred_samples_dims, self.n_dims), arg_type='vels')
             elif hand == 'right':
                 traj_pos_blend = np.array(self.traj_right_wrist_positions, dtype=np.float64)
                 traj_vels_blend = np.array(self.traj_right_wrist_vels, dtype=np.float64)
                 target_wrist_pos = self.convert_local_to_global(
-                    target_right_wrist_pos.reshape(self.traj_step, self.n_dims), arm=hand)
+                    target_right_wrist_pos.reshape(pred_samples_dims, self.n_dims), arm=hand)
                 target_wrist_vels = self.convert_local_to_global(
-                    target_right_wrist_vels.reshape(self.traj_step, self.n_dims), arg_type='vels')
+                    target_right_wrist_vels.reshape(pred_samples_dims, self.n_dims), arg_type='vels')
 
             tr_mid_idx = self.median_idx
             for i in range(tr_mid_idx + 1, len(traj_pos_blend)):
@@ -276,7 +277,8 @@ class Trajectory:
                 scale_pos = 0.5
                 # print('wr ==> ', scale_pos)
                 # iterates over predictions
-                target_idx = i // self.traj_step - self.traj_step
+                # target_idx = i // self.traj_step - self.traj_step
+                target_idx = i // pred_samples_dims - pred_samples_dims
 
                 traj_pos_blend[i] = utils.glm_mix(traj_pos_blend[i],
                                                   target_wrist_pos[target_idx], scale_pos)

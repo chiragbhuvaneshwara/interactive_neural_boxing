@@ -84,7 +84,8 @@ class BoxingController(Controller):
         # direction = self.output.get_root_new_forward()
         direction = np.array([0, 1])
         direction = utils.convert_to_zero_y_3d(direction)
-        target_vel_speed = .00025 * np.linalg.norm(direction)
+        # target_vel_speed = .00025 * np.linalg.norm(direction)
+        target_vel_speed = np.linalg.norm(direction)
         self.target_vel = utils.glm_mix(self.target_vel, target_vel_speed * direction, 0.9)
         # self.target_vel = utils.convert_to_zero_y_3d(self.output.get_root_vel())
         target_vel_dir = self.target_dir if utils.euclidian_length(self.target_vel) \
@@ -127,9 +128,9 @@ class BoxingController(Controller):
         self.input.set_local_vel(joint_vel.ravel())
 
         # 5. Predict: Get MANN Output
-        in_data_df = pd.read_csv(r'C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-MOSI-DEV-VINN\mosi_dev_vinn\data\boxing_fr_1_25\X.csv')
-        input_data = in_data_df.iloc[[164]].values
-        input_data = np.delete(input_data, 0, 1)
+        # in_data_df = pd.read_csv(r'C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-MOSI-DEV-VINN\mosi_dev_vinn\data\boxing_fr_1_25\X.csv')
+        # input_data = in_data_df.iloc[[164]].values
+        # input_data = np.delete(input_data, 0, 1)
         # self.input.data = input_data.ravel()
         input_data = self.input.data.reshape(1, len(self.input.data))
         output_data = self.network.forward_pass(self.network, input_data, self.network.norm)
