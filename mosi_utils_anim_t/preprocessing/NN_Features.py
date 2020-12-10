@@ -234,8 +234,8 @@ class FeatureExtractor():
 
         joints_from_bvh = bvhreader.node_names.keys()
         joints_from_bvh = [joint for joint in joints_from_bvh if len(joint.split('_')) == 1]
-        print('The joints in the bvh in order are:')
-        [print(i, joint) for i, joint in enumerate(joints_from_bvh)]
+        # print('The joints in the bvh in order are:')
+        # [print(i, joint) for i, joint in enumerate(joints_from_bvh)]
         self.joint_indices_dict = {joint: i for i, joint in enumerate(joints_from_bvh)}
 
         skeleton = SkeletonBuilder().load_from_bvh(bvhreader)
@@ -576,7 +576,7 @@ class FeatureExtractor():
                         break
 
                 if len(next_target) == 0:
-                    print('-1 phase set to target 0 vector')
+                    # print('-1 phase set to target 0 vector')
                     next_target = np.array([0.0, 0.0, 0.0])
                     target_pos[i:] = next_target
 
@@ -590,7 +590,7 @@ class FeatureExtractor():
                         break
 
                 if len(next_target) == 0:
-                    print('1 phase set to target 0 vector')
+                    # print('1 phase set to target 0 vector')
                     next_target = np.array([0.0, 0.0, 0.0])
                     target_pos[i:] = next_target
 

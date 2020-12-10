@@ -199,17 +199,54 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
     return np.array(xc), np.array(yc), dataset_config
 
 
+def get_files_in_folder(folder):
+    files = []
+    for path in os.listdir(folder):
+        full_path = os.path.join(folder, path)
+        files.append(full_path)
+
+    return files
+
+
+def process_folder(bvh_path, punch_phase_path):
+    # frame_rate_div = 1  # if 2, Reduces fps from 120fps to 60fps for Axis Neuron bvh
+    # # Ensure: Rotated the bvh mocap data to right hand co-ordinate system i.e. y up and z forward
+    # forward_direction = np.array([0.0, 0.0, 1.0])  # Z axis
+    # # window = math.ceil(25 / frame_rate_div)
+    # window = math.ceil(15 / frame_rate_div)
+    bvh_files = get_files_in_folder(bvh_path)
+    punch_phase_files = get_files_in_folder(punch_phase_path)
+
+    Xc = []
+    Yc = []
+    # for b_f, p_f in zip(bvh_files[1:], punch_phase_files[1:]):
+    for b_f, p_f in zip(bvh_files, punch_phase_files):
+        print(b_f, '\n', p_f)
+        handler = FeatureExtractor(b_f, window, forward_dir=forward_direction)
+        Xc_f, Yc_f, Dataset_Config = process_data(handler, p_f, frame_rate_div)
+        Xc.append(Xc_f)
+        Yc.append(Yc_f)
+
+    Xc = np.vstack(Xc)
+    Yc = np.vstack(Yc)
+
+    return Xc, Yc, Dataset_Config
+
+
 input_base_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor'
-punch_phase_path = input_base_path + '/Blender Code Snippets/data annotation res/new_data/tertiary/boxing_2_tertiary.csv'
-bvh_path = input_base_path + "/Data/boxing_chirag/processed/boxing_2.bvh"
+punch_phase_path = input_base_path + '/Blender Code Snippets/data annotation res/new_data/tertiary/'
+bvh_path = input_base_path + "/Data/boxing_chirag/processed/"
 ####################################################################################
 frame_rate_div = 1  # if 2, Reduces fps from 120fps to 60fps for Axis Neuron bvh
 # Ensure: Rotated the bvh mocap data to right hand co-ordinate system i.e. y up and z forward
 forward_direction = np.array([0.0, 0.0, 1.0])  # Z axis
 # window = math.ceil(25 / frame_rate_div)
 window = math.ceil(15 / frame_rate_div)
-handler = FeatureExtractor(bvh_path, window, forward_dir=forward_direction)
-Xc, Yc, Dataset_Config = process_data(handler, punch_phase_path, frame_rate_div)
+# handler = FeatureExtractor(bvh_path, window, forward_dir=forward_direction)
+# Xc, Yc, Dataset_Config = process_data(handler, punch_phase_path, frame_rate_div)
+Xc, Yc, Dataset_Config = process_folder(bvh_path, punch_phase_path)
+
+
 
 output_base_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-MOSI-DEV-VINN/mosi_dev_vinn/data/'
 frd_win = 'boxing_fr_' + str(frame_rate_div) + '_' + str(window)
