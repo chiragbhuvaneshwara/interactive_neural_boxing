@@ -41,6 +41,7 @@ class BoxingController(Controller):
         self.traj_window = config_store["window"]
         self.num_traj_samples = config_store["num_traj_samples"]
         self.traj_step = config_store["traj_step"]
+        self.zero_posture = config_store["zero_posture"]
         self.joint_names_ids = config_store["joint_indices"]
         self.in_col_names_ids = config_store["col_indices"][0]
         self.out_col_names_ids = config_store["col_indices"][1]
@@ -70,13 +71,13 @@ class BoxingController(Controller):
         self.config_store = config_store
         self.__initialize()
 
-    def pre_render(self, punch_targets):
+    def pre_render(self, punch_targets, space='local'):
         """
         This function is called before rendering. It prepares character and trajectory to be rendered.
 
         Arguments:
             punch_targets {np.array(6)} --{left_punch_target,right_punch_target} user input punch target in local space
-
+            space: 'local' or 'global'
         Returns:
 
         """
@@ -92,10 +93,8 @@ class BoxingController(Controller):
                                             < 1e-05 else utils.normalize(self.target_vel)
         self.target_dir = utils.mix_directions(self.target_dir, target_vel_dir, 0.9)
 
-        # 2. Set new punch_phase and new punch target based on input
-        right_p_target = punch_targets[:self.n_dims]
-        left_p_target = punch_targets[self.n_dims:]
-        self.input.set_punch_target(right_p_target, left_p_target)
+
+
 
         # 3. Update/calculate trajectory based on input
         right_pos_traj_target, left_pos_traj_target = self.output.get_wrist_pos_traj()
@@ -126,6 +125,31 @@ class BoxingController(Controller):
         joint_pos, joint_vel = self.char.getLocalJointPosVel(prev_root_pos, prev_root_rot)
         self.input.set_local_pos(joint_pos.ravel())
         self.input.set_local_vel(joint_vel.ravel())
+
+        # 2. Set new punch_phase and new punch target based on input
+        right_p_target = np.array(punch_targets[:self.n_dims])
+        left_p_target = np.array(punch_targets[self.n_dims:])
+        if space == 'local':
+            self.input.set_punch_target(right_p_target, left_p_target)
+        elif space == 'global':
+            right_p_target = right_p_target.reshape(1, len(right_p_target))
+            left_p_target = left_p_target.reshape(1, len(left_p_target))
+
+            right_p_target_local = self.char.convert_global_to_local(right_p_target, prev_root_pos, prev_root_rot, type='pos')
+            left_p_target_local = self.char.convert_global_to_local(left_p_target, prev_root_pos, prev_root_rot, type='pos')
+
+            right_p_target = right_p_target_local.ravel()
+            left_p_target = left_p_target_local.ravel()
+
+            print('#######################################################')
+            print('Converted punch targets')
+            print(right_p_target_local)
+            print(left_p_target_local)
+            print('#######################################################')
+
+            self.input.set_punch_target(right_p_target, left_p_target)
+        else:
+            raise ValueError("space variable accepts only local or global")
 
         # 5. Predict: Get MANN Output
         # in_data_df = pd.read_csv(r'C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-MOSI-DEV-VINN\mosi_dev_vinn\data\boxing_fr_1_25\X.csv')
@@ -185,7 +209,10 @@ class BoxingController(Controller):
         for hand in ['right', 'left']:
             # self.previous_punch_phase[hand] = self.fix_phase(pred_ph[hand])
             self.previous_punch_phase[hand] = pred_ph[hand]
+
+        print('-------------------------------------------------------------')
         print(self.previous_punch_phase)
+        print('-------------------------------------------------------------')
 
         self.previous_joint_pos = self.output.get_local_pos()
         self.previous_joint_vel = self.output.get_local_vel()
@@ -229,7 +256,7 @@ class BoxingController(Controller):
         return np.reshape(pos, (self.char.joints, 3))
 
     def getWorldPosRot(self):
-        return np.array(self.char.root_position), np.array(self.char.root_rotation)
+        return np.array(self.char.root_position), float(self.char.root_rotation)
 
     def __initialize(self):
         # self.output.data = np.array(self.network.norm["Ymean"])  # * self.network.norm["Ystd"] + self.network.norm["Ymean"]

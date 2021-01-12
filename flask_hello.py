@@ -36,16 +36,16 @@ def hello_world():
 
 @app.route('/punch_in', methods=['GET', 'POST'])
 def post_req():
-    print('Here')
     if request.method == 'POST':  # this block is only entered when the form is submitted
         punch_in = request.get_json()
         punch_hand = punch_in["hand"]
         punch_target = punch_in["target_right"] + punch_in["target_left"]
-        bc.pre_render(punch_target)
-        pose = bc.char.joint_positions
-        # pose = [1, 2, 3]
-        print(pose)
-    return jsonify(pose.tolist())
+        # bc.pre_render(punch_target)
+        # pose = bc.char.joint_positions
+        pose = [1, 2, 3]
+        print(punch_in)
+    # return jsonify(pose.tolist())
+    return jsonify(pose)
 
 
 if __name__ == '__main__':
