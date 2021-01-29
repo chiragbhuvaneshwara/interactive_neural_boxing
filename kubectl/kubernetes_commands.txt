@@ -6,15 +6,15 @@ Kubernetes Commands
                     kubectl exec -it train-env -- /bin/bash
 
 - To copy from a pod to local directory: kubectl cp namespace/podname:/path/to/file /local/path
-
 Example: kubectl cp usas01/test:/tf/mosi_dev_vinn/trained_models/mann/epoch_99.json tmp/epoch_99.json
          kubectl cp chbh01/train-env:/tf/mosi_dev_vinn/mosi_dev_vinn/trained_models/mann/epoch_49.json C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-MOSI-DEV-VINN\mosi_dev_vinn\trained_models\mann\epoch_49.json
-
+         kubectl cp chbh01/train-env:/tf/boxing-mosi-dev-vinn/trained_models/mann_tf2 tmp\mann_tf2
 Execute this command while being in the local directory and not in the pod itself
 
 - To copy from a local directory to a pod: kubectl cp /local/path namespace/podname:/path/to/file 
 Example: kubectl cp .\data\reaching_simple.npz usas01/test:/tf/mosi_dev_vinn/data/reaching_simple.npz
          kubectl cp C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-MOSI-DEV-VINN\mosi_dev_vinn\data\boxing_train.npz chbh01/train-env:/tf/mosi_dev_vinn/mosi_dev_vinn/data/boxing_train.npz
+         kubectl cp C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-MOSI-DEV-VINN\mosi_dev_vinn\data chbh01/train-env:/tf/boxing-mosi-dev-vinn/data
 
 kubectl cp C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-MOSI-DEV-VINN\mosi_dev_vinn\main.py chbh01/train-env:/tf/mosi_dev_vinn/mosi_dev_vinn/main.py
 Execute this command while being in the local directory and not in the pod itself

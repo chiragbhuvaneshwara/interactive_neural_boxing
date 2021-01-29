@@ -91,12 +91,16 @@ def post_req():
         # print(punch_in)
         punch_hand = punch_in["hand"]
         punch_target = punch_in["target_right"] + punch_in["target_left"]
+        # punch_target = punch_target * 100
         bc.pre_render(punch_target, space='global')
         # pose = bc.char.joint_positions
         pose = bc.char.joint_positions
+        # pose = pose * 0.01
         # pose = [1, 2, 3]
         bone_map = {}
 
+        if punch_hand != "none":
+            print(pose)
 
         # print(pose)
         # print(punch_in)

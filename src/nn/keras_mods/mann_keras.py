@@ -220,6 +220,17 @@ class MANN(tf.keras.Model):
         X = data["Xun"]
         Y = data["Yun"]
 
+        x_col_indices = config_store['col_indices'][0]
+        y_col_indices = config_store['col_indices'][1]
+
+        x_pos_indices = {k: v for k, v in x_col_indices.items() if '_pos' in k}
+        y_pos_indices = {k: v for k, v in y_col_indices.items() if '_pos' in k}
+        for k, v in x_pos_indices.items():
+            X[v[0]: v[1]] = X[v[0]: v[1]] * 0.01
+
+        for k, v in y_pos_indices.items():
+            Y[v[0]:v[1]] = Y[v[0]:v[1]] * 0.01
+
         Xmean = np.mean(X, axis=0)
         Ymean = np.mean(Y, axis=0)
         Xstd = np.std(X, axis=0)
@@ -233,9 +244,6 @@ class MANN(tf.keras.Model):
         # joints_ids_that_matter = [val for key, val in joint_indices.items() if key in joints_keys_that_matter]
         # joint_weights = np.array([1 if val in joints_ids_that_matter else 1e-10 for val in joint_indices.values()])
         # joint_weights = np.array([1] * len(joint_indices.values()))
-
-        x_col_indices = config_store['col_indices'][0]
-        y_col_indices = config_store['col_indices'][1]
 
         x_tr_col_indices = {k: v for k, v in x_col_indices.items() if '_tr' in k}
         y_tr_col_indices = {k: v for k, v in y_col_indices.items() if '_tr' in k}
@@ -281,6 +289,7 @@ class MANN(tf.keras.Model):
 
         Xstd[Xstd == 0] = 1.0
         Ystd[Ystd == 0] = 1.0
+
 
         norm = {"Xmean": Xmean.tolist(),
                 "Ymean": Ymean.tolist(),

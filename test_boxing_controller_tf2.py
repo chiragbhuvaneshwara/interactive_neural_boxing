@@ -55,7 +55,7 @@ for f in range(100):
 # for f in range(3):
 # for target in targets[200:300]:
     ## [start:end] contains both left and right punches in X_csv
-    in_data, out_data = bc.pre_render(target)
+    in_data, out_data = bc.pre_render(target, space="local")
     in_data_collection.append(np.hstack(in_data))
     out_data_collection.append(np.hstack(out_data))
     poses.append(np.array(bc.char.joint_positions))
