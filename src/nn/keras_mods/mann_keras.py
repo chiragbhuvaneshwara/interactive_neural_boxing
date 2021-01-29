@@ -223,15 +223,15 @@ class MANN(tf.keras.Model):
         x_col_indices = config_store['col_indices'][0]
         y_col_indices = config_store['col_indices'][1]
 
-        x_pos_indices = {k: v for k, v in x_col_indices.items() if 'pos' or 'punch_target' in k}
-        y_pos_indices = {k: v for k, v in y_col_indices.items() if 'pos' or 'punch_target' in k}
+        x_pos_indices = {k: v for k, v in x_col_indices.items() if 'pos' in k or "punch_target" in k}
+        y_pos_indices = {k: v for k, v in y_col_indices.items() if 'pos' in k or "punch_target" in k}
         for k, v in x_pos_indices.items():
-            X[v[0]: v[1]] = X[v[0]: v[1]] * 0.01
-            print(k)
-            print(X[v[0]:v[1]])
+            print(k, X[:, v[0]:v[1]].mean())
+            X[:, v[0]: v[1]] = X[:, v[0]: v[1]] * 0.01
+            print(k, X[:, v[0]:v[1]].mean())
 
         for k, v in y_pos_indices.items():
-            Y[v[0]:v[1]] = Y[v[0]:v[1]] * 0.01
+            Y[:, v[0]:v[1]] = Y[:, v[0]:v[1]] * 0.01
 
         Xmean = np.mean(X, axis=0)
         Ymean = np.mean(Y, axis=0)
