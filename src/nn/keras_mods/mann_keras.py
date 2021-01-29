@@ -227,6 +227,8 @@ class MANN(tf.keras.Model):
         y_pos_indices = {k: v for k, v in y_col_indices.items() if 'pos' or 'punch_target' in k}
         for k, v in x_pos_indices.items():
             X[v[0]: v[1]] = X[v[0]: v[1]] * 0.01
+            print(k)
+            print(X[v[0]:v[1]])
 
         for k, v in y_pos_indices.items():
             Y[v[0]:v[1]] = Y[v[0]:v[1]] * 0.01
