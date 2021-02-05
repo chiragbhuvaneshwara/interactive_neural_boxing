@@ -4,6 +4,7 @@ using UnityEngine;
 using System.Net;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
 
 namespace MultiMosiServer
 {
@@ -16,6 +17,7 @@ namespace MultiMosiServer
         string serverAddress = "http://127.0.0.1:5000/";
 
         private TPosture posture;
+        public Traj trajectory;
 
         //private TVector3 direction = new TVector3(0, 0, 1);
 
@@ -120,8 +122,9 @@ namespace MultiMosiServer
 
 
                 punch_in.hand = "right";
-                punch_in.target_left = new double[] { l_hand_pos.x, l_hand_pos.y, l_hand_pos.z };
-                punch_in.target_right = new double[] { target.x, target.y, target.z };
+                //punch_in.target_left = new double[] { l_hand_pos.x, l_hand_pos.y, l_hand_pos.z };
+                punch_in.target_left = new double[] { 0, 0, 0};
+                punch_in.target_right = new double[] { -target.x, target.y, target.z };
             }
             else if (TargetHand == "left")
             {
@@ -133,12 +136,18 @@ namespace MultiMosiServer
 
 
                 punch_in.hand = "left";
-                punch_in.target_left = new double[] { target.x, target.y, target.z };
-                punch_in.target_right = new double[] { r_hand_pos.x, r_hand_pos.y, r_hand_pos.z };
+                punch_in.target_left = new double[] { -target.x, target.y, target.z};
+                punch_in.target_right = new double[] { 0, 0, 0};
+            }
+            else if (TargetHand == "none")
+            {
+                punch_in.hand = TargetHand;
+                punch_in.target_left = new double[] {0, 0, 0};
+                punch_in.target_right = new double[] {0, 0, 0};
             }
 
             string punch_input = JsonConvert.SerializeObject(punch_in);
-            Debug.Log(punch_input);
+            //Debug.Log(punch_input);
             string json_obj = JsonPostWithResp("fetch_frame", punch_input);
 
             TPosture posture = JsonConvert.DeserializeObject<TPosture>(json_obj);
@@ -210,6 +219,13 @@ namespace MultiMosiServer
             return q;
         }
 
+        public Vector3 GetArmTrPos(string v, int i)
+        //public void GetArmTrPos(string v, int i)
+        {
+            Debug.Log(Tvec2vec(this.posture.arm_tr.rwt[i]).x);
+            //Debug.Log(this.posture.arm_tr.rwt.Count);
+            return Tvec2vec(this.posture.arm_tr.rwt[i]);
+        }
 
         ////TODO: setup a route in the backend to terminate a connection with the specified unique ID.
         //public void stop()
@@ -223,14 +239,10 @@ namespace MultiMosiServer
         {
             if (this.active)
             {
-
-                
-
                 //TODO: Setup root to get posture with bones, bone_map, root_global_loc, root_global_rot
                 this.posture = this.UpdatePunchTargetFetchPosture(TargetHand);
             }
         }
-
-
     }
+
 }

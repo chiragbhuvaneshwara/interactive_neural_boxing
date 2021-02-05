@@ -83,11 +83,32 @@ namespace MultiMosiServer
 
             public TVector3(double x, double y, double z)
             {
-                this.x = x;
+                this.x = -x;
                 this.y = y;
                 this.z = z;
             }
         }
+
+        //public class Rwt
+        //{
+        //    public double x { get; set; }
+        //    public double y { get; set; }
+        //    public double z { get; set; }
+        //}
+
+        //public class Lwt
+        //{
+        //    public double x { get; set; }
+        //    public double y { get; set; }
+        //    public double z { get; set; }
+        //}
+
+        public class ArmTr
+        {
+            public List<TVector3> rwt { get; set; }
+            public List<TVector3> lwt { get; set; }
+        }
+
 
         public class TPosture
         {
@@ -96,6 +117,8 @@ namespace MultiMosiServer
             public Dictionary<string, int> Bone_map { get; set; }
             public TVector3 Location { get; set; }
             public double Rotation { get; set; }
+            public ArmTr arm_tr { get; set; }
+
         }
 
 

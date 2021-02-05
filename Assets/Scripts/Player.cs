@@ -21,6 +21,7 @@ public partial class Player : MonoBehaviour
     public bool start = false;
     public bool fix_global_pos = false;
     public float velocity_scale = 1.0f;
+    public List<UnityEngine.GameObject> Trajectory;
 
     private Vector3 global_offset = Vector3.zero;
 
@@ -70,6 +71,24 @@ public partial class Player : MonoBehaviour
         server = new MultiMotionServer();
         this.initializeBones(this.rootBone);
         server.Start();
+        Trajectory = new List<GameObject>(10);
+        Material[] materials = Resources.FindObjectsOfTypeAll<Material>();
+        Material red = null, green = null;
+        foreach (Material t in materials)
+        {
+            if (t.name == "red") red = t;
+            if (t.name == "green") green = t;
+        }
+
+        for (int i = 0; i < 10; i++)
+        {
+            var point = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+
+            point.GetComponent<MeshRenderer>().material = red;
+            point.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+            Trajectory.Add(point);
+        }
+
     }
 
     private void processTransforms(Transform t)
@@ -107,6 +126,15 @@ public partial class Player : MonoBehaviour
         }
     }
 
+    private void processTraj()
+    {
+        for (int i = 0; i < 10; i++)
+        {
+            //this.server.GetArmTrPos("Right", i);
+            Trajectory[i].transform.position = this.server.GetArmTrPos("Right", i);
+        }
+    }
+
     void LateUpdate()
     {
         //TODO: update processTransforms to obtain relevant joint positions from your code
@@ -115,6 +143,7 @@ public partial class Player : MonoBehaviour
         {
             this.rootBone.rotation = Quaternion.identity;
             processTransforms(this.rootBone);
+            processTraj();
 
             if (!this.fix_global_pos)
             {
@@ -139,7 +168,7 @@ public partial class Player : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0))
         {
-            Debug.Log("Pressed primary button i.e left");
+            //Debug.Log("Pressed primary button i.e left");
             leftMousePressed = true;
             if (leftMousePressed)
             {
@@ -152,9 +181,9 @@ public partial class Player : MonoBehaviour
 
         }
 
-        if (Input.GetMouseButtonDown(1))
+        else if (Input.GetMouseButtonDown(1))
         {
-            Debug.Log("Pressed secondary button i.e right");
+            //Debug.Log("Pressed secondary button i.e right");
             rightMousePressed = true;
 
             if (rightMousePressed)
@@ -167,10 +196,17 @@ public partial class Player : MonoBehaviour
 
         }
 
-        if (Input.GetMouseButtonDown(2))
+        else if (Input.GetMouseButtonDown(2))
         {
-            Debug.Log("Pressed middle click.");
             midMousePressed = true;
+            //Debug.Log("Pressed middle click.");
+            midMousePressed = false;
+        }
+
+        else
+        {
+            //Debug.Log("No target");
+            server.ManagedUpdate("none");
         }
 
     }
