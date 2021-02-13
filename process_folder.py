@@ -234,7 +234,7 @@ def process_folder(bvh_path, punch_phase_path):
 
 # input_base_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor'
 input_base_path = '/tf/boxing-blender-data-gen'
-punch_phase_path = input_base_path + '/Blender Code Snippets/data annotation res/new_data/tertiary/'
+punch_phase_path = input_base_path + '/Blender_Code_Snippets/data_annotation_res/new_data/tertiary/'
 bvh_path = input_base_path + "/Data/boxing_chirag/hq/processed/"
 ####################################################################################
 frame_rate_div = 1  # if 2, Reduces fps from 120fps to 60fps for Axis Neuron bvh
