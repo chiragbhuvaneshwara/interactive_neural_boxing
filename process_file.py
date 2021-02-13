@@ -201,7 +201,7 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
 
 # input_base_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor'
 input_base_path = '/tf/boxing-blender-data-gen'
-punch_phase_path = input_base_path + '/Blender Code Snippets/data annotation res/new_data/tertiary/boxing_2_tertiary.csv'
+punch_phase_path = input_base_path + '/Blender_Code_Snippets/data_annotation_res/new_data/tertiary/boxing_2_tertiary.csv'
 bvh_path = input_base_path + "/Data/boxing_chirag/hq/processed/boxing_2.bvh"
 ####################################################################################
 frame_rate_div = 1  # if 2, Reduces fps from 120fps to 60fps for Axis Neuron bvh
