@@ -201,7 +201,9 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
 
 def get_files_in_folder(folder):
     files = []
-    for path in os.listdir(folder).sort():
+    dir_files = os.listdir(folder)
+    dir_files.sort()
+    for path in dir_files:
         full_path = os.path.join(folder, path)
         files.append(full_path)
 
