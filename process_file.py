@@ -66,7 +66,7 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
         #############################################################################################
         indices_dict_set = False  # just to print out useful info
         # for i in range(handler.window, handler.n_frames - handler.window - 1, 1):
-        for i in range(handler.window, 350 - handler.window - 1, 1):
+        for i in range(handler.window, 100 - handler.window - 1, 1):
             if i % 50 == 0:
                 print('Frames processed: ', i)
 
@@ -199,7 +199,8 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
     return np.array(xc), np.array(yc), dataset_config
 
 
-input_base_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor'
+# input_base_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor'
+input_base_path = '/tf/boxing-blender-data-gen'
 punch_phase_path = input_base_path + '/Blender Code Snippets/data annotation res/new_data/tertiary/boxing_2_tertiary.csv'
 bvh_path = input_base_path + "/Data/boxing_chirag/hq/processed/boxing_2.bvh"
 ####################################################################################
@@ -212,7 +213,8 @@ window = math.ceil(15 / frame_rate_div)
 handler = FeatureExtractor(bvh_path, window, forward_dir=forward_direction)
 Xc, Yc, Dataset_Config = process_data(handler, punch_phase_path, frame_rate_div)
 
-output_base_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-MOSI-DEV-VINN/mosi_dev_vinn/data/trial2'
+# output_base_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-MOSI-DEV-VINN/mosi_dev_vinn/data/trial2'
+output_base_path = '/tf/boxing-mosi-dev-vinn/data/trial'
 frd_win = 'boxing_fr_' + str(frame_rate_div) + '_' + str(window)
 if frd_win not in os.listdir(output_base_path):
     print('Creating new output dir:', frd_win)
