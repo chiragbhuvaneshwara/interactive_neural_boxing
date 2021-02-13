@@ -65,7 +65,8 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
         feet_l, feet_r = handler.get_foot_concats()
         #############################################################################################
         indices_dict_set = False  # just to print out useful info
-        for i in range(handler.window, handler.n_frames - handler.window - 1, 1):
+        # for i in range(handler.window, handler.n_frames - handler.window - 1, 1):
+        for i in range(handler.window, 100 - handler.window - 1, 1):
             if i % 50 == 0:
                 print('Frames processed: ', i)
 
@@ -200,7 +201,7 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
 
 def get_files_in_folder(folder):
     files = []
-    for path in os.listdir(folder):
+    for path in os.listdir(folder).sort():
         full_path = os.path.join(folder, path)
         files.append(full_path)
 
