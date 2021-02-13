@@ -232,7 +232,8 @@ def process_folder(bvh_path, punch_phase_path):
     return Xc, Yc, Dataset_Config
 
 
-input_base_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor'
+# input_base_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor'
+input_base_path = '/tf/boxing-blender-data-gen'
 punch_phase_path = input_base_path + '/Blender Code Snippets/data annotation res/new_data/tertiary/'
 bvh_path = input_base_path + "/Data/boxing_chirag/hq/processed/"
 ####################################################################################
@@ -247,7 +248,8 @@ Xc, Yc, Dataset_Config = process_folder(bvh_path, punch_phase_path)
 
 
 
-output_base_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-MOSI-DEV-VINN/mosi_dev_vinn/data/'
+# output_base_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-MOSI-DEV-VINN/mosi_dev_vinn/data/'
+output_base_path = '/tf/boxing-mosi-dev-vinn/data'
 frd_win = 'boxing_fr_' + str(frame_rate_div) + '_' + str(window)
 if frd_win not in os.listdir(output_base_path):
     print('Creating new output dir:', frd_win)
