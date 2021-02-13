@@ -22,6 +22,8 @@ public partial class Player : MonoBehaviour
     public bool fix_global_pos = false;
     public float velocity_scale = 1.0f;
     public List<UnityEngine.GameObject> Trajectory;
+    public List<UnityEngine.LineRenderer> TrajLines;
+    public UnityEngine.LineRenderer TrajLineRenderer;
 
     private Vector3 global_offset = Vector3.zero;
 
@@ -72,6 +74,8 @@ public partial class Player : MonoBehaviour
         this.initializeBones(this.rootBone);
         server.Start();
         Trajectory = new List<GameObject>(10);
+        //TrajLines = new List<LineRenderer>(10);
+
         Material[] materials = Resources.FindObjectsOfTypeAll<Material>();
         Material red = null, green = null;
         foreach (Material t in materials)
@@ -85,10 +89,19 @@ public partial class Player : MonoBehaviour
             var point = GameObject.CreatePrimitive(PrimitiveType.Sphere);
 
             point.GetComponent<MeshRenderer>().material = red;
+            point.name = "tr_" + i.ToString();
             point.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
             Trajectory.Add(point);
+
+            //LineRenderer lineRenderer = gameObject.AddComponent<LineRenderer>();
+            //lineRenderer.name = "tr_line_" + i.ToString();
+            //TrajLines.Add(lineRenderer);
         }
 
+        TrajLineRenderer = gameObject.AddComponent<LineRenderer>();
+        TrajLineRenderer.name = "tr_line";
+        //TrajLineRenderer.widthMultiplier = 0.01f;
+        TrajLineRenderer.positionCount = 10;
     }
 
     private void processTransforms(Transform t)
@@ -133,6 +146,14 @@ public partial class Player : MonoBehaviour
             //this.server.GetArmTrPos("Right", i);
             Trajectory[i].transform.position = this.server.GetArmTrPos("Right", i);
         }
+
+        for (int i = 0; i < 10; i++)
+        {
+            //this.server.GetArmTrPos("Right", i);
+            //TrajLines[i].SetPosition(i, new Vector3(i * 0.5f, Mathf.Sin(i + t), 0.0f));
+            TrajLineRenderer.SetPosition(i, Trajectory[i].transform.position);
+        }
+
     }
 
     void LateUpdate()
@@ -166,7 +187,7 @@ public partial class Player : MonoBehaviour
     void Update()
     {
 
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButton(0))
         {
             //Debug.Log("Pressed primary button i.e left");
             leftMousePressed = true;
@@ -181,7 +202,7 @@ public partial class Player : MonoBehaviour
 
         }
 
-        else if (Input.GetMouseButtonDown(1))
+        else if (Input.GetMouseButton(1))
         {
             //Debug.Log("Pressed secondary button i.e right");
             rightMousePressed = true;
@@ -196,7 +217,7 @@ public partial class Player : MonoBehaviour
 
         }
 
-        else if (Input.GetMouseButtonDown(2))
+        else if (Input.GetMouseButton(2))
         {
             midMousePressed = true;
             //Debug.Log("Pressed middle click.");
@@ -206,7 +227,7 @@ public partial class Player : MonoBehaviour
         else
         {
             //Debug.Log("No target");
-            server.ManagedUpdate("none");
+            server.ManagedUpdate("right");
         }
 
     }
