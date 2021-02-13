@@ -41,7 +41,7 @@ class Trajectory:
         ### Trajectory info of the root
         # Root positions contain all 3 components
         self.traj_positions = np.zeros((self.n_frames_tr_win, self.n_dims))
-        #TODO Set vels to zero vector
+        # TODO Set vels to zero vector
         # self.traj_vels = np.tile(self.z_vec, (self.n_frames_tr_win, 1))
         self.traj_vels = np.zeros((self.n_frames_tr_win, self.n_dims))
         self.traj_rotations = np.zeros(self.n_frames_tr_win)
@@ -147,6 +147,8 @@ class Trajectory:
             target_dir {np.array(3)} -- Direction
             target_vel {np.array(3)} -- Velocity in local space
         """
+        # a = self.get_global_root_tr()
+
         # computing future trajectory
         target_vel = target_vel.reshape(1, len(target_vel))
         target_vel = self.convert_local_to_global(target_vel, arg_type='vels')
@@ -161,12 +163,12 @@ class Trajectory:
 
             # ith pos = i-1 th pos + combo of curr velocity and user requested velocity
             mixed_val = utils.glm_mix(self.traj_positions[i] - self.traj_positions[i - 1],
-                          target_vel, scale_pos)
+                                      target_vel, scale_pos)
 
             # print(mixed_val)
             trajectory_positions_blend[i] = trajectory_positions_blend[i - 1] + \
                                             target_vel
-                                            # mixed_val
+            # mixed_val
 
             self.traj_vels[i] = utils.glm_mix(self.traj_vels[i],
                                               target_vel, scale_pos)
@@ -178,67 +180,13 @@ class Trajectory:
 
         for i in range(tr_mid_idx + 1, len(trajectory_positions_blend)):
             self.traj_positions[i] = trajectory_positions_blend[i]
-        # print('######################################')
-
+        print('######################################')
 
         # compute trajectory rotations
         for i in range(0, self.n_frames_tr_win):
             self.traj_rotations[i] = utils.z_angle(self.traj_directions[i])
 
-    def convert_global_to_local(self, arr_in, root_pos, root_rot, arg_type='pos', arm=None):
-        arr = arr_in[:]
-
-        for i in range(len(arr)):
-            curr_point = arr[i]
-            if arg_type == 'pos':
-                curr_point -= root_pos
-                # arr[i] -= root_pos
-
-            # TODO
-            # arr[i] = utils.rot_around_z_3d(arr[i], root_rot, inverse=True)
-            curr_point = utils.rot_around_z_3d(curr_point, root_rot, inverse=True)
-            # curr_point = utils.rot_around_z_3d(curr_point, root_rot)
-            arr[i] = curr_point
-
-        for i in range(len(arr)):
-            curr_point = arr[i]
-            # if arg_type == 'pos':
-            #     if arm == 'left':
-            #         curr_point -= arr[self.median_idx]
-            #         #TODO traj_left is in global put to local
-            #         # arr[i] -= arr[self.median_idx]
-            #     elif arm == 'right':
-            #         curr_point -= arr[self.median_idx]
-            #         # arr[i] -= arr[self.median_idx]
-
-            ####
-            arr[i] = curr_point
-
-        return arr
-
-    def convert_local_to_global(self, arr_in, arg_type='pos', arm=None):
-        arr = arr_in[:]
-
-        # Info at mid trajectory is info at current frame
-        root_pos = self.traj_positions[self.median_idx]
-        root_rot = self.traj_rotations[self.median_idx]
-        for i in range(len(arr)):
-            # if arg_type == 'pos':
-                # if arm == 'left':
-                #     #TODO add middle of array from local info
-                #     arr[i] = arr[i] + arr[0]
-                # elif arm == 'right':
-                #     arr[i] = arr[i] + arr[0]
-
-            #TODO
-            # arr[i] = utils.rot_around_z_3d(arr[i], root_rot)
-            # arr[i] = utils.rot_around_z_3d(arr[i], -root_rot)
-            arr[i] = utils.rot_around_z_3d(arr[i], root_rot)
-
-            if arg_type == 'pos':
-                arr[i] = arr[i] + root_pos
-
-        return arr
+        # a = self.get_global_root_tr()
 
     def compute_future_wrist_trajectory(self, target_right_wrist_pos, target_right_wrist_vels,
                                         target_left_wrist_pos, target_left_wrist_vels):
@@ -252,7 +200,9 @@ class Trajectory:
         """
         # computing future trajectory
         # print('######################################')
-        pred_samples_dims = self.n_tr_samples //2
+        # a = self.get_global_arm_tr()
+
+        pred_samples_dims = self.n_tr_samples // 2
 
         for hand in ['left', 'right']:
             if hand == 'left':
@@ -295,6 +245,8 @@ class Trajectory:
                     self.traj_right_wrist_vels[i] = traj_vels_blend[i]
         # print('######################################')
 
+        # a = self.get_global_arm_tr()
+
     def step_forward(self, pred_root_vel, pred_fwd_dir, wrist_vels_traj):
         """
         Performs a frame-step after rendering
@@ -305,6 +257,8 @@ class Trajectory:
         Returns:
             [type] -- [description]
         """
+        # a = self.get_global_root_tr()
+        # a = self.get_global_arm_tr()
 
         # mix positions with velocity prediction
         # tr_mid_idx = len(self.traj_positions) // 2
@@ -354,7 +308,6 @@ class Trajectory:
         self.traj_positions[idx] = self.traj_positions[idx] + trajectory_update
         # print('tr nxt:', self.traj_positions[idx])
 
-
         self.traj_vels[idx] = utils.glm_mix(self.traj_vels[idx], pred_root_vel, 0.9)
         self.traj_directions[idx] = utils.rot_around_z_3d(self.traj_directions[idx],
                                                           rotational_vel)
@@ -365,6 +318,9 @@ class Trajectory:
         self.traj_right_wrist_positions[idx] = self.traj_right_wrist_positions[idx] + right_tr_update
         self.traj_right_wrist_vels[idx] = right_wr_v
 
+        # a = self.get_global_root_tr()
+        # a = self.get_global_arm_tr()
+
     def update_from_predict(self, prediction):
         """
         Update trajectory from prediction.
@@ -373,6 +329,9 @@ class Trajectory:
         Arguments:
             prediction {np.array(4 * (6 * 2))} -- vector containing the network output regarding future trajectory positions and directions
         """
+        # a = self.get_global_root_tr()
+        # a = self.get_global_arm_tr()
+
         prediction = list(prediction)
         pred_rp_tr, pred_rv_tr, pred_rwp_tr, pred_lwp_tr, pred_rwv_tr, pred_lwv_tr, pred_fwd_dir = prediction
         pred_fwd_dir = utils.convert_to_zero_y_3d(pred_fwd_dir)
@@ -444,6 +403,9 @@ class Trajectory:
             self.traj_left_wrist_vels[i] = self.convert_local_to_global(self.traj_left_wrist_vels[i].reshape(1, n_d),
                                                                         arg_type='vels', arm='left').ravel()
 
+        # a = self.get_global_root_tr()
+        # a = self.get_global_arm_tr()
+
     def smooth_pred(self, tr_frame, axis, weight, prediction_axis):
         """
         Function returns new prediction value at tr_frame by combining consecutive pred values
@@ -479,6 +441,61 @@ class Trajectory:
     def correct_foot_sliding(self, foot_sliding):
         self.traj_positions[self.median_idx] += foot_sliding
 
+    def convert_global_to_local(self, arr_in, root_pos, root_rot, arg_type='pos', arm=None):
+        arr = arr_in[:]
+
+        for i in range(len(arr)):
+            curr_point = arr[i]
+            if arg_type == 'pos':
+                curr_point -= root_pos
+                # arr[i] -= root_pos
+
+            # TODO
+            # arr[i] = utils.rot_around_z_3d(arr[i], root_rot, inverse=True)
+            curr_point = utils.rot_around_z_3d(curr_point, root_rot, inverse=True)
+            # curr_point = utils.rot_around_z_3d(curr_point, root_rot)
+            arr[i] = curr_point
+
+        for i in range(len(arr)):
+            curr_point = arr[i]
+            # if arg_type == 'pos':
+            #     if arm == 'left':
+            #         curr_point -= arr[self.median_idx]
+            #         #TODO traj_left is in global put to local
+            #         # arr[i] -= arr[self.median_idx]
+            #     elif arm == 'right':
+            #         curr_point -= arr[self.median_idx]
+            #         # arr[i] -= arr[self.median_idx]
+
+            ####
+            arr[i] = curr_point
+
+        return arr
+
+    def convert_local_to_global(self, arr_in, arg_type='pos', arm=None):
+        arr = arr_in[:]
+
+        # Info at mid trajectory is info at current frame
+        root_pos = self.traj_positions[self.median_idx]
+        root_rot = self.traj_rotations[self.median_idx]
+        for i in range(len(arr)):
+            # if arg_type == 'pos':
+            # if arm == 'left':
+            #     #TODO add middle of array from local info
+            #     arr[i] = arr[i] + arr[0]
+            # elif arm == 'right':
+            #     arr[i] = arr[i] + arr[0]
+
+            # TODO
+            # arr[i] = utils.rot_around_z_3d(arr[i], root_rot)
+            # arr[i] = utils.rot_around_z_3d(arr[i], -root_rot)
+            arr[i] = utils.rot_around_z_3d(arr[i], root_rot)
+
+            if arg_type == 'pos':
+                arr[i] = arr[i] + root_pos
+
+        return arr
+
     def getWorldPosRot(self):
         pos = np.array(self.traj_positions[self.median_idx])
         pos[1] = 0.0
@@ -492,3 +509,23 @@ class Trajectory:
 
         rot = self.traj_rotations[self.median_idx - 1]
         return (pos, rot)
+
+    def get_global_arm_tr(self):
+        n_d = self.n_dims
+        left_wr_tr = self.traj_left_wrist_positions[::self.traj_step]
+        right_wr_tr = self.traj_right_wrist_positions[::self.traj_step]
+        for i in range(self.n_frames_tr_win // self.traj_step):
+            right_wr_tr[i] = self.convert_local_to_global(
+                right_wr_tr[i].reshape(1, n_d), arm='right').ravel()
+            left_wr_tr[i] = self.convert_local_to_global(
+                left_wr_tr[i].reshape(1, n_d), arm='left').ravel()
+        return right_wr_tr, left_wr_tr
+
+    def get_global_root_tr(self):
+        n_d = self.n_dims
+        root_tr = self.traj_positions[::self.traj_step]
+        for i in range(self.n_frames_tr_win // self.traj_step):
+            root_tr[i] = self.convert_local_to_global(
+                root_tr[i].reshape(1, n_d), arm='right').ravel()
+        root_cur = root_tr[self.median_idx // self.traj_step]
+        return root_tr, root_cur

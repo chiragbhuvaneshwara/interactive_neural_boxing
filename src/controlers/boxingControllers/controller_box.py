@@ -83,7 +83,7 @@ class BoxingController(Controller):
         """
         # User input direction but for simplicity using predicted direction
         # direction = self.output.get_root_new_forward()
-        direction = np.array([0, 1])
+        direction = np.array([0, 0])
         direction = utils.convert_to_zero_y_3d(direction)
         # target_vel_speed = .00025 * np.linalg.norm(direction)
         target_vel_speed = np.linalg.norm(direction)
@@ -92,9 +92,6 @@ class BoxingController(Controller):
         target_vel_dir = self.target_dir if utils.euclidian_length(self.target_vel) \
                                             < 1e-05 else utils.normalize(self.target_vel)
         self.target_dir = utils.mix_directions(self.target_dir, target_vel_dir, 0.9)
-
-
-
 
         # 3. Update/calculate trajectory based on input
         right_pos_traj_target, left_pos_traj_target = self.output.get_wrist_pos_traj()
@@ -135,17 +132,20 @@ class BoxingController(Controller):
             right_p_target = right_p_target.reshape(1, len(right_p_target))
             left_p_target = left_p_target.reshape(1, len(left_p_target))
 
-            right_p_target_local = self.char.convert_global_to_local(right_p_target, prev_root_pos, prev_root_rot, type='pos')
-            left_p_target_local = self.char.convert_global_to_local(left_p_target, prev_root_pos, prev_root_rot, type='pos')
+            right_p_target_local = self.char.convert_global_to_local(right_p_target, prev_root_pos, prev_root_rot,
+                                                                     type='pos')
+            left_p_target_local = self.char.convert_global_to_local(left_p_target, prev_root_pos, prev_root_rot,
+                                                                    type='pos')
 
             right_p_target = right_p_target_local.ravel()
             left_p_target = left_p_target_local.ravel()
-
-            print('#######################################################')
-            print('Converted punch targets')
-            print(right_p_target_local)
-            print(left_p_target_local)
-            print('#######################################################')
+            if sum(punch_targets) != 0:
+                # print('#######################################################')
+                # print('Converted punch targets')
+                # print(right_p_target_local)
+                print('r', right_p_target_local)
+                print('l', left_p_target_local)
+                # print('#######################################################')
 
             self.input.set_punch_target(right_p_target, left_p_target)
         else:
@@ -210,9 +210,9 @@ class BoxingController(Controller):
             # self.previous_punch_phase[hand] = self.fix_phase(pred_ph[hand])
             self.previous_punch_phase[hand] = pred_ph[hand]
 
-        print('-------------------------------------------------------------')
-        print(self.previous_punch_phase)
-        print('-------------------------------------------------------------')
+        # print('-------------------------------------------------------------')
+        # print(self.previous_punch_phase)
+        # print('-------------------------------------------------------------')
 
         self.previous_joint_pos = self.output.get_local_pos()
         self.previous_joint_vel = self.output.get_local_vel()
@@ -254,6 +254,23 @@ class BoxingController(Controller):
                                                                                            dtype=np.float64)
         pos, vel = self.char.getLocalJointPosVel(root_pos, root_rot)
         return np.reshape(pos, (self.char.joints, 3))
+
+    def getArmTrajectroy(self):
+        # right_wr_tr, left_wr_tr = self.traj.get_global_arm_tr()
+        right_wr_tr, left_wr_tr = self.traj.traj_right_wrist_positions[::self.traj_step], self.traj.traj_left_wrist_positions[::self.traj_step]
+        return right_wr_tr, left_wr_tr
+
+    def getGlobalRoot(self):
+        # grt = self.traj.get_global_root_tr()
+        grt = self.traj.traj_positions[::self.traj_step]
+        gr = np.array(self.char.root_position)
+        print('root_tr')
+        print(grt[0])
+        # return grt[1], gr
+        print('--------')
+        print(grt.shape)
+        print(self.traj.traj_left_wrist_positions[::self.traj.traj_step])
+        return grt, grt
 
     def getWorldPosRot(self):
         return np.array(self.char.root_position), float(self.char.root_rotation)

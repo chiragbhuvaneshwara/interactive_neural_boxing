@@ -31,23 +31,29 @@ with open(dataset_config) as f:
     config_store = json.load(f)
 
 bc = BoxingController(mann, config_store)
+
 zp = build_zero_posture(bc)
 print(zp.bones)
 print(zp.bone_map)
 
 
-@app.route('/start')
-def hello_world():
-    return 'Hello, World!'
-
-
 def char2TPosture():
     posture = copy.deepcopy(zp)
     pose = bc.getPose()
+    arm_tr = bc.getArmTrajectroy()
+    # arm_tr = bc.getGlobalRoot()
     for i in range(len(pose)):
         posture.bones[i].position = np_2TVector3(pose[i])
 
     root_pos, root_rot = bc.getWorldPosRot()
+
+    # print('r',arm_tr[0])
+    # print('l',arm_tr[1])
+    arm_tr_keys = ['rwt', 'lwt']
+    for i in range(len(arm_tr_keys)):
+        atr = arm_tr[i]
+        for j in range(len(atr)):
+            posture.arm_tr[arm_tr_keys[i]][j] = np_2TVector3(atr[j])
 
     posture.location = np_2TVector3(root_pos)
     posture.rotation = root_rot
@@ -57,7 +63,7 @@ def char2TPosture():
 @app.route('/fetch_frame', methods=['GET', 'POST'])
 def fetchFrame():
     if request.method == 'POST':
-        print('Fetching Frame')
+        # print('Fetching Frame')
         punch_in = request.get_json()
         # print(punch_in)
         punch_hand = punch_in["hand"]
@@ -81,6 +87,7 @@ def getZeroPosture():
         return json.dumps(posture, default=serialize)
     else:
         print("Problem")
+
 
 @app.route('/punch_in', methods=['GET', 'POST'])
 def post_req():
@@ -109,10 +116,8 @@ def post_req():
             'message': 'OK',
             'pose': pose.tolist()
         }
-        # convert into JSON:
         y = json.dumps(message)
 
-        # the result is a JSON string:
         # print(y)
 
     return jsonify(message)
@@ -120,34 +125,7 @@ def post_req():
     # return jsonify(pose)
 
 
-# @app.route('/start', methods=['GET', 'POST'])
-# def start():
-#     frd = 1
-#     # window = 25
-#     window = 15
-#     epochs = 60
-#     server_to_main_dir = '../../..'
-#     controller_in_out_dir = 'src/controlers/boxingControllers/controller_in_out'
-#     frd_win_epochs = 'boxing_fr_' + str(frd) + '_' + str(window) + '_' + str(epochs)
-#     trained_base_path = 'trained_models/mann_tf2/' + frd_win_epochs
-#     target_file = os.path.join(server_to_main_dir, trained_base_path, 'model_weights_std_in_out.zip')
-#     mann_config_path = os.path.join(server_to_main_dir, trained_base_path, 'mann_config.json')
-#     with open(mann_config_path) as json_file:
-#         mann_config = json.load(json_file)
-#
-#     mann = MANNTF(mann_config)
-#     mann.load_discrete_weights(target_file)
-#     dataset_config = "data/boxing_fr_" + str(frd) + "_" + str(window) + "/config.json"
-#     dataset_config = os.path.join(server_to_main_dir, dataset_config)
-#
-#     with open(dataset_config) as f:
-#         config_store = json.load(f)
-#
-#     global bc
-#     bc = BoxingController(mann, config_store)
-#
-#     return 'Success'
-#     # return jsonify(pose)
+
 
 
 if __name__ == '__main__':

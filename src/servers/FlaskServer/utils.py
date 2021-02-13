@@ -11,11 +11,12 @@ class TPosture(object):
 
     """
 
-    def __init__(self, bones=None, bone_map=None, location=None, rotation=None, ):
+    def __init__(self, bones=None, bone_map=None, location=None, rotation=None, arm_tr=None):
         self.bones = bones
         self.bone_map = bone_map
         self.location = location
         self.rotation = rotation
+        self.arm_tr = arm_tr
 
 
 class TBone(object):
@@ -98,7 +99,9 @@ def build_zero_posture(base_controller, position_str="position"):
         tb = TBone(bone["name"], position, rotation, children, bone["parent"])
         bonelist.append(tb)
 
-    return TPosture(bonelist, mapping, [0,0,0], 0.0)
+    arm_tr = {'rwt': [0]*10, 'lwt': [0]*10}
+
+    return TPosture(bonelist, mapping, [0,0,0], 0.0, arm_tr)
 
 
 def serialize(obj):

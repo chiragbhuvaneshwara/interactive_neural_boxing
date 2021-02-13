@@ -306,6 +306,7 @@ class MANN(tf.keras.Model):
 
         X = (X - Xmean) / Xstd
         Y = (Y - Ymean) / Ystd
+        print(Y[:, 4:6])
         print(X.mean())
         print(Y.mean())
 
@@ -382,8 +383,11 @@ class MANN(tf.keras.Model):
         #     raise Exception('Nans found')
 
         # Y_prediction = Y_prediction.numpy()
+        # p_phase = Y_prediction.numpy().ravel()[4:6]
+        # print('r:', p_phase[0], 'l:', p_phase[1])
         Y_prediction = Y_prediction * Ystd + Ymean
-        # print(Y_prediction.numpy()[4:6])
+        # p_phase = Y_prediction.numpy().ravel()[4:6]
+        # print('r:', p_phase[0], 'l:', p_phase[1])
 
         if np.isnan(Y_prediction).any():
             raise Exception('Nans found')

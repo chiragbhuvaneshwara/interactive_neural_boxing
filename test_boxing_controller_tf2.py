@@ -39,7 +39,7 @@ my_plotter = simple_matplotlib_plotter.Plotter()
 # target = [0.48645876,	-4.699789,	1.029539222,	-0.07795768,	-1.259803896,	-1.021392921]
 # Right Punch
 # target = [0.172554145,	-1.164023857,	-0.527272225,	0.199894633,	-0.756384,	0.982723578]
-target = [0.172554145,	-1.164023857,	-0.527272225,	0.199894633,	-0.756384,	0.982723578]
+target = [-0.30000001192092896, 1.6000000238418579, -0.75, 0.0, 0.0, 0.0]
 
 
 # X_csv_path = "data/boxing_fr_"+str(frd)+"_"+str(window)+"/X.csv"
@@ -55,10 +55,13 @@ for f in range(100):
 # for f in range(3):
 # for target in targets[200:300]:
     ## [start:end] contains both left and right punches in X_csv
-    in_data, out_data = bc.pre_render(target, space="local")
+    in_data, out_data = bc.pre_render(target, space="global")
     in_data_collection.append(np.hstack(in_data))
     out_data_collection.append(np.hstack(out_data))
     poses.append(np.array(bc.char.joint_positions))
+    print(f)
+    print(bc.getArmTrajectroy()[0][5])
+    print(bc.getGlobalRoot())
     bc.post_render()
 
 X_df = pd.DataFrame(data=in_data_collection, columns=config_store['col_names'][0])
