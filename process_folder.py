@@ -39,19 +39,19 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
 
     for div in range(frame_rate_div):
         print('Processing Blender csv data %s' % frame_rate_div, div)
-        # Loading Bvh file into memory
-        handler.load_motion(frame_rate_divisor=frame_rate_div, frame_rate_offset=div)
         # manually set the skeleton parameters by manually checking the bvh files
         handler.set_awinda_parameters()
+
+        # Loading Bvh file into memory
+        handler.load_motion(frame_rate_divisor=frame_rate_div, frame_rate_offset=div)
+
         # (n_frames, 2) => punch phase right, punch phase left
         punch_phase, punch_dphase = handler.load_punch_phase(punch_p_csv_path, frame_rate_divisor=frame_rate_div,
                                                              frame_rate_offset=div)
 
         # TODO Only implemented for phase type tertiary currently
-        # right_punch_target = handler.get_punch_targets(punch_phase[:, 0], hand='right', phase_type='tertiary')
-        # left_punch_target = handler.get_punch_targets(punch_phase[:, 1], hand='left', phase_type='tertiary')
-        right_punch_target = handler.get_punch_targets(punch_phase[:, 0], hand='right')
-        left_punch_target = handler.get_punch_targets(punch_phase[:, 1], hand='left')
+        right_punch_target = handler.get_punch_targets(punch_phase[:, 0], hand='right', space="local")
+        left_punch_target = handler.get_punch_targets(punch_phase[:, 1], hand='left', space="local")
 
         #############################################################################################
         # These work but they aren't as accurate as blender
@@ -66,7 +66,6 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
         #############################################################################################
         indices_dict_set = False  # just to print out useful info
         for i in range(handler.window, handler.n_frames - handler.window - 1, 1):
-        # for i in range(handler.window, 100 - handler.window - 1, 1):
             if i % 50 == 0:
                 print('Frames processed: ', i)
 
@@ -95,8 +94,8 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
             x_curr_frame = [
                 x_rootposs_tr,              # local wrt r in mid frame
                 x_rootvels_tr,
-                x_right_wrist_pos_tr,       # local wrt r in mid frame then wrt wrist in mid frame
-                x_left_wrist_pos_tr,        # local wrt r in mid frame then wrt wrist in mid frame
+                x_right_wrist_pos_tr,       # local wrt r in mid frame (not done: then wrt wrist in mid frame)
+                x_left_wrist_pos_tr,        # local wrt r in mid frame (not done: then wrt wrist in mid frame)
                 x_right_wrist_vels_tr,
                 x_left_wrist_vels_tr,
                 x_punch_phase,
@@ -190,7 +189,7 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div):
         "traj_step": handler.traj_step,
         # "foot_left": handler.foot_left,
         # "foot_right": handler.foot_right,
-        # "zero_posture": handler.reference_skeleton,
+        "zero_posture": handler.reference_skeleton,
         "joint_indices": handler.joint_indices_dict,
         "col_indices": [x_indices, y_indices],
         "col_names": [x_col_names, y_col_names]
@@ -235,7 +234,7 @@ def process_folder(bvh_path, punch_phase_path):
 
 input_base_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor'
 punch_phase_path = input_base_path + '/Blender Code Snippets/data annotation res/new_data/tertiary/'
-bvh_path = input_base_path + "/Data/boxing_chirag/processed/"
+bvh_path = input_base_path + "/Data/boxing_chirag/hq/processed/"
 ####################################################################################
 frame_rate_div = 1  # if 2, Reduces fps from 120fps to 60fps for Axis Neuron bvh
 # Ensure: Rotated the bvh mocap data to right hand co-ordinate system i.e. y up and z forward
