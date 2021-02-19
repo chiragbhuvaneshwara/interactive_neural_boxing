@@ -21,7 +21,7 @@ def save_json(path, data):
     print('Created:', path)
 
 
-epochs = 60
+epochs = 100
 # epochs = 20
 frd = 1
 # window = 25

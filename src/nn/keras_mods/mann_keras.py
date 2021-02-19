@@ -226,12 +226,12 @@ class MANN(tf.keras.Model):
         x_pos_indices = {k: v for k, v in x_col_indices.items() if 'pos' in k or "punch_target" in k}
         y_pos_indices = {k: v for k, v in y_col_indices.items() if 'pos' in k or "punch_target" in k}
         for k, v in x_pos_indices.items():
-            print(k, X[:, v[0]:v[1]].mean())
-            X[:, v[0]: v[1]] = X[:, v[0]: v[1]] * 0.01
-            print(k, X[:, v[0]:v[1]].mean())
+            # print(k, X[:, v[0]:v[1]].mean())
+            X[:, v[0]: v[1]] = X[:, v[0]: v[1]] #* 0.01
+            # print(k, X[:, v[0]:v[1]].mean())
 
         for k, v in y_pos_indices.items():
-            Y[:, v[0]:v[1]] = Y[:, v[0]:v[1]] * 0.01
+            Y[:, v[0]:v[1]] = Y[:, v[0]:v[1]] #* 0.01
 
         Xmean = np.mean(X, axis=0)
         Ymean = np.mean(Y, axis=0)
@@ -257,25 +257,26 @@ class MANN(tf.keras.Model):
         y_local_col_indices = {k: v for k, v in y_col_indices.items() if '_local' in k}
 
         for k, v in x_local_col_indices.items():
-            Xstd[v[0]: v[1]] = Xstd[v[0]: v[1]].mean() # * (joint_weights.repeat(3))  # * 0.1)
+            Xstd[v[0]: v[1]] = Xstd[v[0]: v[1]].mean()  # * (joint_weights.repeat(3))  # * 0.1)
 
         importance_trajectory = 1.0
 
         y_col_other_indices = {k: v for k, v in y_col_indices.items() if ('_tr' not in k) or ('_local' not in k)}
 
         r_vel_indices = y_col_other_indices['y_root_velocity']
-        Ystd[r_vel_indices[0]:r_vel_indices[1]] = Ystd[r_vel_indices[0]:r_vel_indices[1]].mean() # / importance_trajectory
+        Ystd[r_vel_indices[0]:r_vel_indices[1]] = Ystd[
+                                                  r_vel_indices[0]:r_vel_indices[1]].mean()  # / importance_trajectory
 
         r_new_forward_indices = y_col_other_indices['y_root_new_forward']
         Ystd[r_new_forward_indices[0]:r_new_forward_indices[1]] = Ystd[r_new_forward_indices[0]:r_new_forward_indices[
-            1]].mean() # / importance_trajectory
+            1]].mean()  # / importance_trajectory
 
         # p_dphase_indices = y_col_other_indices['y_punch_dphase']
         p_dphase_indices = y_col_other_indices['y_punch_phase']
         Ystd[p_dphase_indices[0]:p_dphase_indices[0] + 1] = \
-            Ystd[p_dphase_indices[0]:p_dphase_indices[0] + 1].mean() # / importance_trajectory
+            Ystd[p_dphase_indices[0]:p_dphase_indices[0] + 1].mean()  # / importance_trajectory
         Ystd[p_dphase_indices[-1] - 1:p_dphase_indices[-1]] = \
-            Ystd[p_dphase_indices[0]:p_dphase_indices[0] + 1].mean() # / importance_trajectory
+            Ystd[p_dphase_indices[0]:p_dphase_indices[0] + 1].mean()  # / importance_trajectory
 
         if config_store["use_footcontacts"]:
             print("using Footcontacts")
@@ -287,11 +288,10 @@ class MANN(tf.keras.Model):
             Ystd[v[0]: v[1]] = Ystd[v[0]: v[1]].mean()
 
         for k, v in y_local_col_indices.items():
-            Ystd[v[0]: v[1]] = Ystd[v[0]: v[1]].mean() #* (joint_weights.repeat(3))  # * 0.1)
+            Ystd[v[0]: v[1]] = Ystd[v[0]: v[1]].mean()  # * (joint_weights.repeat(3))  # * 0.1)
 
         Xstd[Xstd == 0] = 1.0
         Ystd[Ystd == 0] = 1.0
-
 
         norm = {"Xmean": Xmean.tolist(),
                 "Ymean": Ymean.tolist(),
@@ -302,13 +302,16 @@ class MANN(tf.keras.Model):
         # X = (X - Xmean) / (Xstd + eps)
         # Y = (Y - Ymean) / (Ystd + eps)
 
-        #todo which vals are 0
+        # todo which vals are 0
 
         X = (X - Xmean) / Xstd
         Y = (Y - Ymean) / Ystd
-        print(Y[:, 4:6])
-        print(X.mean())
-        print(Y.mean())
+        # print('----------------------')
+        # print(X[:, 160:162])
+        # print('----------------------')
+        # print(Y[:, 4:6])
+        # print(X.mean())
+        # print(Y.mean())
 
         raise_nan_exception(X)
         raise_nan_exception(Y)
@@ -331,7 +334,7 @@ class MANN(tf.keras.Model):
             target_path {string} -- path to target folder, in which networks should be stored.
             epochs {int} -- Training duration in epochs
         """
-        #TODO check tensorboard to see if MANN is working correctly
+        # TODO check tensorboard to see if MANN is working correctly
         input_dim = normalized_X.shape[1]
         output_dim = normalized_Y.shape[1]
 
@@ -351,7 +354,7 @@ class MANN(tf.keras.Model):
             "optimizer": "Adam",
             "learning_rate": 0.00001,
             # "learning_rate": 3e-4,
-            #TODO 100 epochs
+            # TODO 100 epochs
             "epochs": epochs,
             "batchsize": 32,
             # "batchsize": 64,
@@ -372,6 +375,10 @@ class MANN(tf.keras.Model):
         # eps = 1e-100
         # input = (X - Xmean) / (Xstd + eps)
         input = (X - Xmean) / Xstd
+        print('---------------------------------------')
+        print(input)
+        p_phase = input.ravel()[160:162]
+        print('rp:', p_phase[0], 'lp:', p_phase[1])
 
         # Using the standardized input is leading to NaNs
         Y_prediction = mann(input)
@@ -386,8 +393,9 @@ class MANN(tf.keras.Model):
         # p_phase = Y_prediction.numpy().ravel()[4:6]
         # print('r:', p_phase[0], 'l:', p_phase[1])
         Y_prediction = Y_prediction * Ystd + Ymean
-        # p_phase = Y_prediction.numpy().ravel()[4:6]
-        # print('r:', p_phase[0], 'l:', p_phase[1])
+        p_phase = Y_prediction.numpy().ravel()[4:6]
+        print('rp:', p_phase[0], 'lp:', p_phase[1])
+        print('---------------------------------------')
 
         if np.isnan(Y_prediction).any():
             raise Exception('Nans found')
