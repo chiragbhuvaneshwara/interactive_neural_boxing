@@ -15,3 +15,4 @@ mosi_utils_anim_t/tornado_test*
 mosi_utils_anim_t/data*
 mosi_utils_anim_t/texdoc*
 mosi_utils_anim_t/checkpoint
+__pycache__
