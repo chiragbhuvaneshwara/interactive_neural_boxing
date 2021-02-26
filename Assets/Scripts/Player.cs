@@ -21,10 +21,11 @@ public partial class Player : MonoBehaviour
     public bool start = false;
     public bool fix_global_pos = false;
     public float velocity_scale = 1.0f;
-    public List<UnityEngine.GameObject> Trajectory;
-    public List<UnityEngine.LineRenderer> TrajLines;
-    public UnityEngine.LineRenderer TrajLineRenderer;
-
+    private Dictionary<string, List<GameObject>>Trajectory = new Dictionary<string, List<GameObject>>();
+    private Dictionary<string, LineRenderer> TrajLineRenderer = new Dictionary<string, LineRenderer>();
+    private List<string> TrajNames = new List<string> { "root", "right_wrist", "left_wrist"};
+    //public List<GameObject> Trajectory;
+    //public LineRenderer TrajLineRenderer;
     private Vector3 global_offset = Vector3.zero;
 
     //public MultiMotionServer server = null;
@@ -68,40 +69,106 @@ public partial class Player : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        //RigidBodyComp = GetComponent<Rigidbody>();
         this.global_offset += this.transform.position;
         server = new MultiMotionServer();
         this.initializeBones(this.rootBone);
         server.Start();
-        Trajectory = new List<GameObject>(10);
-        //TrajLines = new List<LineRenderer>(10);
 
-        Material[] materials = Resources.FindObjectsOfTypeAll<Material>();
-        Material red = null, green = null;
-        foreach (Material t in materials)
-        {
-            if (t.name == "red") red = t;
-            if (t.name == "green") green = t;
-        }
+        createTrajVisObjs("root", Color.black);
+        createTrajVisObjs("right_wrist", Color.red);
+        createTrajVisObjs("left_wrist", Color.blue);
 
+        //////////////////////////TRAJ_OBJS///////////////////////////////////////
+        //Trajectory = new List<GameObject>(10);
+
+        
+        ////Material[] materials = Resources.FindObjectsOfTypeAll<Material>();
+        ////Material red = null, green = null;
+        ////foreach (Material t in materials)
+        ////{
+        ////    if (t.name == "red") red = t;
+        ////    if (t.name == "green") green = t;
+        ////}
+
+        //var GameObjectScale = 0.01f;
+        //for (int i = 0; i < 10; i++)
+        //{
+        //    var point = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+
+        //    point.GetComponent<MeshRenderer>().material = new Material(Shader.Find("Sprites/Default"));
+        //    point.GetComponent<MeshRenderer>().material.SetColor("Black",Color.black);
+        //    point.name = "tr_" + i.ToString();
+        //    point.transform.localScale = new Vector3(GameObjectScale, GameObjectScale, GameObjectScale);
+        //    Trajectory.Add(point);
+
+        //}
+
+        //Color c1 = Color.white;
+        //Color c2 = new Color(1, 1, 1, 0);
+
+        //TrajLineRenderer = gameObject.AddComponent<LineRenderer>();
+        //TrajLineRenderer.name = "tr_line";
+        //TrajLineRenderer.widthMultiplier = GameObjectScale;
+        //TrajLineRenderer.material = new Material(Shader.Find("Sprites/Default"));
+        //TrajLineRenderer.positionCount = 10;
+        //TrajLineRenderer.startColor = c1;
+        //TrajLineRenderer.endColor = c2;
+        //////////////////////////TRAJ_OBJS///////////////////////////////////////
+    }
+
+    private void createTrajVisObjs(string tr_name, Color col)
+    {
+        ////////////////////////TRAJ_OBJS///////////////////////////////////////
+        var traj_spheres = new List<GameObject>(10);
+        var GameObjectScale = 0.01f;
         for (int i = 0; i < 10; i++)
         {
             var point = GameObject.CreatePrimitive(PrimitiveType.Sphere);
 
-            point.GetComponent<MeshRenderer>().material = red;
-            point.name = "tr_" + i.ToString();
-            point.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
-            Trajectory.Add(point);
-
-            //LineRenderer lineRenderer = gameObject.AddComponent<LineRenderer>();
-            //lineRenderer.name = "tr_line_" + i.ToString();
-            //TrajLines.Add(lineRenderer);
+            point.GetComponent<MeshRenderer>().material = new Material(Shader.Find("Sprites/Default"));
+            point.GetComponent<MeshRenderer>().material.SetColor("Black", Color.black);
+            point.name = "tr_" + tr_name + "_" + i.ToString();
+            point.transform.localScale = new Vector3(GameObjectScale, GameObjectScale, GameObjectScale);
+            traj_spheres.Add(point);
         }
+        Trajectory.Add(tr_name, traj_spheres);
 
-        TrajLineRenderer = gameObject.AddComponent<LineRenderer>();
-        TrajLineRenderer.name = "tr_line";
-        //TrajLineRenderer.widthMultiplier = 0.01f;
-        TrajLineRenderer.positionCount = 10;
+        Color c1 = col;
+        Color c2 = new Color(1, 1, 1, 0);
+
+        GameObject obj = new GameObject("line");
+        LineRenderer traj_line;
+        traj_line = obj.AddComponent<LineRenderer>();
+        traj_line.name = tr_name;
+        traj_line.widthMultiplier = GameObjectScale;
+        traj_line.material = new Material(Shader.Find("Sprites/Default"));
+        traj_line.positionCount = 10;
+        traj_line.startColor = c1;
+        traj_line.endColor = c2;
+
+        TrajLineRenderer.Add(tr_name, traj_line);
+        ////////////////////////TRAJ_OBJS///////////////////////////////////////
+    }
+
+    private void updateTrajVisObjs(string target)
+    {
+        ////////////////////////TRAJ_OBJS///////////////////////////////////////
+        var tr = Trajectory[target];
+        for (int i = 0; i < 10; i++)
+        {
+            //Trajectory[i].transform.position = this.server.GetTrPos(target, i);
+            tr[i].transform.position = this.server.GetTrPos(target, i);
+        }
+        Trajectory[target] = tr;
+
+        var tr_line = TrajLineRenderer[target];
+        for (int i = 0; i < 10; i++)
+        {
+            //TrajLineRenderer.SetPosition(i, Trajectory[i].transform.position);
+            tr_line.SetPosition(i, Trajectory[target][i].transform.position);
+        }
+        TrajLineRenderer[target] = tr_line;
+        ////////////////////////TRAJ_OBJS///////////////////////////////////////
     }
 
     private void processTransforms(Transform t)
@@ -141,31 +208,21 @@ public partial class Player : MonoBehaviour
 
     private void processTraj()
     {
-        for (int i = 0; i < 10; i++)
+        ////////////////////////TRAJ_OBJS///////////////////////////////////////
+        foreach (string target in TrajNames) 
         {
-            //this.server.GetArmTrPos("Right", i);
-            Trajectory[i].transform.position = this.server.GetArmTrPos("Right", i);
+            updateTrajVisObjs(target);
         }
-
-        for (int i = 0; i < 10; i++)
-        {
-            //this.server.GetArmTrPos("Right", i);
-            //TrajLines[i].SetPosition(i, new Vector3(i * 0.5f, Mathf.Sin(i + t), 0.0f));
-            TrajLineRenderer.SetPosition(i, Trajectory[i].transform.position);
-        }
-
+        ////////////////////////TRAJ_OBJS///////////////////////////////////////
     }
 
     void LateUpdate()
     {
-        //TODO: update processTransforms to obtain relevant joint positions from your code
-
         if (start)
         {
             this.rootBone.rotation = Quaternion.identity;
             processTransforms(this.rootBone);
             processTraj();
-
             if (!this.fix_global_pos)
             {
                 Vector3 q = this.server.GetGlobalRotation().eulerAngles;
@@ -182,54 +239,35 @@ public partial class Player : MonoBehaviour
 
     }
 
-
     // Update is called once per frame
     void Update()
     {
-
         if (Input.GetMouseButton(0))
         {
-            //Debug.Log("Pressed primary button i.e left");
             leftMousePressed = true;
             if (leftMousePressed)
             {
-                //string json_obj = server.UpdatePunchTarget("left");
-                //MultiMotionServer.TPosture json_obj = server.UpdatePunchTargetFetchPosture("left");
                 server.ManagedUpdate("left");
-
                 leftMousePressed = false;
             }
-
         }
-
         else if (Input.GetMouseButton(1))
         {
-            //Debug.Log("Pressed secondary button i.e right");
             rightMousePressed = true;
-
             if (rightMousePressed)
             {
-                //string json_obj = server.UpdatePunchTarget("right");
                 server.ManagedUpdate("right");
-
                 rightMousePressed = false;
             }
-
         }
-
         else if (Input.GetMouseButton(2))
         {
             midMousePressed = true;
-            //Debug.Log("Pressed middle click.");
             midMousePressed = false;
         }
-
         else
         {
-            //Debug.Log("No target");
-            server.ManagedUpdate("right");
+            server.ManagedUpdate("none");
         }
-
     }
-
 }

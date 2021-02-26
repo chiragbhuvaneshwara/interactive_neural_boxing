@@ -58,7 +58,7 @@ namespace MultiMosiServer
 
             GameObject go = GameObject.Find("punch_target");
             punchTargetTransform = go.transform;
-            Debug.Log("punch target: " + punchTargetTransform.position);
+            //Debug.Log("punch target: " + punchTargetTransform.position);
             //Debug.Log(punchTargetTransform.position);
             return punchTargetTransform;
 
@@ -100,10 +100,10 @@ namespace MultiMosiServer
             BonePositions bp = JsonConvert.DeserializeObject<BonePositions>(json_obj);
 
 
-            Debug.Log("******************************");
-            Debug.Log(bp.pose);
-            Debug.Log(bp.message);
-            Debug.Log(bp.status);
+            //Debug.Log("******************************");
+            //Debug.Log(bp.pose);
+            //Debug.Log(bp.message);
+            //Debug.Log(bp.status);
 
             return json_obj;
         }
@@ -167,7 +167,8 @@ namespace MultiMosiServer
         public TPosture getZeroPosture()
         {
             ZeroPostureCommand zp_command = new ZeroPostureCommand();
-            zp_command.name = "fetch_zp";
+            //zp_command.name = "fetch_zp";
+            zp_command.name = "fetch_zp_reset";
 
             string zp_com_json = JsonConvert.SerializeObject(zp_command);
             string zp_json_obj = JsonPostWithResp("fetch_zp", zp_com_json);
@@ -219,12 +220,39 @@ namespace MultiMosiServer
             return q;
         }
 
-        public Vector3 GetArmTrPos(string v, int i)
-        //public void GetArmTrPos(string v, int i)
+        public Vector3 GetTrPos(string tr_name, int i)
+        //public void GetArmTrPos(string tr_name, int i)
         {
-            Debug.Log(Tvec2vec(this.posture.arm_tr.rwt[i]).x);
+            //Debug.Log(Tvec2vec(this.posture.arm_tr.rwt[i]).x);
             //Debug.Log(this.posture.arm_tr.rwt.Count);
-            return Tvec2vec(this.posture.arm_tr.rwt[i]);
+            if (tr_name == "root")
+            {
+                return Tvec2vec(this.posture.arm_tr.rt[i]);
+            }
+            else if (tr_name == "root_vel")
+            {
+                return Tvec2vec(this.posture.arm_tr.rt_v[i]);
+            }
+            else if (tr_name == "right_wrist")
+            {
+                return Tvec2vec(this.posture.arm_tr.rwt[i]);
+            }
+            else if (tr_name == "left_wrist")
+            {
+                return Tvec2vec(this.posture.arm_tr.lwt[i]);
+            }
+            else if (tr_name == "right_wrist_vel")
+            {
+                return Tvec2vec(this.posture.arm_tr.rwt_v[i]);
+            }
+            else if (tr_name == "left_wrist_vel")
+            {
+                return Tvec2vec(this.posture.arm_tr.lwt_v[i]);
+            }
+            else
+            {
+                throw new InvalidOperationException("invalid trajectory name passed:" + tr_name);
+            }
         }
 
         ////TODO: setup a route in the backend to terminate a connection with the specified unique ID.

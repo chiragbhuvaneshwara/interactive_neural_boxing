@@ -83,9 +83,9 @@ namespace MultiMosiServer
 
             public TVector3(double x, double y, double z)
             {
-                this.x = -x;
+                this.x = x;
                 this.y = y;
-                this.z = z;
+                this.z = -z;
             }
         }
 
@@ -105,8 +105,12 @@ namespace MultiMosiServer
 
         public class ArmTr
         {
+            public List<TVector3> rt { get; set; }
+            public List<TVector3> rt_v { get; set; }
             public List<TVector3> rwt { get; set; }
             public List<TVector3> lwt { get; set; }
+            public List<TVector3> rwt_v { get; set; }
+            public List<TVector3> lwt_v { get; set; }
         }
 
 
