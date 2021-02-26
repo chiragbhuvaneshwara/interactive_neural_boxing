@@ -19,7 +19,7 @@ from pfnn_evaluate_network import evaluate_network
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="This is the main file to run this project from console. You can either train a new network model or execute an existing one.")
-    parser.add_argument("-t", "--train", help="Train a network. Please specify the network type. ",
+    parser.add_argument("-t", "--train", help="Train a network. Please specify the network type_in. ",
                         choices=["pfnn", "vinn", "mann"])
     parser.add_argument("-x", "--execute", help="Execute a pretrained network. ",
                         choices=["pfnn_np", "pfnn_tf", "vinn_tf", "mann_tf"])

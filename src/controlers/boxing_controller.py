@@ -1,3 +1,5 @@
+# TODO: Cleanup ==> Delete script
+
 """author: Janis Sprenger """
 import numpy as np
 import math, time
@@ -21,7 +23,7 @@ class BoxingController(Controller):
     This is a controller for directional input.
 
     Returns:
-        [type] -- [description]
+        [type_in] -- [description]
     """
 
     def __init__(self, network: FCNetwork, config_store):  # xdim, ydim, end_joints = 5, numJoints = 21):
@@ -142,7 +144,7 @@ class BoxingController(Controller):
         # 7. set new character pose
         self.char.set_pose(joint_positions, joint_velocities, joint_rotations)
 
-        # TODO: Check if to apply before or after set_pose
+        # Check if to apply before or after set_pose
         self.char.root_rotation += self.output.getRootRotationVelocity()  # [-2*pi, +2*pi]
         self.char.root_position += self.output.getRootVelocity()
         # self.char.root_position = self.output.getRotVel()[0]
@@ -181,9 +183,9 @@ class BoxingController(Controller):
         Resets the controller to start location, orientation and direction.
 
         Arguments:
-            start_location {[type]} -- [description]
-            start_orientation {[type]} -- [description]
-            start_direction {[type]} -- [description]
+            start_location {[type_in]} -- [description]
+            start_orientation {[type_in]} -- [description]
+            start_direction {[type_in]} -- [description]
         """
         self.char.reset(start_location, start_orientation)
         self.traj.reset(start_location, start_orientation, start_direction)
@@ -193,7 +195,7 @@ class BoxingController(Controller):
         Should copy the controler. At the moment, just creates a new, blank controler.
 
         Returns:
-            [type] -- [description]
+            [type_in] -- [description]
         """
         return Controller(self.network, self.config_store)
 
@@ -215,6 +217,7 @@ class BoxingController(Controller):
         return np.array(self.char.root_position), np.array(self.char.root_rotation)
 
     def __initialize(self):
+
         # self.set_weights(n.W0, n.W1, n.W2, n.b0, n.b1, n.b2, n.xmean, n.xstd, n.ymean, n.ystd)
         # self.network = n
 
@@ -241,7 +244,7 @@ class BoxingController(Controller):
         # 7. set new character pose
         self.char.set_pose(joint_positions, joint_velocities, joint_rotations)
 
-        # TODO: Check if to apply before or after set_pose
+        # Check if to apply before or after set_pose
         self.char.root_rotation += self.output.getRootRotationVelocity()  # [-2*pi, +2*pi]
         self.char.root_position += self.output.getRootVelocity()
 
@@ -264,10 +267,10 @@ class MANNInput(object):
     This class is managing the network input. It is depending on the network data model
 
     Arguments:
-        object {[type]} -- [description]
+        object {[type_in]} -- [description]
 
     Returns:
-        [type] -- [description]
+        [type_in] -- [description]
     """
 
     def __init__(self, data, n_joints, end_joints, joint_indices, in_col_pos_indices):
@@ -368,10 +371,10 @@ class MANNOutput(object):
     This class is managing the network output. It is depending on the network data model.
 
     Arguments:
-        object {[type]} -- [description]
+        object {[type_in]} -- [description]
 
     Returns:
-        [type] -- [description]
+        [type_in] -- [description]
     """
 
     def __init__(self, data, joints, endJoints, use_foot_contacts):

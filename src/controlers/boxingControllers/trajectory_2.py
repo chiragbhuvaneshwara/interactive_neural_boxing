@@ -18,7 +18,7 @@ class Trajectory:
     This class manages gait information as well (as it is linked to the trajectory points).
 
     Returns:
-        [type] -- [description]
+        [type_in] -- [description]
     """
 
     def __init__(self, config_store):
@@ -40,30 +40,48 @@ class Trajectory:
 
         ### Trajectory info of the root
         # Root positions contain all 3 components
-        self.traj_positions = np.zeros((self.n_frames_tr_win, self.n_dims))
-        # TODO Set vels to zero vector
-        # self.traj_vels = np.tile(self.z_vec, (self.n_frames_tr_win, 1))
-        self.traj_vels = np.zeros((self.n_frames_tr_win, self.n_dims))
+        self.traj_positions = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
+        self.traj_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
         self.traj_rotations = np.zeros(self.n_frames_tr_win)
-        self.traj_directions = np.zeros((self.n_frames_tr_win, self.n_dims))
+        self.traj_directions = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
+        # TODO Set wrist positions to mean positions ==> Mabe take the positions from the mean position you have in
+        #  norm
 
         ### Trajectory info of the hand
         # Wrist positions contain all 3 components
-        self.traj_right_wrist_positions = np.zeros((self.n_frames_tr_win, self.n_dims))
-        # self.traj_right_wrist_vels = np.tile(self.z_vec, (self.n_frames_tr_win, 1))
-        self.traj_right_wrist_vels = np.zeros((self.n_frames_tr_win, self.n_dims))
+        self.traj_right_wrist_positions = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
+        self.traj_right_wrist_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
 
         # Wrist positions contain all 3 components
-        self.traj_left_wrist_positions = np.zeros((self.n_frames_tr_win, self.n_dims))
-        # self.traj_left_wrist_vels = np.tile(self.z_vec, (self.n_frames_tr_win, 1))
-        self.traj_left_wrist_vels = np.zeros((self.n_frames_tr_win, self.n_dims))
+        self.traj_left_wrist_positions = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
+        self.traj_left_wrist_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
+
+        # TODO Cleanup
+        # ### Trajectory info of the root
+        # # Root positions contain all 3 components
+        # self.traj_positions = np.zeros((self.n_frames_tr_win, self.n_dims))
+        # # self.traj_vels = np.tile(self.z_vec, (self.n_frames_tr_win, 1))
+        # self.traj_vels = np.zeros((self.n_frames_tr_win, self.n_dims))
+        # self.traj_rotations = np.zeros(self.n_frames_tr_win)
+        # self.traj_directions = np.zeros((self.n_frames_tr_win, self.n_dims))
+        #
+        # ### Trajectory info of the hand
+        # # Wrist positions contain all 3 components
+        # self.traj_right_wrist_positions = np.zeros((self.n_frames_tr_win, self.n_dims))
+        # # self.traj_right_wrist_vels = np.tile(self.z_vec, (self.n_frames_tr_win, 1))
+        # self.traj_right_wrist_vels = np.zeros((self.n_frames_tr_win, self.n_dims))
+        #
+        # # Wrist positions contain all 3 components
+        # self.traj_left_wrist_positions = np.zeros((self.n_frames_tr_win, self.n_dims))
+        # # self.traj_left_wrist_vels = np.tile(self.z_vec, (self.n_frames_tr_win, 1))
+        # self.traj_left_wrist_vels = np.zeros((self.n_frames_tr_win, self.n_dims))
 
         n_foot_joints = 2
         n_feet = 2  # left, right
         self.foot_drifting = np.zeros(n_foot_joints * n_feet)
         self.blend_bias = 2.0
 
-    def reset(self, start_location=[0, 0, 0], start_orientation=[1, 0, 0, 0], start_direction=[0, 0, 1]):
+    def reset(self):
         """
         Resets the trajectory information and thus the character to 0,0,0 pointing to 0,0,1.
 
@@ -73,27 +91,25 @@ class Trajectory:
             start_direction {list} -- [description] (default: {[0,0,1]})
         """
         self.traj_positions = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
-        self.traj_directions = np.array([[0.0, 0.0, 1.0]] * self.n_frames_tr_win)
-        self.traj_rotations = np.array([0.0] * self.n_frames_tr_win)
-        self.traj_vels = np.tile(self.z_vec, (self.n_frames_tr_win, 1))
-        self.traj_right_wrist_positions = np.zeros(
-            (self.n_frames_tr_win, self.n_dims))  # Wrist positions contain all 3 components
-        self.traj_right_wrist_vels = np.tile(self.z_vec, (self.n_frames_tr_win, 1))
+        self.traj_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
+        self.traj_rotations = np.zeros(self.n_frames_tr_win)
+        self.traj_directions = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
 
-        self.traj_left_wrist_positions = np.zeros(
-            (self.n_frames_tr_win, self.n_dims))  # Wrist positions contain all 3 components
-        self.traj_left_wrist_vels = np.tile(self.z_vec, (self.n_frames_tr_win, 1))
-        for idx in range(self.median_idx + 1):
-            self.traj_positions[idx] = np.array(start_location)
-            self.traj_rotations[self.median_idx] = np.array(start_orientation)
-            self.traj_directions[self.median_idx] = np.array(start_direction)
+        ### Trajectory info of the hand
+        # Wrist positions contain all 3 components
+        self.traj_right_wrist_positions = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
+        self.traj_right_wrist_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
+
+        # Wrist positions contain all 3 components
+        self.traj_left_wrist_positions = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
+        self.traj_left_wrist_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
 
     def get_input(self, root_position, root_rotation):
         """
         This function computes the network input vector based on the current trajectory state for the new root_position and root_rotations.
 
         Arguments:
-            root_position {[type]} -- new root position
+            root_position {[type_in]} -- new root position
             root_rotation {[arg_type]} -- new root rotation
         Returns:
             np.array[10 * 2] -- trajectory positions
@@ -180,7 +196,7 @@ class Trajectory:
 
         for i in range(tr_mid_idx + 1, len(trajectory_positions_blend)):
             self.traj_positions[i] = trajectory_positions_blend[i]
-        print('######################################')
+        # print('######################################')
 
         # compute trajectory rotations
         for i in range(0, self.n_frames_tr_win):
@@ -198,6 +214,8 @@ class Trajectory:
         :param target_left_wrist_vels: local space
         :return:
         """
+        # TODO Instead of blending future traj points with preds, blend with the goal i.e. the punch target
+
         # computing future trajectory
         # print('######################################')
         # a = self.get_global_arm_tr()
@@ -255,7 +273,7 @@ class Trajectory:
             rot_vel {np.array(4)} -- root velocity + new root direction
 
         Returns:
-            [type] -- [description]
+            [type_in] -- [description]
         """
         # a = self.get_global_root_tr()
         # a = self.get_global_arm_tr()
@@ -450,7 +468,7 @@ class Trajectory:
                 curr_point -= root_pos
                 # arr[i] -= root_pos
 
-            # TODO
+            # TODO Cleanup
             # arr[i] = utils.rot_around_z_3d(arr[i], root_rot, inverse=True)
             curr_point = utils.rot_around_z_3d(curr_point, root_rot, inverse=True)
             # curr_point = utils.rot_around_z_3d(curr_point, root_rot)
@@ -461,7 +479,6 @@ class Trajectory:
             # if arg_type == 'pos':
             #     if arm == 'left':
             #         curr_point -= arr[self.median_idx]
-            #         #TODO traj_left is in global put to local
             #         # arr[i] -= arr[self.median_idx]
             #     elif arm == 'right':
             #         curr_point -= arr[self.median_idx]
@@ -481,12 +498,11 @@ class Trajectory:
         for i in range(len(arr)):
             # if arg_type == 'pos':
             # if arm == 'left':
-            #     #TODO add middle of array from local info
+            #     #TEMPORARY add middle of array from local info
             #     arr[i] = arr[i] + arr[0]
             # elif arm == 'right':
             #     arr[i] = arr[i] + arr[0]
 
-            # TODO
             # arr[i] = utils.rot_around_z_3d(arr[i], root_rot)
             # arr[i] = utils.rot_around_z_3d(arr[i], -root_rot)
             arr[i] = utils.rot_around_z_3d(arr[i], root_rot)

@@ -12,7 +12,8 @@ app = Flask(__name__)
 frd = 1
 # window = 25
 window = 15
-epochs = 60
+# epochs = 60
+epochs = 100
 server_to_main_dir = '../../..'
 controller_in_out_dir = 'src/controlers/boxingControllers/controller_in_out'
 frd_win_epochs = 'boxing_fr_' + str(frd) + '_' + str(window) + '_' + str(epochs)
@@ -31,8 +32,8 @@ with open(dataset_config) as f:
     config_store = json.load(f)
 
 bc = BoxingController(mann, config_store)
-
 zp = build_zero_posture(bc)
+
 print(zp.bones)
 print(zp.bone_map)
 
@@ -40,7 +41,8 @@ print(zp.bone_map)
 def char2TPosture():
     posture = copy.deepcopy(zp)
     pose = bc.getPose()
-    arm_tr = bc.getArmTrajectroy()
+    tr = bc.getTrajectroy()
+    # arm_tr = bc.getTrajectroy()
     # arm_tr = bc.getGlobalRoot()
     for i in range(len(pose)):
         posture.bones[i].position = np_2TVector3(pose[i])
@@ -49,9 +51,9 @@ def char2TPosture():
 
     # print('r',arm_tr[0])
     # print('l',arm_tr[1])
-    arm_tr_keys = ['rwt', 'lwt']
+    arm_tr_keys = ['rt', 'rt_v', 'rwt', 'lwt', 'rwt_v', 'lwt_v']
     for i in range(len(arm_tr_keys)):
-        atr = arm_tr[i]
+        atr = tr[i]
         for j in range(len(atr)):
             posture.arm_tr[arm_tr_keys[i]][j] = np_2TVector3(atr[j])
 
@@ -67,12 +69,13 @@ def fetchFrame():
         punch_in = request.get_json()
         # print(punch_in)
         punch_hand = punch_in["hand"]
-        punch_target = punch_in["target_right"] + punch_in["target_left"]
+        punch_target = TVector3_2np(punch_in["target_right"]) + TVector3_2np(punch_in["target_left"])
         bc.pre_render(punch_target, space='global')
         posture = char2TPosture()
         bc.post_render()
         json_str = json.dumps(posture, default=serialize)
-        # print(json_str)
+        print('******************************')
+        print(json_str)
 
         return json_str
 
@@ -82,8 +85,13 @@ def fetchFrame():
 
 @app.route('/fetch_zp', methods=['GET', 'POST'])
 def getZeroPosture():
+    print(request.get_json()["name"])
     if request.method == 'POST' and request.get_json()["name"] == "fetch_zp":
         posture = char2TPosture()
+        return json.dumps(posture, default=serialize)
+    elif request.method == 'POST' and request.get_json()["name"] == "fetch_zp_reset":
+        posture = char2TPosture()
+        bc.reset()
         return json.dumps(posture, default=serialize)
     else:
         print("Problem")
@@ -123,9 +131,6 @@ def post_req():
     return jsonify(message)
     # return jsonify(pose.tolist())
     # return jsonify(pose)
-
-
-
 
 
 if __name__ == '__main__':

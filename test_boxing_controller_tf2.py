@@ -7,11 +7,11 @@ import numpy as np
 # from src.controlers.character import *
 import pandas as pd
 
-# TODO Write an init README
+# TODO Cleanup
 frd = 1
 # window = 25
 window = 15
-epochs = 60
+epochs = 100
 controller_in_out_dir = 'src/controlers/boxingControllers/controller_in_out'
 frd_win_epochs = 'boxing_fr_' + str(frd) + '_' + str(window) + '_' + str(epochs)
 trained_base_path = 'trained_models/mann_tf2/' + frd_win_epochs
@@ -22,7 +22,7 @@ with open(mann_config_path) as json_file:
 
 mann = MANNTF(mann_config)
 mann.load_discrete_weights(target_file)
-dataset_config = "data/boxing_fr_"+str(frd)+"_"+str(window)+"/config.json"
+dataset_config = "data/boxing_fr_" + str(frd) + "_" + str(window) + "/config.json"
 
 with open(dataset_config) as f:
     config_store = json.load(f)
@@ -32,15 +32,14 @@ bc = BoxingController(mann, config_store)
 my_plotter = simple_matplotlib_plotter.Plotter()
 # right target coordinates, left target coordinates
 # Neutral Postion
-# target = [0.312219549,	-5.135918,	1.105719129,	0.312219549,	-5.135918,	1.105719129]
-# target = [0.317314766,	-5.138619,	1.10436228,	    0.317314766,	-5.138619,	1.10436228]
+# target = [0, 0, 0, 0, 0, 0]
+# target1 = [0, 0, 0, 0, 0, 0]
 # Left Punch
-# target = [0.267201945,	-1.783858,	0.958687371,	-0.212572447,	-1.056275163,	-1.190664312]
-# target = [0.48645876,	-4.699789,	1.029539222,	-0.07795768,	-1.259803896,	-1.021392921]
+target = [0, 0, 0, -0.347354, 0.578946, -0.521855]
+# target = [0, 0, 0, 0.30000001192092896, 1.6000000238418579, -0.75]
 # Right Punch
-# target = [0.172554145,	-1.164023857,	-0.527272225,	0.199894633,	-0.756384,	0.982723578]
-target = [-0.30000001192092896, 1.6000000238418579, -0.75, 0.0, 0.0, 0.0]
-
+# target = [0.30000001192092896, 1.6000000238418579, -0.75, 0.0, 0.0, 0.0]
+# target2 = [-0.30000001192092896, 1.6000000238418579, 0.75, 0.0, 0.0, 0.0]
 
 # X_csv_path = "data/boxing_fr_"+str(frd)+"_"+str(window)+"/X.csv"
 # X_csv = pd.read_csv(X_csv_path)
@@ -51,17 +50,19 @@ in_data_collection = []
 out_data_collection = []
 poses = []
 for f in range(100):
-# for f in range(2):
-# for f in range(3):
-# for target in targets[200:300]:
-    ## [start:end] contains both left and right punches in X_csv
-    in_data, out_data = bc.pre_render(target, space="global")
+    # for f in range(2):
+    # if f < 50:
+    #     in_data, out_data = bc.pre_render(target1, space="global")
+    # else:
+    #     in_data, out_data = bc.pre_render(target2, space="global")
+    # in_data, out_data = bc.pre_render(target, space="global")
+    in_data, out_data = bc.pre_render(target, space="local")
     in_data_collection.append(np.hstack(in_data))
     out_data_collection.append(np.hstack(out_data))
     poses.append(np.array(bc.char.joint_positions))
-    print(f)
-    print(bc.getArmTrajectroy()[0][5])
-    print(bc.getGlobalRoot())
+    # print(f)
+    # print(bc.getArmTrajectroy()[0][5])
+    # print(bc.getGlobalRoot())
     bc.post_render()
 
 X_df = pd.DataFrame(data=in_data_collection, columns=config_store['col_names'][0])
@@ -87,5 +88,5 @@ Y_df.to_csv(os.path.join(controller_in_out_dir, "Y_controller.csv"))
 print('start')
 poses = poses * 10
 pos2 = np.array(poses)
-my_plotter.animated(pos2[200:300])
+# my_plotter.animated(pos2[200:300])
 print('done')

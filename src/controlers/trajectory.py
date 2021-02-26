@@ -22,7 +22,7 @@ class Trajectory:
 	This class manages gait information as well (as it is linked to the trajectory points). 
 	
 	Returns:
-		[type] -- [description]
+		[type_in] -- [description]
 	"""
 	def __init__(self):
 		self.n_frames = 12 * 10  # 120 fps
@@ -67,9 +67,9 @@ class Trajectory:
 		This function computes the network input vector based on the current trajectory state for the new root_position and root_rotations. 
 		
 		Arguments:
-			root_position {[type]} -- new root position
-			root_rotation {[type]} -- new root rotation
-			n_gaits {[type]} -- number of gaits
+			root_position {[type_in]} -- new root position
+			root_rotation {[type_in]} -- new root rotation
+			n_gaits {[type_in]} -- number of gaits
 		Returns:
 			np.array[12 * 2] -- trajectory positions
 			np.array[12 * 2] -- trajectory directions
@@ -202,7 +202,7 @@ class Trajectory:
 			rot_vel {np.array(4)} -- root velocity + new root direction
 		
 		Returns:
-			[type] -- [description]
+			[type_in] -- [description]
 		"""
 		# mix positions with velocity prediction
 		for i in range(0, len(self.traj_positions) // 2):

@@ -71,7 +71,7 @@ class MotionPredictionLayer(tf.keras.layers.Layer):
         Loads a network from a zip file (path)
 
         Arguments:
-            path {[type]} -- path to zip file
+            path {[type_in]} -- path to zip file
 
         Keyword Arguments:
             prefix {str} -- [description] (default: {''})
@@ -159,7 +159,7 @@ class MANN(tf.keras.Model):
         Loads a network from a zip file (path)
 
         Arguments:
-            path {[type]} -- path to zip file
+            path {[type_in]} -- path to zip file
 
         Keyword Arguments:
             prefix {str} -- [description] (default: {''})

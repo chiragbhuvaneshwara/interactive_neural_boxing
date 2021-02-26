@@ -15,6 +15,8 @@ Execute this command while being in the local directory and not in the pod itsel
 Example: kubectl cp .\data\reaching_simple.npz usas01/test:/tf/mosi_dev_vinn/data/reaching_simple.npz
          kubectl cp C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-MOSI-DEV-VINN\mosi_dev_vinn\data\boxing_train.npz chbh01/train-env:/tf/mosi_dev_vinn/mosi_dev_vinn/data/boxing_train.npz
          kubectl cp C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-MOSI-DEV-VINN\mosi_dev_vinn\data chbh01/train-env:/tf/boxing-mosi-dev-vinn/data
+         kubectl cp C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Blender_Code_Snippets\data_annotation_res chbh01/train-env:/tf/boxing-blender-data-gen/Blender_Code_Snippets/data_annotation_res
+         kubectl cp C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Data\boxing_chirag\hq\processed chbh01/train-env:/tf/boxing-blender-data-gen/Data/boxing_chirag/hq/processed
 
 kubectl cp C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-MOSI-DEV-VINN\mosi_dev_vinn\main.py chbh01/train-env:/tf/mosi_dev_vinn/mosi_dev_vinn/main.py
 Execute this command while being in the local directory and not in the pod itself

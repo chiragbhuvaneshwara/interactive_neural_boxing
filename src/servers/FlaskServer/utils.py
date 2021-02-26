@@ -71,7 +71,10 @@ class TQuaternion(object):
 
 
 def TVector3_2np(x):
-    return np.array([x.x, x.y, x.z])
+    # np.array(x[0], x[1], -x[2])
+    x = [x[0], x[1], -x[2]]
+    return x
+    # return np.array([x.x, x.y, x.z])
 
 
 def np_2TVector3(x):
@@ -99,7 +102,8 @@ def build_zero_posture(base_controller, position_str="position"):
         tb = TBone(bone["name"], position, rotation, children, bone["parent"])
         bonelist.append(tb)
 
-    arm_tr = {'rwt': [0]*10, 'lwt': [0]*10}
+    # arm_tr = {'rwt': [0]*10, 'lwt': [0]*10}
+    arm_tr = {'rt': [0]*10, 'rt_v': [0]*10, 'rwt': [0]*10, 'lwt': [0]*10, 'rwt_v': [0]*10, 'lwt_v': [0]*10}
 
     return TPosture(bonelist, mapping, [0,0,0], 0.0, arm_tr)
 

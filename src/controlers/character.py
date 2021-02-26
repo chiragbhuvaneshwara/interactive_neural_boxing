@@ -18,7 +18,7 @@ class Character:
     Character class contains information about the simulated character.
 
     Returns:
-        [type] -- [description]
+        [type_in] -- [description]
     """
 
     def __init__(self, config_store):  # endJoints = 5, numJoints = 21):
@@ -65,7 +65,7 @@ class Character:
         Arguments:
             joint_positions {np.array(njoints * 3)} -- predicted root-local joint positions
             joint_velocities {np.array(njoints * 3)} -- predicted root-local joint velocity
-            joint_rotations {[type]} -- not utilized at the moment
+            joint_rotations {[type_in]} -- not utilized at the moment
 
         Keyword Arguments:
             foot_contacts {list} -- binary vector of foot-contacts  (default: {[0, 0, 0, 0]})

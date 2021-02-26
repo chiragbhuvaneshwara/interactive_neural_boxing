@@ -22,7 +22,7 @@ class DirectionalController(Controller):
 	This is a controller for directional input. 
 	
 	Returns:
-		[type] -- [description]
+		[type_in] -- [description]
 	"""
 	def __init__(self, network : FCNetwork, config_store):#xdim, ydim, endJoints = 5, numJoints = 21):
 		self.network = network
@@ -177,9 +177,9 @@ class DirectionalController(Controller):
 		Resets the controller to start location, orientation and direction. 
 		
 		Arguments:
-			start_location {[type]} -- [description]
-			start_orientation {[type]} -- [description]
-			start_direction {[type]} -- [description]
+			start_location {[type_in]} -- [description]
+			start_orientation {[type_in]} -- [description]
+			start_direction {[type_in]} -- [description]
 		"""
 		self.char.reset(start_location, start_orientation)
 		self.traj.reset(start_location, start_orientation, start_direction)
@@ -190,7 +190,7 @@ class DirectionalController(Controller):
 		Should copy the controler. At the moment, just creates a new, blank controler. 
 		
 		Returns:
-			[type] -- [description]
+			[type_in] -- [description]
 		"""
 		return Controller(self.network, self.config_store)
 
@@ -258,10 +258,10 @@ class PFNNInput(object):
 	This class is managing the network input. It is depending on the network data model
 	
 	Arguments:
-		object {[type]} -- [description]
+		object {[type_in]} -- [description]
 	
 	Returns:
-		[type] -- [description]
+		[type_in] -- [description]
 	"""
 	def __init__(self, data, joints, n_gaits, endJoints, use_foot_contacts):
 		self.data = data
@@ -316,10 +316,10 @@ class PFNNOutput(object):
 	This class is managing the network output. It is depending on the network data model. 
 	
 	Arguments:
-		object {[type]} -- [description]
+		object {[type_in]} -- [description]
 	
 	Returns:
-		[type] -- [description]
+		[type_in] -- [description]
 	"""
 	def __init__(self, data, joints, endJoints, use_foot_contacts):
 		self.data = data

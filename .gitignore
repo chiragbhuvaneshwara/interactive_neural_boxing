@@ -128,7 +128,7 @@ venv.bak/
 .dmypy.json
 dmypy.json
 
-# Pyre type checker
+# Pyre type_in checker
 .pyre/
 /mann_config.json
 

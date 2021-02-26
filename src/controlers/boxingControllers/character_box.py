@@ -18,7 +18,7 @@ class Character:
     Character class contains information about the simulated character.
 
     Returns:
-        [type] -- [description]
+        [type_in] -- [description]
     """
 
     def __init__(self, config_store):  # endJoints = 5, numJoints = 21):
@@ -38,18 +38,18 @@ class Character:
         # root position projected to ground (y-axis = 0)
         self.root_position = np.array([0.0, 0.0, 0.0])
 
-    def reset(self, root_position, start_orientation):
+    def reset(self, root_position=np.array([0.0, 0.0, 0.0]), start_orientation=0.0):
         self.root_position = root_position
         self.root_rotation = start_orientation
 
-    def set_pose(self, joint_positions, joint_velocities, joint_rotations, foot_contacts=[0, 0, 0, 0], init= False):
+    def set_pose(self, joint_positions, joint_velocities, joint_rotations, foot_contacts=[0, 0, 0, 0], init=False):
         """
         Sets a new pose after prediction.
 
         Arguments:
             joint_positions {np.array(njoints * 3)} -- predicted root-local joint positions
             joint_velocities {np.array(njoints * 3)} -- predicted root-local joint velocity
-            joint_rotations {[type]} -- not utilized at the moment
+            joint_rotations {[type_in]} -- not utilized at the moment
 
         Keyword Arguments:
             foot_contacts {list} -- binary vector of foot-contacts  (default: {[0, 0, 0, 0]})
@@ -61,12 +61,12 @@ class Character:
         for j in range(0, self.joints):
             local_pos = np.array([joint_positions[j * 3 + 0], joint_positions[j * 3 + 1], joint_positions[j * 3 + 2]],
                                  dtype=np.float64).reshape(1, 3)
-            pos = self.convert_local_to_global(local_pos, type='pos').ravel()
+            pos = self.convert_local_to_global(local_pos, type_in='pos').ravel()
 
             local_vel = np.array(
                 [joint_velocities[j * 3 + 0], joint_velocities[j * 3 + 1], joint_velocities[j * 3 + 2]],
                 dtype=np.float64).reshape(1, 3)
-            vel = self.convert_local_to_global(local_vel, type='vels').ravel()
+            vel = self.convert_local_to_global(local_vel, type_in='vels').ravel()
 
             if not init:
                 # mix positions and velocities.
@@ -179,20 +179,20 @@ class Character:
 
             curr_joint_pos = self.joint_positions[i]
             curr_joint_pos = curr_joint_pos.reshape(1, len(curr_joint_pos))
-            curr_joint_pos = self.convert_global_to_local(curr_joint_pos, prp, prr, type='pos')
+            curr_joint_pos = self.convert_global_to_local(curr_joint_pos, prp, prr, type_in='pos')
             joint_pos[i * 3: i * 3 + 3] = curr_joint_pos.ravel()
 
             curr_joint_vel = self.joint_velocities[i]
             curr_joint_vel = curr_joint_vel.reshape(1, len(curr_joint_vel))
-            curr_joint_vel = self.convert_global_to_local(curr_joint_vel, prp, prr, type='vels')
+            curr_joint_vel = self.convert_global_to_local(curr_joint_vel, prp, prr, type_in='vels')
             joint_vel[i * 3:i * 3 + 3] = curr_joint_vel.ravel()
 
         return (joint_pos, joint_vel)
 
-    def convert_global_to_local(self, arr, root_pos, root_rot, type='pos'):
+    def convert_global_to_local(self, arr, root_pos, root_rot, type_in='pos'):
         for i in range(len(arr)):
             # curr_point = arr[i]
-            if type == 'pos':
+            if type_in == 'pos':
                 # curr_point -= root_pos
                 arr[i] -= root_pos
             # arr[i] = utils.rot_around_z_3d(arr[i], root_rot)
@@ -200,13 +200,13 @@ class Character:
 
         return arr
 
-    def convert_local_to_global(self, arr, type='pos'):
+    def convert_local_to_global(self, arr, type_in='pos'):
         # Info at mid trajectory is info at current frame
         root_pos = self.root_position
         root_rot = self.root_rotation
         for i in range(len(arr)):
             # arr[i] = utils.rot_around_z_3d(arr[i], -root_rot)
             arr[i] = utils.rot_around_z_3d(arr[i], root_rot)
-            if type == 'pos':
+            if type_in == 'pos':
                 arr[i] = arr[i] + root_pos
         return arr

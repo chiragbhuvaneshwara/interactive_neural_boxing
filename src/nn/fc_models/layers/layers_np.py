@@ -73,7 +73,7 @@ class NP_PFNN_Layer(Interpolating_Layer):
 			elu_operator {function} -- elu operation (default: {None})
 
 		Returns:
-			[type] -- [description]
+			[type_in] -- [description]
 		"""
 		def interpolation_function(w, phase):
 			# This function performs the splitting of variables to the four layers. 

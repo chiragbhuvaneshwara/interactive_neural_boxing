@@ -26,7 +26,7 @@ epochs = 100
 frd = 1
 # window = 25
 window = 15
-#TODO Check norm used
+#TODO Cleanup
 frd_win = 'boxing_fr_' + str(frd) + '_' + str(window)
 args_dataset = os.path.join("data", frd_win, "config.json")
 with open(args_dataset) as f:
@@ -85,7 +85,8 @@ foot_end_effector_velocities = generate_indices(x_indices, 'x_local_vel')[
                                generate_indices(x_indices, 'x_local_vel')[
                                joint_indices[left_foot_key] * 3:joint_indices[left_foot_key] * 3 + 3
                                ]
-
+# TODO Update gating indices to include trajectory of hands when using trajectory of hands
+# TODO Setup rest of gating input close to MANN paper
 gating_indices = wrist_velocities_indices + \
                  current_punch_phase_indices + \
                  punch_target_indices + \

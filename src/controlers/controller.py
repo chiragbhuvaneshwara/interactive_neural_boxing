@@ -60,9 +60,9 @@ class Controller:
 		This function resets the agent at a certain location with a specific orientation in world coordinates. 
 		
 		Arguments:
-			start_location {[type]} -- [description]
-			start_orientation {[type]} -- [description]
-			start_direction {[type]} -- [description]
+			start_location {[type_in]} -- [description]
+			start_orientation {[type_in]} -- [description]
+			start_direction {[type_in]} -- [description]
 		"""
 		pass
 

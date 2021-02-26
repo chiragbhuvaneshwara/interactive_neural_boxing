@@ -74,7 +74,7 @@ class MotionPredictionLayer(tf.keras.layers.Layer):
         Loads a network from a zip file (path)
 
         Arguments:
-            path {[type]} -- path to zip file
+            path {[type_in]} -- path to zip file
 
         Keyword Arguments:
             prefix {str} -- [description] (default: {''})
@@ -165,7 +165,7 @@ class MANN(tf.keras.Model):
         Loads a network from a zip file (path)
 
         Arguments:
-            path {[type]} -- path to zip file
+            path {[type_in]} -- path to zip file
 
         Keyword Arguments:
             prefix {str} -- [description] (default: {''})
@@ -302,7 +302,7 @@ class MANN(tf.keras.Model):
         # X = (X - Xmean) / (Xstd + eps)
         # Y = (Y - Ymean) / (Ystd + eps)
 
-        # todo which vals are 0
+        # TODO Setup comparator to warn if input and inverse of output are the same or not
 
         X = (X - Xmean) / Xstd
         Y = (Y - Ymean) / Ystd
@@ -354,7 +354,6 @@ class MANN(tf.keras.Model):
             "optimizer": "Adam",
             "learning_rate": 0.00001,
             # "learning_rate": 3e-4,
-            # TODO 100 epochs
             "epochs": epochs,
             "batchsize": 32,
             # "batchsize": 64,
@@ -376,9 +375,9 @@ class MANN(tf.keras.Model):
         # input = (X - Xmean) / (Xstd + eps)
         input = (X - Xmean) / Xstd
         print('---------------------------------------')
-        print(input)
+        # print(input)
         p_phase = input.ravel()[160:162]
-        print('rp:', p_phase[0], 'lp:', p_phase[1])
+        print('rph:', p_phase[0], 'lph:', p_phase[1])
 
         # Using the standardized input is leading to NaNs
         Y_prediction = mann(input)
@@ -394,8 +393,7 @@ class MANN(tf.keras.Model):
         # print('r:', p_phase[0], 'l:', p_phase[1])
         Y_prediction = Y_prediction * Ystd + Ymean
         p_phase = Y_prediction.numpy().ravel()[4:6]
-        print('rp:', p_phase[0], 'lp:', p_phase[1])
-        print('---------------------------------------')
+        print('rph:', p_phase[0], 'lph:', p_phase[1])
 
         if np.isnan(Y_prediction).any():
             raise Exception('Nans found')

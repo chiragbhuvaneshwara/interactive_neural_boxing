@@ -20,7 +20,7 @@ class BoxingController(Controller):
     This is a controller for punch target input.
 
     Returns:
-        [type] -- [description]
+        [type_in] -- [description]
     """
 
     def __init__(self, network: MANN, config_store):  # xdim, ydim, end_joints = 5, numJoints = 21):
@@ -71,6 +71,9 @@ class BoxingController(Controller):
         self.config_store = config_store
         self.__initialize()
 
+    # TODO: Exp with punch target as curr wrist pos when not punching instead of 0 vector used in present implementation
+    # TODO: Exp with only punch target and punch action and without any trajectory of the hands
+    # TODO pre render setup new input of punch action (or punch phase)
     def pre_render(self, punch_targets, space='local'):
         """
         This function is called before rendering. It prepares character and trajectory to be rendered.
@@ -96,6 +99,8 @@ class BoxingController(Controller):
         # 3. Update/calculate trajectory based on input
         right_pos_traj_target, left_pos_traj_target = self.output.get_wrist_pos_traj()
         right_vels_traj_target, left_vels_traj_target = self.output.get_wrist_vels_traj()
+
+        ## TODO Blend to punch target i.e goal
         self.traj.compute_future_wrist_trajectory(right_pos_traj_target, right_vels_traj_target, left_pos_traj_target,
                                                   left_vels_traj_target)
 
@@ -124,28 +129,31 @@ class BoxingController(Controller):
         self.input.set_local_vel(joint_vel.ravel())
 
         # 2. Set new punch_phase and new punch target based on input
-        right_p_target = np.array(punch_targets[:self.n_dims])
-        left_p_target = np.array(punch_targets[self.n_dims:])
+        right_p_target = np.array(punch_targets[:self.n_dims], dtype=np.float64)
+        left_p_target = np.array(punch_targets[self.n_dims:], dtype=np.float64)
         if space == 'local':
             self.input.set_punch_target(right_p_target, left_p_target)
         elif space == 'global':
-            right_p_target = right_p_target.reshape(1, len(right_p_target))
-            left_p_target = left_p_target.reshape(1, len(left_p_target))
-
-            right_p_target_local = self.char.convert_global_to_local(right_p_target, prev_root_pos, prev_root_rot,
-                                                                     type='pos')
-            left_p_target_local = self.char.convert_global_to_local(left_p_target, prev_root_pos, prev_root_rot,
-                                                                    type='pos')
-
-            right_p_target = right_p_target_local.ravel()
-            left_p_target = left_p_target_local.ravel()
+            # right_p_target_local = right_p_target
+            # left_p_target_local = left_p_target
             if sum(punch_targets) != 0:
+                right_p_target = right_p_target.reshape(1, len(right_p_target))
+                left_p_target = left_p_target.reshape(1, len(left_p_target))
+
+                right_p_target_local = self.char.convert_global_to_local(right_p_target, prev_root_pos, prev_root_rot,
+                                                                         type_in='pos')
+                left_p_target_local = self.char.convert_global_to_local(left_p_target, prev_root_pos, prev_root_rot,
+                                                                        type_in='pos')
+
+                right_p_target = right_p_target_local.ravel()
+                left_p_target = left_p_target_local.ravel()
+
                 # print('#######################################################')
                 # print('Converted punch targets')
                 # print(right_p_target_local)
-                print('r', right_p_target_local)
-                print('l', left_p_target_local)
-                # print('#######################################################')
+            print('rtarget', right_p_target)
+            print('ltarget', left_p_target)
+            # print('#######################################################')
 
             self.input.set_punch_target(right_p_target, left_p_target)
         else:
@@ -219,24 +227,29 @@ class BoxingController(Controller):
 
         return self.previous_punch_phase, self.previous_joint_pos, self.previous_joint_vel
 
-    def reset(self, start_location, start_orientation, start_direction):
+    def reset(self, start_location=np.array([0.0, 0.0, 0.0]), start_orientation=0,
+              start_direction=np.array([0.0, 0.0, 0.0])):
         """
         Resets the controller to start location, orientation and direction.
 
         Arguments:
-            start_location {[type]} -- [description]
-            start_orientation {[type]} -- [description]
-            start_direction {[type]} -- [description]
+            start_location {[type_in]} -- [description]
+            start_orientation {[type_in]} -- [description]
+            start_direction {[type_in]} -- [description]
         """
         self.char.reset(start_location, start_orientation)
-        self.traj.reset(start_location, start_orientation, start_direction)
+        # self.traj.reset(start_location, start_orientation, start_direction)
+        self.traj.reset()
+        print('###################################')
+        print('RESET DONE')
+        print('###################################')
 
     def copy(self):
         """
         Should copy the controler. At the moment, just creates a new, blank controler.
 
         Returns:
-            [type] -- [description]
+            [type_in] -- [description]
         """
         return Controller(self.network, self.config_store)
 
@@ -255,27 +268,36 @@ class BoxingController(Controller):
         pos, vel = self.char.getLocalJointPosVel(root_pos, root_rot)
         return np.reshape(pos, (self.char.joints, 3))
 
-    def getArmTrajectroy(self):
+    def getTrajectroy(self):
+        tr = self.traj
+        step = self.traj_step
         # right_wr_tr, left_wr_tr = self.traj.get_global_arm_tr()
-        right_wr_tr, left_wr_tr = self.traj.traj_right_wrist_positions[::self.traj_step], self.traj.traj_left_wrist_positions[::self.traj_step]
-        return right_wr_tr, left_wr_tr
+        right_wr_tr, left_wr_tr = tr.traj_right_wrist_positions[::step], tr.traj_left_wrist_positions[::step]
+        root_tr = tr.traj_positions[::step]
+        root_vels_tr = tr.traj_vels[::step]
+        right_wr_vels_tr = tr.traj_right_wrist_vels[::step]
+        left_wrist_vels_tr = tr.traj_left_wrist_vels[::step]
+        return root_tr, root_vels_tr, right_wr_tr, left_wr_tr, right_wr_vels_tr, left_wrist_vels_tr
 
     def getGlobalRoot(self):
         # grt = self.traj.get_global_root_tr()
         grt = self.traj.traj_positions[::self.traj_step]
         gr = np.array(self.char.root_position)
-        print('root_tr')
-        print(grt[0])
+        # print('root_tr')
+        # print(grt[0])
         # return grt[1], gr
         print('--------')
-        print(grt.shape)
-        print(self.traj.traj_left_wrist_positions[::self.traj.traj_step])
+        # print(grt.shape)
+        # print(self.traj.traj_left_wrist_positions[::self.traj.traj_step])
         return grt, grt
 
     def getWorldPosRot(self):
         return np.array(self.char.root_position), float(self.char.root_rotation)
 
     def __initialize(self):
+        # TODO Get init local positions from a frame in the mocap data that you think is in neutral position
+
+
         # self.output.data = np.array(self.network.norm["Ymean"])  # * self.network.norm["Ystd"] + self.network.norm["Ymean"]
         # self.input.data = np.array(self.network.norm["Xmean"])  # * self.network.norm["Xstd"] + self.network.norm["Xmean"]
 
@@ -329,10 +351,10 @@ class MANNInput(object):
     This class is managing the network input. It is depending on the network data model
 
     Arguments:
-        object {[type]} -- [description]
+        object {[type_in]} -- [description]
 
     Returns:
-        [type] -- [description]
+        [type_in] -- [description]
     """
 
     def __init__(self, data, n_joints, end_joints, joint_indices, x_col_names_ids):
@@ -412,10 +434,10 @@ class MANNOutput(object):
     This class is managing the network output. It is depending on the network data model.
 
     Arguments:
-        object {[type]} -- [description]
+        object {[type_in]} -- [description]
 
     Returns:
-        [type] -- [description]
+        [type_in] -- [description]
     """
 
     def __init__(self, data, n_joints, end_joints, use_foot_contacts, joint_names_ids,
