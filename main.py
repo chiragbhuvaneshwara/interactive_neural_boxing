@@ -6,7 +6,8 @@ import numpy as np
 import pandas as pd
 import json
 
-#TODO: Remove all unused files
+
+# TODO: try to pip install mosi_utils_anim instead of having it in the repo
 
 def setup_output_dir(output_base_path, output_directory):
     """
@@ -26,7 +27,6 @@ def setup_output_dir(output_base_path, output_directory):
 
 ####################### CONTROL PARAMS ###################################
 DEVELOP = True
-# TODO Develop a new main file with params for file processing or folder processing
 INPUT_BASE_PATH = '/tf/boxing-blender-data-gen'
 OUTPUT_BASE_PATH = '/tf/boxing-mosi-dev-vinn/data'
 if DEVELOP:
@@ -40,7 +40,8 @@ FORWARD_DIR = np.array([0.0, 0.0, 1.0])
 TR_WINDOW = math.ceil(15 / FRAME_RATE_DIV)
 ####################### CONTROL PARAMS ###################################
 
-x_train, y_train, Dataset_Config = process_folder(BVH_PATH, PUNCH_PHASE_PATH, FRAME_RATE_DIV, FORWARD_DIR, TR_WINDOW, DEVELOP)
+x_train, y_train, Dataset_Config = process_folder(BVH_PATH, PUNCH_PHASE_PATH, FRAME_RATE_DIV, FORWARD_DIR, TR_WINDOW,
+                                                  DEVELOP)
 frd_win = 'boxing_fr_' + str(FRAME_RATE_DIV) + '_' + str(TR_WINDOW)
 setup_output_dir(OUTPUT_BASE_PATH, frd_win)
 out_dir = os.path.join(OUTPUT_BASE_PATH, frd_win)

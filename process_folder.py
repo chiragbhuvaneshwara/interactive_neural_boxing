@@ -58,8 +58,8 @@ def prepare_input_data(i, handler, punch_phase, right_punch_target, left_punch_t
     x_curr_frame = [
         x_rootposs_tr,  # local wrt r in mid frame
         x_rootvels_tr,
-        x_right_wrist_pos_tr,  # local wrt r in mid frame (not done: then wrt wrist in mid frame)
-        x_left_wrist_pos_tr,  # local wrt r in mid frame (not done: then wrt wrist in mid frame)
+        x_right_wrist_pos_tr,  # local wrt r in mid frame (TODO then wrt wrist in mid frame)
+        x_left_wrist_pos_tr,  # local wrt r in mid frame (TODO then wrt wrist in mid frame)
         x_right_wrist_vels_tr,
         x_left_wrist_vels_tr,
         x_punch_phase,
@@ -169,7 +169,7 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div, de
         punch_phase, punch_dphase = handler.load_punch_phase(punch_p_csv_path, frame_rate_divisor=frame_rate_div,
                                                              frame_rate_offset=div)
 
-        # TODO Only implemented for phase type tertiary currently
+        # TODO Only implemented for action label type tertiary currently. Must do binary labels and phase.
         right_punch_target = handler.get_punch_targets(punch_phase[:, 0], hand='right', space="local")
         left_punch_target = handler.get_punch_targets(punch_phase[:, 1], hand='left', space="local")
 
