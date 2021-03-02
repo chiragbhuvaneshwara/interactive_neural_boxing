@@ -26,7 +26,7 @@ def setup_output_dir(output_base_path, output_directory):
 
 
 ####################### CONTROL PARAMS ###################################
-DEVELOP = True
+DEVELOP = False
 INPUT_BASE_PATH = '../VCS-boxing-predictor'
 OUTPUT_BASE_PATH = '../VCS-MOSI-DEV-VINN/mosi_dev_vinn/data/'
 if DEVELOP:
