@@ -8,7 +8,6 @@ from mosi_utils_anim_t.animation_data.quaternion import Quaternion
 import inspect
 
 
-# TODO Cleanup
 def retrieve_name(var):
     callers_local_vars = inspect.currentframe().f_back.f_locals.items()
     reqd_var_name = ''
@@ -37,24 +36,35 @@ class FeatureExtractor:
                  hid_r=10,
                  num_traj_sampling_pts=10):
         """
-
-        This class provides functionality to preprocess raw bvh data into a deep-learning favored format.
-        It does not actually transfer the data, but provides the possibilitie to create these. An additional, lightweight process_data function is required.
-
-        Default configurations can be loaded using set_holden_parameters and set_makehuman_parameters. Other default configurations may be added later.
-
-            :param bvh_file_path:
-            :param type_hand="flat":
-            :param to_meters=1:
-            :param forward_dir = [0,0,1]:
-            :param shoulder_joints = [10, 20] (left, right):
-            :param hip_joints = [2, 27] (left, right):
-            :param fid_l = [4,5] (heel, toe):
-            :param fid_r = [29, 30] (heel, toe):
+                This class provides functionality to preprocess raw bvh data into a deep-learning favored format.
+        It does not actually transfer the data, but provides the possibilitie to create these. An additional,
+        lightweight process_data function is required.
+        Default configurations can be loaded using set_neuron_parameters and set_awinda_parameters.
+        Other default configurations may be added later.
+        :param bvh_file_path:
+        :param window:
+        :param to_meters=1:
+        :param forward_dir = [0,0,1]:
+        :param shoulder_joints = [10, 20] (left, right):
+        :param hip_joints = [2, 27] (left, right):
+        :param fid_l = [4,5] (heel, toe):
+        :param fid_r = [29, 30] (heel, toe):
+        :param head_id:
+        :param hid_l:
+        :param hid_r:
+        :param num_traj_sampling_pts:
         """
+        # TODO: Documentation
 
         self.bvh_file_path = bvh_file_path
         self.__global_positions = []
+
+        self.punch_labels = {}
+        self.delta_punch_labels = {}
+        self.punch_targets = {}
+        self.__bone_local_velocities = {}
+        self.new_fwd_dirs = []
+        self.foot_contacts = {}
 
         self.__dir_head = []
         self.__forwards = []
@@ -88,6 +98,7 @@ class FeatureExtractor:
         Resets computation buffers (__forwards, __root_rotations, __local_positions, __local_velocities).
         Usefull, if global_rotations are changed.
         """
+        # TODO Check
         self.__forwards = []
         self.__root_rotations = []
         self.__local_positions, self.__local_velocities = [], []
@@ -97,6 +108,7 @@ class FeatureExtractor:
         Produces a copy of the current handler.
         :return FeatureExtractor
         """
+        # TODO Check
         copy_feature_extractor = FeatureExtractor(self.bvh_file_path, self.window,
                                                   # self.type,
                                                   self.to_meters, self.__ref_dir, self.shoulder_joints,
@@ -130,20 +142,32 @@ class FeatureExtractor:
         self.hand_right = 10
         self.to_meters = 100
 
-    @staticmethod
-    def load_punch_phase(punch_phase_csv_path, frame_rate_divisor=2, frame_rate_offset=0):
+    def load_punch_action_labels(self, punch_labels_csv_path, frame_rate_divisor=2, frame_rate_offset=0):
+        # TODO: Documentation
+        punch_phase_df = pd.read_csv(punch_labels_csv_path, index_col=0, header=0)
 
-        punch_phase_df = pd.read_csv(punch_phase_csv_path, index_col=0, header=0)
-        total_frames = len(punch_phase_df.index)
-        rows_to_keep = [i for i in range(frame_rate_offset, total_frames, frame_rate_divisor)]
+        for hand_id in [self.hand_left, self.hand_right]:
+            if hand_id == self.hand_left:
+                h_col = "left punch"
+            else:
+                h_col = "right punch"
 
-        punch_phase_df = punch_phase_df.iloc[rows_to_keep, :]
-        punch_phase = punch_phase_df.values
+            hand_df = pd.DataFrame(punch_phase_df[h_col])
 
-        punch_dphase = punch_phase[1:] - punch_phase[:-1]
-        punch_dphase[punch_dphase < 0] = (1.0 - punch_phase[:-1] + punch_phase[1:])[punch_dphase < 0]
+            total_frames = len(hand_df.index)
+            rows_to_keep = [i for i in range(frame_rate_offset, total_frames, frame_rate_divisor)]
 
-        return punch_phase, punch_dphase
+            hand_df = hand_df.iloc[rows_to_keep, :]
+            hand_punch_labels = hand_df.values
+
+            hand_delta_punch_labels = hand_punch_labels[1:] - hand_punch_labels[:-1]
+            hand_delta_punch_labels[hand_delta_punch_labels < 0] = \
+                (1.0 - hand_punch_labels[:-1] + hand_punch_labels[1:])[hand_delta_punch_labels < 0]
+
+            self.punch_labels[hand_id] = hand_punch_labels
+            self.delta_punch_labels[hand_id] = hand_delta_punch_labels
+
+            # return self.__punch_labels[hand_id], self.__delta_punch_labels[hand_id]
 
     def load_motion(self, frame_rate_divisor=2, frame_rate_offset=0):
         """
@@ -222,11 +246,10 @@ class FeatureExtractor:
         Computes forward directions. Results are stored internally to reduce future computation time.
             :return forward_dirs (np.array(n_frames, 3))
         """
-        sdr_l, sdr_r = self.shoulder_joints[0], self.shoulder_joints[1]
-        hip_l, hip_r = self.hip_joints[0], self.hip_joints[1]
-        global_positions = np.array(self.__global_positions)
-
         if len(self.__forwards) == 0:
+            sdr_l, sdr_r = self.shoulder_joints[0], self.shoulder_joints[1]
+            hip_l, hip_r = self.hip_joints[0], self.hip_joints[1]
+            global_positions = np.array(self.__global_positions)
             across = (
                     (global_positions[:, sdr_l] - global_positions[:, sdr_r]) +
                     (global_positions[:, hip_l] - global_positions[:, hip_r]))
@@ -246,10 +269,10 @@ class FeatureExtractor:
         Computes forward directions. Results are stored internally to reduce future computation time.
             :return forward_dirs (np.array(n_frames, 3))
         """
-        head_j = self.joint_indices_dict['Head']
-        global_positions = np.array(self.__global_positions)
-
         if len(self.__dir_head) == 0:
+            head_j = self.joint_indices_dict['Head']
+            global_positions = np.array(self.__global_positions)
+
             across = (global_positions[:, head_j])
             across = across / np.sqrt((across ** 2).sum(axis=-1))[..., np.newaxis]
 
@@ -265,10 +288,9 @@ class FeatureExtractor:
         Returns root rotations. Results are stored internally to reduce future computation time.
             :return root_rotations (List(Quaternion), n_frames length)
         """
-        ref_dir = self.__ref_dir
-        forward = self.get_forward_directions()
-
         if len(self.__root_rotations) == 0:
+            ref_dir = self.__ref_dir
+            forward = self.get_forward_directions()
             self.__root_rotations = get_rotation_to_ref_direction(forward, ref_dir=ref_dir)
         return self.__root_rotations
 
@@ -311,121 +333,126 @@ class FeatureExtractor:
         _, lv = self.__root_local_transform()
         return lv
 
-    def get_punch_targets(self, punch_phase, hand, space='local'):
+    def calculate_punch_targets(self, space='local'):
         """
-            CURRENTLY SET UP FOR TERTIARY PUNCH PHASE ONLY
+        CURRENTLY SET UP FOR TERTIARY PUNCH PHASE ONLY
 
-            :param punch_phase: np.array(n_frame)
-            :param hand: str, 'left' or 'right'
-            :param space: str, 'local' or 'global' indicating the reqd coordinate space of the punch targets
-                :return punch_target_array (np.array(n_frame, 3))
+        :param punch_labels: np.array(n_frame)
+        :param hand: str, 'left' or 'right'
+        :param space: str, 'local' or 'global' indicating the reqd coordinate space of the punch targets
+            :return punch_target_array (np.array(n_frame, 3))
         """
+        for hand_id in [self.hand_left, self.hand_right]:
 
-        # TODO Replace with single get_punch_targets that returns punch targets for both left and right hands
-        if hand == 'right':
-            hand_joint = self.hand_right
+            punch_labels = self.punch_labels[hand_id]
 
-        elif hand == 'left':
-            hand_joint = self.hand_left
+            if space == 'local':
+                grp = np.array(self.__global_positions[:, 0])
+                grp[:, 1] = 0  # TODO Check if punch target height is correct
+                punch_target_array = np.array(self.__global_positions[:, hand_id]) - grp
+                root_rotations = self.get_root_rotations()
+                for f in range(len(punch_labels)):
+                    punch_target_array[f] = root_rotations[f] * punch_target_array[f]
+            else:
+                punch_target_array = np.array(self.__global_positions[:, hand_id])
 
-        if space == 'local':
-            grp = np.array(self.__global_positions[:, 0])
-            punch_target_array = np.array(self.__global_positions[:, hand_joint]) - grp
-            root_rotations = self.get_root_rotations()
-            for f in range(len(punch_phase)):
-                punch_target_array[f] = root_rotations[f] * punch_target_array[f]
-        else:
-            punch_target_array = np.array(self.__global_positions[:, hand_joint])
+            target_pos = np.zeros((punch_labels.shape[0], 3))
 
-        target_pos = np.zeros((punch_phase.shape[0], 3))
+            i = 0
+            while i < len(punch_labels):
+                # TODO Check if this line is still required
+                next_target = np.array([0.0, 0.0, 0.0])
 
-        i = 0
-        while i < len(punch_phase):
-            # TODO Check if this line is still required
-            next_target = np.array([0.0, 0.0, 0.0])
+                if punch_labels[i] == 0.0:
+                    target_pos[i] = np.array([0.0, 0.0, 0.0])
 
-            if punch_phase[i] == 0.0:
-                target_pos[i] = np.array([0.0, 0.0, 0.0])
+                elif punch_labels[i] == -1.0:
+                    # set punch target to be next target when hand is retreating i.e phase is -1
+                    # -1.0 is considered for the tertiary space
+                    # -1.0 indicates that the hand is returning back to the rest position
+                    next_target = []
+                    for j in range(i, len(punch_labels)):
+                        if punch_labels[j] == 1.0:
+                            for k in range(j, len(punch_labels)):
+                                if punch_labels[k] == -1.0:
+                                    next_target = punch_target_array[k - 1]
+                                    target_pos[i:j] = next_target
+                                    break
+                            i = j - 1
+                            break
+                        elif punch_labels[j] == 0.0:
+                            next_target = np.array([0.0, 0.0, 0.0])
+                            target_pos[i:j] = next_target
+                            i = j - 1
+                            break
 
-            elif punch_phase[i] == -1.0:
-                # set punch target to be next target when hand is retreating i.e phase is -1
-                # -1.0 is considered for the tertiary space
-                # -1.0 indicates that the hand is returning back to the rest position
-                next_target = []
-                for j in range(i, len(punch_phase)):
-                    if punch_phase[j] == 1.0:
-                        for k in range(j, len(punch_phase)):
-                            if punch_phase[k] == -1.0:
-                                next_target = punch_target_array[k - 1]
-                                target_pos[i:j] = next_target
-                                break
-                        i = j - 1
-                        break
-                    elif punch_phase[j] == 0.0:
+                    if len(next_target) == 0:
                         next_target = np.array([0.0, 0.0, 0.0])
-                        target_pos[i:j] = next_target
-                        i = j - 1
-                        break
+                        target_pos[i:] = next_target
 
-                if len(next_target) == 0:
-                    next_target = np.array([0.0, 0.0, 0.0])
-                    target_pos[i:] = next_target
+                elif punch_labels[i] == 1.0:
+                    next_target = []
+                    for j in range(i, len(punch_labels)):
+                        if punch_labels[j] == -1.0:
+                            next_target = punch_target_array[j - 1]
+                            target_pos[i:j] = next_target
+                            i = j - 1
+                            break
 
-            elif punch_phase[i] == 1.0:
-                next_target = []
-                for j in range(i, len(punch_phase)):
-                    if punch_phase[j] == -1.0:
-                        next_target = punch_target_array[j - 1]
-                        target_pos[i:j] = next_target
-                        i = j - 1
-                        break
+                    if len(next_target) == 0:
+                        next_target = np.array([0.0, 0.0, 0.0])
+                        target_pos[i:] = next_target
 
-                if len(next_target) == 0:
-                    next_target = np.array([0.0, 0.0, 0.0])
-                    target_pos[i:] = next_target
+                i += 1
 
-            i += 1
-
-        punch_target_array = np.array(target_pos)
-
-        return punch_target_array
+            punch_target_array = np.array(target_pos)
+            self.punch_targets[hand_id] = punch_target_array
 
     def get_root_velocity(self):
         """
         Returns root velocity in root local cartesian space.
             : return np.array(n_frames, 1, 3)
         """
-        global_positions = np.array(self.__global_positions)
-        root_rotations = self.get_root_rotations()
-        root_velocity = (global_positions[1:, 0:1] - global_positions[:-1, 0:1]).copy()
+        if len(self.__local_velocities) == 0:
+            global_positions = np.array(self.__global_positions)
+            root_rotations = self.get_root_rotations()
+            root_velocity = (global_positions[1:, 0:1] - global_positions[:-1, 0:1]).copy()
 
-        for i in range(self.n_frames - 1):
-            root_velocity[i, 0][1] = 0
-            root_velocity[i, 0] = root_rotations[i] * root_velocity[i, 0]
+            for i in range(self.n_frames - 1):
+                root_velocity[i, 0][1] = 0
+                root_velocity[i, 0] = root_rotations[i] * root_velocity[i, 0]
+        else:
+            root_velocity = self.__local_velocities[:, 0:1]
+            root_velocity[:, 0:1, 1] = 0
 
         return root_velocity
 
-    # TODO replace with get_bone_velcoity with input param as self.root or self.hand_left etc
-    def get_wrist_velocity(self, type_hand):
+    def get_bone_velocity(self, joint_id, project_to_ground=False):
         """
         Returns root velocity in root local cartesian space.
-            : return np.array(n_frames, 1, 3)
+            : return np.array(n_frames, 3)
         """
-        global_positions = np.array(self.__global_positions)
-        root_rotations = self.get_root_rotations()
+        if len(self.__local_velocities) == 0:
+            if joint_id not in self.__bone_local_velocities.keys():
+                global_positions = np.array(self.__global_positions)
+                root_rotations = self.get_root_rotations()
 
-        if type_hand == 'left':
-            hand_joint = self.hand_left
-        elif type_hand == 'right':
-            hand_joint = self.hand_right
+                bone_velocity = (global_positions[1:, joint_id]
+                                 - global_positions[:-1, joint_id]).copy()
 
-        hand_velocity = (global_positions[1:, hand_joint:hand_joint + 1]
-                         - global_positions[:-1, hand_joint:hand_joint + 1]).copy()
+                for i in range(self.n_frames - 1):
+                    bone_velocity[i, 0] = root_rotations[i] * bone_velocity[i, 0]
 
-        for i in range(self.n_frames - 1):
-            hand_velocity[i, 0] = root_rotations[i] * hand_velocity[i, 0]
+                self.__bone_local_velocities[joint_id] = bone_velocity
+            else:
+                bone_velocity = self.__bone_local_velocities[joint_id]
+        else:
+            bone_velocity = self.__local_velocities[:, joint_id]
 
-        return hand_velocity
+        if project_to_ground:
+            bone_velocity[:, 1] = 0
+
+        return bone_velocity
 
     def get_rotational_velocity(self):
         """
@@ -443,8 +470,8 @@ class FeatureExtractor:
 
         return root_rvelocity
 
-    #TODO Verify difference between get_rotational_velocity and get_new_forward_dirs
-    def get_new_forward_dirs(self):
+    # TODO Verify difference between get_rotational_velocity and get_new_forward_dirs
+    def calculate_new_forward_dirs(self):
         """
         Returns the new forward direction relative to the last position.
         Alternative to rotational velocity, as this can be computed out of the new forward direction
@@ -459,7 +486,7 @@ class FeatureExtractor:
             td = q * self.__ref_dir
             root_rvelocity[i] = np.array([td[0], td[2]])
 
-        return root_rvelocity
+        self.new_fwd_dirs = root_rvelocity
 
     def get_foot_concats(self, velfactor=np.array([0.05, 0.05])):
         """
@@ -473,28 +500,16 @@ class FeatureExtractor:
         global_positions = np.array(self.__global_positions)
 
         def __foot_contacts(fid):
-            feet_l_x = (global_positions[1:, fid, 0] - global_positions[:-1, fid, 0]) ** 2
-            feet_l_y = (global_positions[1:, fid, 1] - global_positions[:-1, fid, 1]) ** 2
-            feet_l_z = (global_positions[1:, fid, 2] - global_positions[:-1, fid, 2]) ** 2
-            feet_l = (((feet_l_x + feet_l_y + feet_l_z) < velfactor)).astype(np.float)
+            feet_x = (global_positions[1:, fid, 0] - global_positions[:-1, fid, 0]) ** 2
+            feet_y = (global_positions[1:, fid, 1] - global_positions[:-1, fid, 1]) ** 2
+            feet_z = (global_positions[1:, fid, 2] - global_positions[:-1, fid, 2]) ** 2
+            feet = ((feet_x + feet_y + feet_z) < velfactor).astype(np.float)
 
-            return feet_l
+            return feet
 
-        # TODO verify functioning of __foot_contacts and remove comments
-        # feet_l_x = (global_positions[1:, fid_l, 0] - global_positions[:-1, fid_l, 0]) ** 2
-        # feet_l_y = (global_positions[1:, fid_l, 1] - global_positions[:-1, fid_l, 1]) ** 2
-        # feet_l_z = (global_positions[1:, fid_l, 2] - global_positions[:-1, fid_l, 2]) ** 2
-        # feet_l = (((feet_l_x + feet_l_y + feet_l_z) < velfactor)).astype(np.float)
-        #
-        # feet_r_x = (global_positions[1:, fid_r, 0] - global_positions[:-1, fid_r, 0]) ** 2
-        # feet_r_y = (global_positions[1:, fid_r, 1] - global_positions[:-1, fid_r, 1]) ** 2
-        # feet_r_z = (global_positions[1:, fid_r, 2] - global_positions[:-1, fid_r, 2]) ** 2
-        # feet_r = (((feet_r_x + feet_r_y + feet_r_z) < velfactor)).astype(np.float)
-
-        feet_l = __foot_contacts(fid_l)
-        feet_r = __foot_contacts(fid_r)
-
-        return feet_l, feet_r
+        for fid in [fid_l, fid_r]:
+            feet_contacts = __foot_contacts(fid)
+            self.foot_contacts[fid[0]] = feet_contacts
 
     def get_trajectory(self, frame, start_from=-1):
         """
@@ -504,19 +519,20 @@ class FeatureExtractor:
         :param num_sampling_pts:
         :param start_from: (integer) -1 if whole window should be considered, value if specific start frame should be considered (e.g. i+1)
 
-        :return rootposs, rootdirs (np.array(12, 3))
+        :return root_pos, root_dirs (np.array(12, 3))
         """
         global_positions = np.array(self.__global_positions)
 
         forward = self.get_forward_directions()
-        head_directions = self.get_head_directions()
-
-        # TODO: Setup action labels (what you call phase) as part of trajectory
+        # head_directions = self.get_head_directions()
 
         ####### Already rotated ########
-        root_vel = np.squeeze(self.get_root_velocity())
-        left_wrist_vel = np.squeeze(self.get_wrist_velocity(type_hand='left'))
-        right_wrist_vel = np.squeeze(self.get_wrist_velocity(type_hand='right'))
+        # root_vel = np.squeeze(self.get_root_velocity())
+        # left_wrist_vel = np.squeeze(self.get_wrist_velocity(type_hand='left'))
+        # right_wrist_vel = np.squeeze(self.get_wrist_velocity(type_hand='right'))
+        root_vel = self.get_bone_velocity(0, project_to_ground=True)
+        left_wrist_vel = self.get_bone_velocity(self.hand_left)
+        right_wrist_vel = self.get_bone_velocity(self.hand_right)
         ####### Already rotated ########
 
         root_rotations = self.get_root_rotations()
@@ -527,7 +543,7 @@ class FeatureExtractor:
         step = self.traj_step
 
         # #Global vals
-        # rootposs = np.array(
+        # root_pos = np.array(
         #     global_positions[start_from:frame + self.window:step, 0])
         # left_wrist_pos = np.array(
         #     global_positions[start_from:frame + self.window:step, self.hand_left]
@@ -541,23 +557,24 @@ class FeatureExtractor:
         #     global_positions[start_from:frame + self.window:step, self.head]
         #     )
         #
-        # rootdirs = np.array(forward[start_from:frame + self.window:step])
+        # root_dirs = np.array(forward[start_from:frame + self.window:step])
         #
         # headdirs = np.array(head_directions[start_from:frame + self.window:step])
         #
-        # rootvels = np.array(root_vel[start_from:frame + self.window:step])
+        # root_vels = np.array(root_vel[start_from:frame + self.window:step])
         #
-        # left_wristvels = np.array(left_wrist_vel[start_from:frame + self.window:step])
-        # right_wristvels = np.array(right_wrist_vel[start_from:frame + self.window:step])
+        # left_wrist_vels = np.array(left_wrist_vel[start_from:frame + self.window:step])
+        # right_wrist_vels = np.array(right_wrist_vel[start_from:frame + self.window:step])
 
         # Local vals
         # TODO: verify if window should be same for punch and walk
 
-        # TODO Set y to zero in root
-        rootposs = np.array(
+        root_pos = np.array(
             global_positions[start_from:frame + self.window:step, 0] - global_positions[frame:frame + 1, 0])
 
-        # Set y to zero in root
+        # Setting y to zero in root so that traj of wrist and head are at correct height
+        global_positions[:, 0, 1] = 0
+
         left_wrist_pos = np.array(
             global_positions[start_from:frame + self.window:step, self.hand_left]
             - global_positions[frame:frame + 1, 0])
@@ -570,31 +587,36 @@ class FeatureExtractor:
             global_positions[start_from:frame + self.window:step, self.head]
             - global_positions[frame:frame + 1, 0])
 
-        rootdirs = np.array(forward[start_from:frame + self.window:step])
+        root_dirs = np.array(forward[start_from:frame + self.window:step])
 
-        headdirs = np.array(head_directions[start_from:frame + self.window:step])
+        # headdirs = np.array(head_directions[start_from:frame + self.window:step])
 
-        rootvels = np.array(root_vel[start_from:frame + self.window:step])
+        root_vels = np.array(root_vel[start_from:frame + self.window:step])
 
-        left_wristvels = np.array(left_wrist_vel[start_from:frame + self.window:step])
-        right_wristvels = np.array(right_wrist_vel[start_from:frame + self.window:step])
+        left_wrist_vels = np.array(left_wrist_vel[start_from:frame + self.window:step])
+        right_wrist_vels = np.array(right_wrist_vel[start_from:frame + self.window:step])
 
-        for j in range(len(rootposs)):
+        left_punch_labels = np.array(self.punch_labels[self.hand_left][start_from:frame + self.window:step])
+        right_punch_labels = np.array(self.punch_labels[self.hand_right][start_from:frame + self.window:step])
+
+        for j in range(len(root_pos)):
             # multiplying by root_rotation is rotating vectors to point to forward direction
             # by multiplying the inverse of the quaternion (taken care of internally ==> multiplication
             # handles only inverse rotation)
-            rootposs[j] = root_rotations[frame] * rootposs[j]
-            rootdirs[j] = root_rotations[frame] * rootdirs[j]
+            root_pos[j] = root_rotations[frame] * root_pos[j]
+            root_dirs[j] = root_rotations[frame] * root_dirs[j]
             left_wrist_pos[j] = root_rotations[frame] * left_wrist_pos[j]
             right_wrist_pos[j] = root_rotations[frame] * right_wrist_pos[j]
-            headdirs[j] = root_rotations[frame] * headdirs[j]
+            # headdirs[j] = root_rotations[frame] * headdirs[j]
 
         # # TODO explain why you need mid frame removal or not (Janis probably considers this to be important)
         # left_wrist_pos = left_wrist_pos - left_wrist_pos[len(left_wrist_pos) // 2]
         # right_wrist_pos = right_wrist_pos - right_wrist_pos[len(right_wrist_pos) // 2]
 
-        return_items = [rootposs, left_wrist_pos, right_wrist_pos, head_pos, rootdirs, headdirs, rootvels,
-                        left_wristvels, right_wristvels]
+        return_items = [root_pos, left_wrist_pos, right_wrist_pos, head_pos, root_dirs,
+                        # headdirs,
+                        root_vels, left_wrist_vels, right_wrist_vels,
+                        left_punch_labels, right_punch_labels]
 
         keys = list(map(retrieve_name, return_items))
         return_tr_items = {k: v for k, v in zip(keys, return_items)}

@@ -30,39 +30,51 @@ def prepare_indices_dict(**args):
     return indices_dict, col_names
 
 
-def prepare_input_data(i, handler, punch_phase, right_punch_target, left_punch_target, local_positions,
-                       local_velocities, indices_dict_set=True):
-    #TODO Add docstring after simplifying inputs i.e after moving all these input vars inside the handler
+def prepare_input_data(i, handler, indices_dict_set=True):
+    # TODO Add docstring after simplifying inputs i.e after moving all these input vars inside the handler
+
+    punch_labels = handler.punch_labels
+    punch_target = handler.punch_targets
+    local_positions = handler.get_root_local_joint_positions()
+    local_velocities = handler.get_root_local_joint_velocities()
+
     traj_info = handler.get_trajectory(i)
 
-    x_rootposs_tr = traj_info['rootposs']
-    x_rootposs_tr = np.delete(x_rootposs_tr, 1, 1).ravel()  # Trajectory Pos, 2 * 10d
+    x_root_pos_tr = traj_info['root_pos']
+    x_root_pos_tr = np.delete(x_root_pos_tr, 1, 1).ravel()  # Trajectory Pos, 2 * 10d
 
-    x_rootvels_tr = traj_info['rootvels']
-    x_rootvels_tr = np.delete(x_rootvels_tr, 1, 1).ravel()
+    x_root_vels_tr = traj_info['root_vels']
+    x_root_vels_tr = np.delete(x_root_vels_tr, 1, 1).ravel()
 
     x_right_wrist_pos_tr = traj_info['right_wrist_pos'].ravel()
     x_left_wrist_pos_tr = traj_info['left_wrist_pos'].ravel()
 
-    x_right_wrist_vels_tr = traj_info['right_wristvels'].ravel()
-    x_left_wrist_vels_tr = traj_info['left_wristvels'].ravel()
+    x_right_wrist_vels_tr = traj_info['right_wrist_vels'].ravel()
+    x_left_wrist_vels_tr = traj_info['left_wrist_vels'].ravel()
 
-    x_punch_phase = punch_phase[i].ravel()  # Right punch phase followed by left punch phase
+    x_right_punch_labels_tr = traj_info['right_punch_labels'].ravel()
+    x_left_punch_labels_tr = traj_info['left_punch_labels'].ravel()
 
-    x_right_punch_target = right_punch_target[i].ravel()
-    x_left_punch_target = left_punch_target[i].ravel()
+    x_right_punch_labels = punch_labels[handler.hand_right][i].ravel()
+    x_left_punch_labels = punch_labels[handler.hand_right][i].ravel()
+
+    x_right_punch_target = punch_target[handler.hand_right][i].ravel()
+    x_left_punch_target = punch_target[handler.hand_left][i].ravel()
 
     x_local_pos = local_positions[i - 1].ravel()
     x_local_vel = local_velocities[i - 1].ravel()
 
     x_curr_frame = [
-        x_rootposs_tr,  # local wrt r in mid frame
-        x_rootvels_tr,
+        x_root_pos_tr,  # local wrt r in mid frame
+        x_root_vels_tr,
         x_right_wrist_pos_tr,  # local wrt r in mid frame (TODO then wrt wrist in mid frame)
         x_left_wrist_pos_tr,  # local wrt r in mid frame (TODO then wrt wrist in mid frame)
         x_right_wrist_vels_tr,
         x_left_wrist_vels_tr,
-        x_punch_phase,
+        x_right_punch_labels_tr,
+        x_left_punch_labels_tr,
+        x_right_punch_labels,
+        x_left_punch_labels,
         x_right_punch_target,  # local wrt r in mid frame
         x_left_punch_target,  # local wrt r in mid frame
         x_local_pos,
@@ -81,29 +93,38 @@ def prepare_input_data(i, handler, punch_phase, right_punch_target, left_punch_t
         return x_curr_frame
 
 
-def prepare_output_data(i, handler, punch_phase, right_punch_target, left_punch_target, local_positions,
-                        local_velocities, root_velocity, punch_dphase, feet_l, feet_r, root_new_forward,
-                        indices_dict_set=True):
-    #TODO Add docstring after simplifying inputs i.e after moving all these input vars inside the handler
+def prepare_output_data(i, handler, indices_dict_set=True):
+    # TODO Add docstring after simplifying inputs i.e after moving all these input vars inside the handler
+
+    punch_labels = handler.punch_labels
+    punch_target = handler.punch_targets
+    local_positions = handler.get_root_local_joint_positions()
+    local_velocities = handler.get_root_local_joint_velocities()
+    root_new_forward = handler.new_fwd_dirs
+    root_velocity = handler.get_root_velocity()
 
     traj_info_next = handler.get_trajectory(i + 1, i + 1)
 
-    y_rootposs_tr = traj_info_next['rootposs']
-    y_rootposs_tr = np.delete(y_rootposs_tr, 1, 1).ravel()
+    y_root_pos_tr = traj_info_next['root_pos']
+    y_root_pos_tr = np.delete(y_root_pos_tr, 1, 1).ravel()
 
-    y_rootvels_tr = traj_info_next['rootvels']
-    y_rootvels_tr = np.delete(y_rootvels_tr, 1, 1).ravel()
+    y_root_vels_tr = traj_info_next['root_vels']
+    y_root_vels_tr = np.delete(y_root_vels_tr, 1, 1).ravel()
 
     y_right_wrist_pos_tr = traj_info_next['right_wrist_pos'].ravel()
     y_left_wrist_pos_tr = traj_info_next['left_wrist_pos'].ravel()
 
-    y_right_wrist_vels_tr = traj_info_next['right_wristvels'].ravel()
-    y_left_wrist_vels_tr = traj_info_next['left_wristvels'].ravel()
+    y_right_wrist_vels_tr = traj_info_next['right_wrist_vels'].ravel()
+    y_left_wrist_vels_tr = traj_info_next['left_wrist_vels'].ravel()
 
-    y_punch_phase = punch_phase[i + 1].ravel()  # Right punch phase followed by left punch phase
+    y_right_punch_labels_tr = traj_info_next['right_punch_labels'].ravel()
+    y_left_punch_labels_tr = traj_info_next['left_punch_labels'].ravel()
 
-    y_right_punch_target = right_punch_target[i + 1].ravel()
-    y_left_punch_target = left_punch_target[i + 1].ravel()
+    y_right_punch_labels = punch_labels[handler.hand_right][i + 1].ravel()
+    y_left_punch_labels = punch_labels[handler.hand_left][i + 1].ravel()
+
+    y_right_punch_target = punch_target[handler.hand_right][i + 1].ravel()
+    y_left_punch_target = punch_target[handler.hand_right][i + 1].ravel()
 
     y_local_pos = local_positions[i].ravel()
     y_local_vel = local_velocities[i].ravel()
@@ -112,22 +133,29 @@ def prepare_output_data(i, handler, punch_phase, right_punch_target, left_punch_
     y_root_new_forward = root_new_forward[i].ravel()
 
     # Taking i because length of phase is l and length of dphase is l-1
-    y_punch_dphase = punch_dphase[i].ravel()
+    # y_punch_dphase = punch_dphase[i].ravel()
 
-    y_foot_contacts = np.concatenate([feet_l[i], feet_r[i]], axis=-1)
+    # TODO You have changed foot contacts from l, r to r, l. Ensure that controller can process r, l
+    y_right_foot_contacts = handler.foot_contacts[handler.foot_right[0]][i]
+    y_left_foot_contacts = handler.foot_contacts[handler.foot_left[0]][i]
+    # y_foot_contacts = np.concatenate([feet_r[i], feet_l[i]], axis=-1)
 
     y_curr_frame = [
         y_root_velocity,
         y_root_new_forward,
         # y_punch_dphase,
-        y_punch_phase,
-        y_foot_contacts,
-        y_rootposs_tr,
-        y_rootvels_tr,
+        y_right_punch_labels,
+        y_left_punch_labels,
+        y_right_foot_contacts,
+        y_left_foot_contacts,
+        y_root_pos_tr,
+        y_root_vels_tr,
         y_right_wrist_pos_tr,
         y_left_wrist_pos_tr,
         y_right_wrist_vels_tr,
         y_left_wrist_vels_tr,
+        y_right_punch_labels_tr,
+        y_left_punch_labels_tr,
         y_local_pos,
         y_local_vel
     ]
@@ -165,44 +193,29 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div, de
         handler.load_motion(frame_rate_divisor=frame_rate_div, frame_rate_offset=div)
         # (n_frames, 2) => punch phase right, punch phase left
 
-        # TODO Save all handler generated vars before for loop inside the handler
-        punch_phase, punch_dphase = handler.load_punch_phase(punch_p_csv_path, frame_rate_divisor=frame_rate_div,
-                                                             frame_rate_offset=div)
+        handler.load_punch_action_labels(punch_p_csv_path, frame_rate_divisor=frame_rate_div,
+                                         frame_rate_offset=div)
 
         # TODO Only implemented for action label type tertiary currently. Must do binary labels and phase.
-        right_punch_target = handler.get_punch_targets(punch_phase[:, 0], hand='right', space="local")
-        left_punch_target = handler.get_punch_targets(punch_phase[:, 1], hand='left', space="local")
+        handler.calculate_punch_targets(space="local")
 
-        local_positions = handler.get_root_local_joint_positions()
-        local_velocities = handler.get_root_local_joint_velocities()
+        handler.calculate_new_forward_dirs()
 
-        root_velocity = handler.get_root_velocity()
-        # root_rvelocity = handler.get_rotational_velocity()
-        root_new_forward = handler.get_new_forward_dirs()
-
-        feet_l, feet_r = handler.get_foot_concats()
+        handler.get_foot_concats()
 
         indices_dict_set = False
-        x_indices, x_col_names = prepare_input_data(handler.window, handler, punch_phase, right_punch_target, left_punch_target,
-                                                    local_positions, local_velocities, indices_dict_set)
-        y_indices, y_col_names = prepare_output_data(handler.window, handler, punch_phase, right_punch_target, left_punch_target,
-                                                     local_positions,
-                                                     local_velocities, root_velocity, punch_dphase, feet_l, feet_r,
-                                                     root_new_forward,
-                                                     indices_dict_set)
+        x_indices, x_col_names = prepare_input_data(handler.window, handler, indices_dict_set)
+        y_indices, y_col_names = prepare_output_data(handler.window, handler, indices_dict_set)
+
         for i in range(handler.window, handler.n_frames - handler.window - 1, 1):
             if i % 50 == 0:
                 print('Frames processed: ', i)
                 if develop:
                     break
-            x_curr_frame = prepare_input_data(i, handler, punch_phase, right_punch_target, left_punch_target,
-                                              local_positions, local_velocities)
+            x_curr_frame = prepare_input_data(i, handler)
             x.append(np.hstack(x_curr_frame))
 
-            y_curr_frame = prepare_output_data(i, handler, punch_phase, right_punch_target, left_punch_target,
-                                               local_positions,
-                                               local_velocities, root_velocity, punch_dphase, feet_l, feet_r,
-                                               root_new_forward)
+            y_curr_frame = prepare_output_data(i, handler)
             y.append(np.hstack(y_curr_frame))
 
     dataset_config = {

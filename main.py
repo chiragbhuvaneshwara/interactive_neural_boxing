@@ -27,11 +27,9 @@ def setup_output_dir(output_base_path, output_directory):
 
 ####################### CONTROL PARAMS ###################################
 DEVELOP = True
-INPUT_BASE_PATH = '/tf/boxing-blender-data-gen'
-OUTPUT_BASE_PATH = '/tf/boxing-mosi-dev-vinn/data'
+INPUT_BASE_PATH = '../VCS-boxing-predictor'
+OUTPUT_BASE_PATH = '../VCS-MOSI-DEV-VINN/mosi_dev_vinn/data/'
 if DEVELOP:
-    INPUT_BASE_PATH = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor'
-    OUTPUT_BASE_PATH = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-MOSI-DEV-VINN/mosi_dev_vinn/data/'
     OUTPUT_BASE_PATH += '/dev'
 PUNCH_PHASE_PATH = INPUT_BASE_PATH + '/Blender_Code_Snippets/data_annotation_res/new_data/tertiary/'
 BVH_PATH = INPUT_BASE_PATH + "/Data/boxing_chirag/hq/processed/"
