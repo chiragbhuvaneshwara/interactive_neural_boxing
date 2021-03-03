@@ -3,9 +3,9 @@ import numpy as np
 import math, time
 import pandas as pd
 from src.nn.keras_mods.mann_keras import MANN
-from ..controller import Controller
-from .trajectory_2 import Trajectory
-from .character_box import Character
+from ..abstract_controller import Controller
+from .trajectory import Trajectory
+from .character import Character
 from ... import utils
 
 DEBUG = False
@@ -253,7 +253,7 @@ class BoxingController(Controller):
         """
         return Controller(self.network, self.config_store)
 
-    def getPose(self):
+    def get_pose(self):
         """
         This function forwards the posture for the next frame. Possibly just a forward from the character class
 
@@ -262,7 +262,7 @@ class BoxingController(Controller):
 
         """
 
-        # root_pos, root_rot = self.traj.getWorldPosRot()
+        # root_pos, root_rot = self.traj.get_world_pos_rot()
         root_pos, root_rot = np.array(self.char.root_position, dtype=np.float64), np.array(self.char.root_rotation,
                                                                                            dtype=np.float64)
         pos, vel = self.char.getLocalJointPosVel(root_pos, root_rot)
@@ -291,12 +291,11 @@ class BoxingController(Controller):
         # print(self.traj.traj_left_wrist_positions[::self.traj.traj_step])
         return grt, grt
 
-    def getWorldPosRot(self):
+    def get_world_pos_rot(self):
         return np.array(self.char.root_position), float(self.char.root_rotation)
 
     def __initialize(self):
         # TODO Get init local positions from a frame in the mocap data that you think is in neutral position
-
 
         # self.output.data = np.array(self.network.norm["Ymean"])  # * self.network.norm["Ystd"] + self.network.norm["Ymean"]
         # self.input.data = np.array(self.network.norm["Xmean"])  # * self.network.norm["Xstd"] + self.network.norm["Xmean"]
@@ -365,9 +364,6 @@ class MANNInput(object):
         self.joint_indices_dict = joint_indices
         self.col_names_ids = x_col_names_ids
 
-    def __set_data__(self, data_part, id_start, id_end):
-        self.data[id_start: id_end] = data_part
-
     def __set_data__(self, key_name, data_sub_part):
         ids = self.col_names_ids[key_name]
         key_data_start = ids[0]
@@ -376,57 +372,31 @@ class MANNInput(object):
 
     def set_rootpos_traj(self, rootpos_traj):
         self.__set_data__("x_rootposs_tr", rootpos_traj)
-        # rootpos_traj_id = self.col_names_ids["x_rootposs_tr"]
-        # self.__set_data__(rootpos_traj, rootpos_traj_id[0], rootpos_traj_id[1])
 
     def set_rootvel_traj(self, rootvel_traj):
         self.__set_data__("x_rootvels_tr", rootvel_traj)
-        # rootvel_traj_id = self.col_names_ids["x_rootvels_tr"]
-        # self.__set_data__(rootvel_traj, rootvel_traj_id[0], rootvel_traj_id[1])
 
     def set_wrist_pos_tr(self, right_wrist_pos_traj, left_wrist_pos_traj):
         self.__set_data__("x_right_wrist_pos_tr", right_wrist_pos_traj)
         self.__set_data__("x_left_wrist_pos_tr", left_wrist_pos_traj)
 
-        # right_wrist_pos_ids = self.col_names_ids["x_right_wrist_pos_tr"]
-        # left_wrist_pos_ids = self.col_names_ids["x_left_wrist_pos_tr"]
-        # self.__set_data__(wrist_pos_traj, right_wrist_pos_ids[0], left_wrist_pos_ids[1])
-
     def set_wrist_vels_tr(self, right_wrist_vels_traj, left_wrist_vels_traj):
         self.__set_data__("x_right_wrist_vels_tr", right_wrist_vels_traj)
         self.__set_data__("x_left_wrist_vels_tr", left_wrist_vels_traj)
-
-        # right_wrist_vels_ids = self.col_names_ids["x_right_wrist_vels_tr"]
-        # left_wrist_vels_ids = self.col_names_ids["x_left_wrist_vels_tr"]
-        # self.__set_data__(wrist_vels_traj, right_wrist_vels_ids[0], left_wrist_vels_ids[1])
 
     def set_punch_phase(self, right_phase, left_phase):
         curr_phase = np.array([right_phase, left_phase], dtype=np.float64)
         self.__set_data__("x_punch_phase", curr_phase)
 
-        # punch_phase_id = self.col_names_ids["x_punch_phase"]
-        # self.__set_data__(curr_phase, punch_phase_id[0], punch_phase_id[1])
-
     def set_punch_target(self, right_target, left_target):
         self.__set_data__("x_right_punch_target", right_target)
         self.__set_data__("x_left_punch_target", left_target)
 
-        # punch_right_target_id = self.col_names_ids["x_right_punch_target"]
-        # punch_left_target_id = self.col_names_ids["x_left_punch_target"]
-        # punch_both_target_id = [punch_right_target_id[0], punch_left_target_id[1]]
-        # self.__set_data__(targets, punch_both_target_id[0], punch_both_target_id[1])
-
     def set_local_pos(self, pos):
         self.__set_data__("x_local_pos", pos)
 
-        # local_pos_id = self.col_names_ids["x_local_pos"]
-        # self.__set_data__(pos, local_pos_id[0], local_pos_id[1])
-
     def set_local_vel(self, vel):
         self.__set_data__("x_local_vel", vel)
-
-        # local_vel_id = self.col_names_ids["x_local_vel"]
-        # self.__set_data__(vel, local_vel_id[0], local_vel_id[1])
 
 
 class MANNOutput(object):
@@ -514,5 +484,3 @@ class MANNOutput(object):
         pred_dir = self.get_root_new_forward()
 
         return rp_tr, rv_tr, rwp_tr, lwp_tr, rwv_tr, lwv_tr, pred_dir
-
-    # def get_local_wrist_pos_curr_fr(self, left_wr_id, right_wrist_id):

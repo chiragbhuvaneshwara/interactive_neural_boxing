@@ -1,7 +1,7 @@
 import copy
 
 from flask import Flask, request
-from src.controlers.boxingControllers.controller_box import BoxingController
+from src.controlers.boxing.controller import BoxingController
 import json, os
 from src.nn.keras_mods.mann_keras import MANN as MANNTF
 from flask import jsonify
@@ -15,7 +15,7 @@ window = 15
 # epochs = 60
 epochs = 100
 server_to_main_dir = '../../..'
-controller_in_out_dir = 'src/controlers/boxingControllers/controller_in_out'
+controller_in_out_dir = 'src/controlers/boxing/controller_in_out'
 frd_win_epochs = 'boxing_fr_' + str(frd) + '_' + str(window) + '_' + str(epochs)
 trained_base_path = 'trained_models/mann_tf2/' + frd_win_epochs
 target_file = os.path.join(server_to_main_dir, trained_base_path, 'model_weights_std_in_out.zip')
@@ -40,14 +40,14 @@ print(zp.bone_map)
 
 def char2TPosture():
     posture = copy.deepcopy(zp)
-    pose = bc.getPose()
+    pose = bc.get_pose()
     tr = bc.getTrajectroy()
     # arm_tr = bc.getTrajectroy()
     # arm_tr = bc.getGlobalRoot()
     for i in range(len(pose)):
         posture.bones[i].position = np_2TVector3(pose[i])
 
-    root_pos, root_rot = bc.getWorldPosRot()
+    root_pos, root_rot = bc.get_world_pos_rot()
 
     # print('r',arm_tr[0])
     # print('l',arm_tr[1])

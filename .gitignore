@@ -132,6 +132,8 @@ dmypy.json
 .pyre/
 /mann_config.json
 
-src/controlers/boxingControllers/controller_in_out/*
+src/controlers/boxing/controller_in_out/*
 
 /tmp
+
+/models

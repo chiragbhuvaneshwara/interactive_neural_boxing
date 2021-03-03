@@ -1,7 +1,7 @@
-from src.controlers.boxingControllers.controller_box import BoxingController
+from src.controlers.boxing.controller import BoxingController
 from src.nn.fc_models.mann_tf import *
 from src.nn.fc_models.mann_tf import MANN as MANNTF
-from src.controlers.character import *
+# from src.controlers.character import *
 from simple_plotter import simple_matplotlib_plotter
 from pathlib import Path, PureWindowsPath
 import numpy as np

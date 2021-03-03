@@ -8,6 +8,8 @@ from sklearn import preprocessing
 
 from zipfile import ZipFile
 
+# TODO Verify and understand if MANN network is setup correctly
+# TODO Verify if required ==> Doesn't this mean that the weights are always initialized the same way?
 rng = np.random.RandomState(23456)
 
 
@@ -217,26 +219,28 @@ class MANN(tf.keras.Model):
     @staticmethod
     def prepare_mann_data(dataset, config_store):
         data = np.load(dataset)
-        X = data["Xun"]
-        Y = data["Yun"]
+        x_train = data["x"]
+        y_train = data["y"]
 
-        x_col_indices = config_store['col_indices'][0]
-        y_col_indices = config_store['col_indices'][1]
+        x_col_demarcation_ids = config_store['col_demarcation_ids'][0]
+        y_col_demarcation_ids = config_store['col_demarcation_ids'][1]
 
-        x_pos_indices = {k: v for k, v in x_col_indices.items() if 'pos' in k or "punch_target" in k}
-        y_pos_indices = {k: v for k, v in y_col_indices.items() if 'pos' in k or "punch_target" in k}
-        for k, v in x_pos_indices.items():
-            # print(k, X[:, v[0]:v[1]].mean())
-            X[:, v[0]: v[1]] = X[:, v[0]: v[1]] #* 0.01
-            # print(k, X[:, v[0]:v[1]].mean())
+        # x_pos_indices = {k: v for k, v in x_col_demarcation_ids.items() if 'pos' in k or "punch_target" in k}
+        # y_pos_indices = {k: v for k, v in y_col_demarcation_ids.items() if 'pos' in k or "punch_target" in k}
+        # for k, v in x_pos_indices.items():
+        #     # print(k, x_train[:, v[0]:v[1]].mean())
+        #     x_train[:, v[0]: v[1]] = x_train[:, v[0]: v[1]] #* 0.01
+        #     # print(k, x_train[:, v[0]:v[1]].mean())
+        #
+        # for k, v in y_pos_indices.items():
+        #     y_train[:, v[0]:v[1]] = y_train[:, v[0]:v[1]] #* 0.01
 
-        for k, v in y_pos_indices.items():
-            Y[:, v[0]:v[1]] = Y[:, v[0]:v[1]] #* 0.01
+        x_mean = np.mean(x_train, axis=0)
+        y_mean = np.mean(y_train, axis=0)
+        x_std = np.std(x_train, axis=0)
+        y_std = np.std(y_train, axis=0)
 
-        Xmean = np.mean(X, axis=0)
-        Ymean = np.mean(Y, axis=0)
-        Xstd = np.std(X, axis=0)
-        Ystd = np.std(Y, axis=0)
+        # importance_trajectory = 1.0
 
         # joint_indices = config_store['joint_indices']
         # joints_ids_that_dont_matter = [val for key, val in joint_indices.items() if 'RightHand' in key][1:] + \
@@ -246,84 +250,44 @@ class MANN(tf.keras.Model):
         # joints_ids_that_matter = [val for key, val in joint_indices.items() if key in joints_keys_that_matter]
         # joint_weights = np.array([1 if val in joints_ids_that_matter else 1e-10 for val in joint_indices.values()])
         # joint_weights = np.array([1] * len(joint_indices.values()))
+        # x_tr_col_indices = {k: v for k, v in x_col_demarcation_ids.items() if '_tr' in k}
 
-        x_tr_col_indices = {k: v for k, v in x_col_indices.items() if '_tr' in k}
-        y_tr_col_indices = {k: v for k, v in y_col_indices.items() if '_tr' in k}
+        for k, v in x_col_demarcation_ids.items():
+            x_std[v[0]: v[1]] = x_std[v[0]: v[1]].mean()
+            # if "_tr" in k:
+            #     x_std[v[0]: v[1]] *= importance_trajectory
+            # if "_local" in k:
+            #     x_std[v[0]: v[1]] *= (joint_weights.repeat(3))
 
-        for k, v in x_tr_col_indices.items():
-            Xstd[v[0]: v[1]] = Xstd[v[0]: v[1]].mean()
+        for k, v in y_col_demarcation_ids.items():
+            y_std[v[0]: v[1]] = y_std[v[0]: v[1]].mean()
+            # if "_tr" in k:
+            #     y_std[v[0]: v[1]] *= importance_trajectory
+            # if "_local" in k:
+            #     y_std[v[0]: v[1]] *= (joint_weights.repeat(3))
 
-        x_local_col_indices = {k: v for k, v in x_col_indices.items() if '_local' in k}
-        y_local_col_indices = {k: v for k, v in y_col_indices.items() if '_local' in k}
+        x_std[x_std == 0] = 1.0
+        y_std[y_std == 0] = 1.0
 
-        for k, v in x_local_col_indices.items():
-            Xstd[v[0]: v[1]] = Xstd[v[0]: v[1]].mean()  # * (joint_weights.repeat(3))  # * 0.1)
-
-        importance_trajectory = 1.0
-
-        y_col_other_indices = {k: v for k, v in y_col_indices.items() if ('_tr' not in k) or ('_local' not in k)}
-
-        r_vel_indices = y_col_other_indices['y_root_velocity']
-        Ystd[r_vel_indices[0]:r_vel_indices[1]] = Ystd[
-                                                  r_vel_indices[0]:r_vel_indices[1]].mean()  # / importance_trajectory
-
-        r_new_forward_indices = y_col_other_indices['y_root_new_forward']
-        Ystd[r_new_forward_indices[0]:r_new_forward_indices[1]] = Ystd[r_new_forward_indices[0]:r_new_forward_indices[
-            1]].mean()  # / importance_trajectory
-
-        # p_dphase_indices = y_col_other_indices['y_punch_dphase']
-        p_dphase_indices = y_col_other_indices['y_punch_phase']
-        Ystd[p_dphase_indices[0]:p_dphase_indices[0] + 1] = \
-            Ystd[p_dphase_indices[0]:p_dphase_indices[0] + 1].mean()  # / importance_trajectory
-        Ystd[p_dphase_indices[-1] - 1:p_dphase_indices[-1]] = \
-            Ystd[p_dphase_indices[0]:p_dphase_indices[0] + 1].mean()  # / importance_trajectory
-
-        if config_store["use_footcontacts"]:
-            print("using Footcontacts")
-
-            foot_indices = y_col_other_indices['y_foot_contacts']
-            Ystd[foot_indices[0]:foot_indices[1]] = Ystd[foot_indices[0]:foot_indices[1]].mean()  # foot contacts
-
-        for k, v in y_tr_col_indices.items():
-            Ystd[v[0]: v[1]] = Ystd[v[0]: v[1]].mean()
-
-        for k, v in y_local_col_indices.items():
-            Ystd[v[0]: v[1]] = Ystd[v[0]: v[1]].mean()  # * (joint_weights.repeat(3))  # * 0.1)
-
-        Xstd[Xstd == 0] = 1.0
-        Ystd[Ystd == 0] = 1.0
-
-        norm = {"Xmean": Xmean.tolist(),
-                "Ymean": Ymean.tolist(),
-                "Xstd": Xstd.tolist(),
-                "Ystd": Ystd.tolist()}
-
-        # eps = 1e-100
-        # X = (X - Xmean) / (Xstd + eps)
-        # Y = (Y - Ymean) / (Ystd + eps)
+        norm = {"x_mean": x_mean.tolist(),
+                "y_mean": y_mean.tolist(),
+                "x_std": x_std.tolist(),
+                "y_std": y_std.tolist()}
 
         # TODO Setup comparator to warn if input and inverse of output are the same or not
 
-        X = (X - Xmean) / Xstd
-        Y = (Y - Ymean) / Ystd
-        # print('----------------------')
-        # print(X[:, 160:162])
-        # print('----------------------')
-        # print(Y[:, 4:6])
-        # print(X.mean())
-        # print(Y.mean())
+        x_train_norm = (x_train - x_mean) / x_std
+        y_train_norm = (y_train - y_mean) / y_std
 
-        raise_nan_exception(X)
-        raise_nan_exception(Y)
+        raise_nan_exception(x_train_norm)
+        raise_nan_exception(y_train_norm)
 
-        return X, Y, norm
+        return x_train_norm, y_train_norm, norm
 
     @staticmethod
-    def train_mann(normalized_X, normalized_Y, norm, gating_indices, model_path, epochs):
+    def train_mann(normalized_x, normalized_y, norm, gating_indices, model_path, epochs):
         """
-
         This constant function loads a *.npz numpy stored dataset, builds the network and trains it.
-
         The data is assumed to be stored as
             * "Xun": network input,
             * "Yun": network output and
@@ -335,12 +299,12 @@ class MANN(tf.keras.Model):
             epochs {int} -- Training duration in epochs
         """
         # TODO check tensorboard to see if MANN is working correctly
-        input_dim = normalized_X.shape[1]
-        output_dim = normalized_Y.shape[1]
+        input_dim = normalized_x.shape[1]
+        output_dim = normalized_y.shape[1]
 
         print('################################')
-        print(normalized_X.shape)
-        print(normalized_Y.shape)
+        print(normalized_x.shape)
+        print(normalized_y.shape)
 
         mann_config = {"n_controls": 4, "input_dim": input_dim, "output_dim": output_dim, "dropout_rate": 0.6,
                        # TODO : maybe reduce h_dims
@@ -352,15 +316,15 @@ class MANN(tf.keras.Model):
 
         train_config = {
             "optimizer": "Adam",
-            "learning_rate": 0.00001,
-            # "learning_rate": 3e-4,
+            # "learning_rate": 0.00001,
+            "learning_rate": 3e-4,
             "epochs": epochs,
-            "batchsize": 32,
-            # "batchsize": 64,
+            # "batchsize": 32,
+            "batchsize": 64,
             "loss": "mse"
         }
 
-        TrainNetwork(mann, normalized_X, normalized_Y, train_config)
+        TrainNetwork(mann, normalized_x, normalized_y, train_config)
         mann.export_discrete_weights(model_path)
         return mann_config
 

@@ -1,6 +1,6 @@
 import json
 import os
-from src.controlers.boxingControllers.controller_box import BoxingController
+from src.controlers.boxing.controller import BoxingController
 from src.nn.keras_mods.mann_keras import MANN as MANNTF
 from simple_plotter import simple_matplotlib_plotter
 import numpy as np
@@ -12,7 +12,7 @@ frd = 1
 # window = 25
 window = 15
 epochs = 100
-controller_in_out_dir = 'src/controlers/boxingControllers/controller_in_out'
+controller_in_out_dir = 'src/controlers/boxing/controller_in_out'
 frd_win_epochs = 'boxing_fr_' + str(frd) + '_' + str(window) + '_' + str(epochs)
 trained_base_path = 'trained_models/mann_tf2/' + frd_win_epochs
 target_file = os.path.join(trained_base_path, 'model_weights_std_in_out.zip')
