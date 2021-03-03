@@ -4,11 +4,11 @@ import numpy as np
 
 
 # TODO Come up with better name below
-def prepare_indices_dict(**args):
+def prepare_col_demarcation_ids(**args):
     """
     :param args: all the variables that can be possibly used as part of X or Y
     :return:
-        indices_dict: dict of joint names with start_idx and end_idx
+        col_demarcation_ids: dict of joint names with start_idx and end_idx
         col_names: list of col names with for example position marked as position_0, position_1, position_2 for x,y,z co-ordinates
     """
     keys = args.keys()
@@ -16,10 +16,10 @@ def prepare_indices_dict(**args):
 
     start = 0
     end = 0
-    indices_dict = {}
+    col_demarcation_ids = {}
     for k, v in zip(keys, args.values()):
         end = len(v) + end
-        indices_dict[k] = [start, end]
+        col_demarcation_ids[k] = [start, end]
         col_names_subset = [k] * (end - start)
         col_names_subset = [var + '_' + str(i) for i, var in enumerate(col_names_subset)]
         col_names.extend(col_names_subset)
@@ -27,10 +27,10 @@ def prepare_indices_dict(**args):
 
     print('col names len: ', len(col_names))
 
-    return indices_dict, col_names
+    return col_demarcation_ids, col_names
 
 
-def prepare_input_data(i, handler, indices_dict_set=True):
+def prepare_input_data(i, handler, col_demarcation_done=True):
     # TODO Add docstring after simplifying inputs i.e after moving all these input vars inside the handler
 
     punch_labels = handler.punch_labels
@@ -81,19 +81,19 @@ def prepare_input_data(i, handler, indices_dict_set=True):
         x_local_vel
     ]
 
-    if not indices_dict_set:
+    if not col_demarcation_done:
         keys = list(map(retrieve_name, x_curr_frame))
         kwargs = {k: v for k, v in zip(keys, x_curr_frame)}
-        x_idxs, x_col_names = prepare_indices_dict(**kwargs)
+        x_demarcation_ids, x_col_names = prepare_col_demarcation_ids(**kwargs)
         print('curr frame len ', len(np.hstack(x_curr_frame)))
-        print(x_idxs)
+        print(x_demarcation_ids)
         print('\n')
-        return x_idxs, x_col_names
+        return x_demarcation_ids, x_col_names
     else:
         return x_curr_frame
 
 
-def prepare_output_data(i, handler, indices_dict_set=True):
+def prepare_output_data(i, handler, col_demarcation_done=True):
     # TODO Add docstring after simplifying inputs i.e after moving all these input vars inside the handler
 
     punch_labels = handler.punch_labels
@@ -160,14 +160,14 @@ def prepare_output_data(i, handler, indices_dict_set=True):
         y_local_vel
     ]
 
-    if not indices_dict_set:
+    if not col_demarcation_done:
         keys = list(map(retrieve_name, y_curr_frame))
         kwargs = {k: v for k, v in zip(keys, y_curr_frame)}
-        y_idxs, y_col_names = prepare_indices_dict(**kwargs)
+        y_demarcation_ids, y_col_names = prepare_col_demarcation_ids(**kwargs)
         print('curr frame len ', len(np.hstack(y_curr_frame)))
-        print(y_idxs)
+        print(y_demarcation_ids)
         print('\n')
-        return y_idxs, y_col_names
+        return y_demarcation_ids, y_col_names
     else:
         return y_curr_frame
 
@@ -203,9 +203,8 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div, de
 
         handler.get_foot_concats()
 
-        indices_dict_set = False
-        x_indices, x_col_names = prepare_input_data(handler.window, handler, indices_dict_set)
-        y_indices, y_col_names = prepare_output_data(handler.window, handler, indices_dict_set)
+        x_col_demarcation_ids, x_col_names = prepare_input_data(handler.window, handler, col_demarcation_done=False)
+        y_col_demarcation_ids, y_col_names = prepare_output_data(handler.window, handler, col_demarcation_done=False)
 
         for i in range(handler.window, handler.n_frames - handler.window - 1, 1):
             if i % 50 == 0:
@@ -219,11 +218,11 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div, de
             y.append(np.hstack(y_curr_frame))
 
     dataset_config = {
-        "endJoints": 0,
-        "numJoints": len(handler.joint_indices_dict.keys()),
+        "end_joints": 0,
+        "num_joints": len(handler.joint_id_map.keys()),
         "use_rotations": False,
         "n_gaits": 1,
-        "use_footcontacts": True,
+        "use_foot_contacts": True,
         "frd": frame_rate_div,
         "window": handler.window,
         "num_traj_samples": handler.num_traj_sampling_pts,
@@ -231,8 +230,8 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div, de
         # "foot_left": handler.foot_left,
         # "foot_right": handler.foot_right,
         "zero_posture": handler.reference_skeleton,
-        "joint_indices": handler.joint_indices_dict,
-        "col_indices": [x_indices, y_indices],
+        "bone_map": handler.joint_id_map,
+        "col_demarcation_ids": [x_col_demarcation_ids, y_col_demarcation_ids],
         "col_names": [x_col_names, y_col_names]
     }
 

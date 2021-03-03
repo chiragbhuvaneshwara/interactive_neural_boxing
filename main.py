@@ -40,22 +40,22 @@ FORWARD_DIR = np.array([0.0, 0.0, 1.0])
 TR_WINDOW = math.ceil(15 / FRAME_RATE_DIV)
 ####################### CONTROL PARAMS ###################################
 
-x_train, y_train, Dataset_Config = process_folder(BVH_PATH, PUNCH_PHASE_PATH, FRAME_RATE_DIV, FORWARD_DIR, TR_WINDOW,
+x_train, y_train, dataset_config = process_folder(BVH_PATH, PUNCH_PHASE_PATH, FRAME_RATE_DIV, FORWARD_DIR, TR_WINDOW,
                                                   DEVELOP)
 frd_win = 'boxing_fr_' + str(FRAME_RATE_DIV) + '_' + str(TR_WINDOW)
 setup_output_dir(OUTPUT_BASE_PATH, frd_win)
 out_dir = os.path.join(OUTPUT_BASE_PATH, frd_win)
 
-np.savez_compressed(os.path.join(out_dir, "train"), Xun=x_train, Yun=y_train)
+np.savez_compressed(os.path.join(out_dir, "train"), x=x_train, y=y_train)
 with open(os.path.join(out_dir, "config.json"), "w") as f:
-    json.dump(Dataset_Config, f)
+    json.dump(dataset_config, f)
 
 if DEVELOP:
     print('X shape is {0} and X mean is {1}'.format(x_train.shape, x_train.mean()))
     print('Y shape is {0} and Y mean is {1}'.format(y_train.shape, y_train.mean()))
-    X_train_df = pd.DataFrame(data=x_train, columns=Dataset_Config['col_names'][0])
+    X_train_df = pd.DataFrame(data=x_train, columns=dataset_config['col_names'][0])
     X_train_df.to_csv(os.path.join(out_dir, "x_train_debug.csv"))
-    Y_train_df = pd.DataFrame(data=y_train, columns=Dataset_Config['col_names'][1])
+    Y_train_df = pd.DataFrame(data=y_train, columns=dataset_config['col_names'][1])
     Y_train_df.to_csv(os.path.join(out_dir, "y_train_debug.csv"))
 
 print("done")

@@ -89,7 +89,7 @@ class FeatureExtractor:
 
         self.reference_skeleton = []
 
-        self.joint_indices_dict = {}
+        self.joint_id_map = {}
         self.num_traj_sampling_pts = num_traj_sampling_pts
         self.traj_step = (self.window * 2 // self.num_traj_sampling_pts)
 
@@ -184,7 +184,7 @@ class FeatureExtractor:
         joints_from_bvh = [joint for joint in joints_from_bvh if len(joint.split('_')) == 1]
         # print('The joints in the bvh in order are:')
         # [print(i, joint) for i, joint in enumerate(joints_from_bvh)]
-        self.joint_indices_dict = {joint: i for i, joint in enumerate(joints_from_bvh)}
+        self.joint_id_map = {joint: i for i, joint in enumerate(joints_from_bvh)}
 
         skeleton = SkeletonBuilder().load_from_bvh(bvhreader)
         zero_rotations = np.zeros(bvhreader.frames.shape[1])
@@ -270,7 +270,7 @@ class FeatureExtractor:
             :return forward_dirs (np.array(n_frames, 3))
         """
         if len(self.__dir_head) == 0:
-            head_j = self.joint_indices_dict['Head']
+            head_j = self.joint_id_map['Head']
             global_positions = np.array(self.__global_positions)
 
             across = (global_positions[:, head_j])
