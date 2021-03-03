@@ -329,40 +329,38 @@ class MANN(tf.keras.Model):
         return mann_config
 
     @staticmethod
-    def forward_pass(mann, X, norm):
+    def forward_pass(mann, x, norm, col_demarcation_ids):
 
-        Xmean = np.array(norm['Xmean'], dtype=np.float64)
-        Xstd = np.array(norm['Xstd'], dtype=np.float64)
-        Ymean = np.array(norm['Ymean'], dtype=np.float64)
-        Ystd = np.array(norm['Ystd'], dtype=np.float64)
-        # eps = 1e-100
-        # input = (X - Xmean) / (Xstd + eps)
-        input = (X - Xmean) / Xstd
-        print('---------------------------------------')
-        # print(input)
-        p_phase = input.ravel()[160:162]
-        print('rph:', p_phase[0], 'lph:', p_phase[1])
+        x_mean = np.array(norm['x_mean'], dtype=np.float64)
+        x_std = np.array(norm['x_std'], dtype=np.float64)
+        y_mean = np.array(norm['y_mean'], dtype=np.float64)
+        y_std = np.array(norm['y_std'], dtype=np.float64)
+        x_input = (x - x_mean) / x_std
 
-        # Using the standardized input is leading to NaNs
-        Y_prediction = mann(input)
-        if np.isnan(Y_prediction).any():
+        print("#####################################")
+        tmp = x_input.ravel()
+        r_p_label = tmp[
+                    col_demarcation_ids[0]['x_right_punch_labels'][0]:col_demarcation_ids[0]['x_right_punch_labels'][1]]
+        l_p_label = tmp[
+                    col_demarcation_ids[0]['x_left_punch_labels'][0]:col_demarcation_ids[0]['x_left_punch_labels'][1]]
+        print('rph:', r_p_label, 'lph:', l_p_label)
+
+        y_prediction = mann(x_input)
+        if np.isnan(y_prediction).any():
             raise Exception('Nans found')
 
-        # Y_prediction = mann(X)
-        # if np.isnan(Y_prediction).any():
-        #     raise Exception('Nans found')
+        y_prediction = y_prediction * y_std + y_mean
+        tmp = y_prediction.numpy().ravel()
+        r_p_label = tmp[
+                    col_demarcation_ids[1]['y_right_punch_labels'][0]:col_demarcation_ids[1]['y_right_punch_labels'][1]]
+        l_p_label = tmp[
+                    col_demarcation_ids[1]['y_left_punch_labels'][0]:col_demarcation_ids[1]['y_left_punch_labels'][1]]
+        print('rph:', r_p_label, 'lph:', l_p_label)
 
-        # Y_prediction = Y_prediction.numpy()
-        # p_phase = Y_prediction.numpy().ravel()[4:6]
-        # print('r:', p_phase[0], 'l:', p_phase[1])
-        Y_prediction = Y_prediction * Ystd + Ymean
-        p_phase = Y_prediction.numpy().ravel()[4:6]
-        print('rph:', p_phase[0], 'lph:', p_phase[1])
-
-        if np.isnan(Y_prediction).any():
+        if np.isnan(y_prediction).any():
             raise Exception('Nans found')
 
-        return Y_prediction
+        return y_prediction
 
 
 def raise_nan_exception(arr):

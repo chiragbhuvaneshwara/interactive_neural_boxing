@@ -1,16 +1,6 @@
-"""author: Janis Sprenger """
+"""author: Chirag Bhuvaneshwara """
 import numpy as np
-import math, time
-
-from ...nn.fc_models.fc_networks import FCNetwork
-
 from ... import utils
-
-DEBUG = False
-DEBUG_TIMING = False
-np.set_printoptions(precision=3)
-np.set_printoptions(suppress=True)
-np.set_printoptions(linewidth=120)
 
 
 class Character:
@@ -21,9 +11,9 @@ class Character:
         [type_in] -- [description]
     """
 
-    def __init__(self, config_store):  # endJoints = 5, numJoints = 21):
-        self.endJoints = config_store["endJoints"]
-        self.joints = config_store["numJoints"] + self.endJoints  # 59
+    def __init__(self, data_configuration):  # endJoints = 5, numJoints = 21):
+        self.endJoints = data_configuration["endJoints"]
+        self.joints = data_configuration["numJoints"] + self.endJoints  # 59
 
         # fields for joint positions and velocities in global space.
         self.joint_positions = np.array([[0.0, 0.0, 0.0]] * self.joints)
@@ -38,11 +28,7 @@ class Character:
         # root position projected to ground (y-axis = 0)
         self.root_position = np.array([0.0, 0.0, 0.0])
 
-    def reset(self, root_position=np.array([0.0, 0.0, 0.0]), start_orientation=0.0):
-        self.root_position = root_position
-        self.root_rotation = start_orientation
-
-    def set_pose(self, joint_positions, joint_velocities, joint_rotations, foot_contacts=[0, 0, 0, 0], init=False):
+    def set_pose(self, joint_positions, joint_velocities, joint_rotations, init=False):
         """
         Sets a new pose after prediction.
 
@@ -76,69 +62,6 @@ class Character:
 
             self.joint_velocities[j] = vel
 
-        # prediction is finished and post processed. Pose can be rendered!
-        return
-
-    def compute_punch_phase(self, punch_targets):
-
-        joint_positions = self.joint_positions
-
-        def compute_global_positions(j):
-            # j = self.hand_left
-            # joint_positions
-            local_pos = np.array(joint_positions[j], dtype=np.float64).reshape(3, )
-            pos = utils.rot_around_z_3d(local_pos, self.root_rotation) + self.root_position
-            return pos
-
-        def compute_arm_dist(i, j):
-            pos_shoulder = compute_global_positions(j)
-            pos_hand = compute_global_positions(i)
-            arm_distance = np.linalg.norm(pos_shoulder - pos_hand)
-            return arm_distance
-
-        # def get_acting_arm():
-        #     l_dist = compute_arm_dist(self.hand_left, self.shoulder_left)
-        #     r_dist = compute_arm_dist(self.hand_right, self.shoulder_right)
-        #
-        #     if l_dist > r_dist:
-        #         return 'left', l_dist
-        #
-        #     else:
-        #         return 'right', r_dist
-
-        def get_acting_arm(punch_targets):
-            l_dist = compute_arm_dist(self.hand_left, self.shoulder_left)
-            r_dist = compute_arm_dist(self.hand_right, self.shoulder_right)
-
-            l_target = punch_targets[3:]
-            r_target = punch_targets[0:3]
-
-            no_movement_target = np.array([0.0, 0.0, 0.0])
-
-            l_target_dist = np.linalg.norm(l_target - no_movement_target)
-            r_target_dist = np.linalg.norm(r_target - no_movement_target)
-
-            if l_target_dist > r_target_dist:
-                return 'left', l_dist
-
-            else:
-                return 'right', r_dist
-
-        def convert_range(new_max, new_min, old_max, old_min, old_value):
-            old_range = (old_max - old_min)
-            new_range = (new_max - new_min)
-            new_value = (((old_value - old_min) * new_range) / old_range) + new_min
-            return new_value
-
-        acting_arm, dist = get_acting_arm(punch_targets)
-        # acting_arm_phase = convert_range(1, 0, self.max_punch_distance, 0.2, dist)  # TO DO
-        acting_arm_phase = convert_range(1, 0, self.max_punch_distance, 0, dist)  # TO DO
-
-        if acting_arm == 'left':
-            return np.array([0, acting_arm_phase], dtype=np.float64)
-        else:
-            return np.array([acting_arm_phase, 0], dtype=np.float64)
-
     def compute_foot_sliding(self, joint_positions, joint_velocities, foot_contacts=[0, 0, 0, 0]):
         def compute_foot_movement(j):
             local_pos = np.array(
@@ -168,7 +91,7 @@ class Character:
         # return np.array([0.0, 0.0, 0.0])
         return global_foot_drift
 
-    def getLocalJointPosVel(self, prev_root_pos, prev_root_rot):
+    def get_local_joint_pos_vel(self, prev_root_pos, prev_root_rot):
         joint_pos = np.array([0.0] * (self.joints * 3), dtype=np.float64)
         joint_vel = np.array([0.0] * (self.joints * 3), dtype=np.float64)
         prp = prev_root_pos
@@ -190,23 +113,30 @@ class Character:
         return (joint_pos, joint_vel)
 
     def convert_global_to_local(self, arr, root_pos, root_rot, type_in='pos'):
+        type_arg = type_in.split("_")
         for i in range(len(arr)):
-            # curr_point = arr[i]
-            if type_in == 'pos':
-                # curr_point -= root_pos
+            if type_arg[0] == 'pos':
+                if len(type_arg) > 1 and type_arg[1] == "hand":
+                    root_pos[1] = 0
                 arr[i] -= root_pos
-            # arr[i] = utils.rot_around_z_3d(arr[i], root_rot)
+
             arr[i] = utils.rot_around_z_3d(arr[i], root_rot, inverse=True)
 
         return arr
 
     def convert_local_to_global(self, arr, type_in='pos'):
-        # Info at mid trajectory is info at current frame
         root_pos = self.root_position
         root_rot = self.root_rotation
+        type_arg = type_in.split("_")
+
         for i in range(len(arr)):
-            # arr[i] = utils.rot_around_z_3d(arr[i], -root_rot)
             arr[i] = utils.rot_around_z_3d(arr[i], root_rot)
-            if type_in == 'pos':
+            if type_arg[0] == 'pos':
+                if len(type_arg) > 1 and type_arg[1] == "hand":
+                    root_pos[1] = 0
                 arr[i] = arr[i] + root_pos
         return arr
+
+    def reset(self, root_position=np.array([0.0, 0.0, 0.0]), start_orientation=0.0):
+        self.root_position = root_position
+        self.root_rotation = start_orientation

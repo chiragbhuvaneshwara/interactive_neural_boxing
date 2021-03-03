@@ -1,49 +1,34 @@
 """author: Chirag Bhuvaneshwara """
 import numpy as np
-import math, time
+import math
 from ... import utils
-
-DEBUG = False
-DEBUG_TIMING = False
-np.set_printoptions(precision=3)
-np.set_printoptions(suppress=True)
-np.set_printoptions(linewidth=120)
 
 
 class Trajectory:
     """
-    This class contains data and functionality for local trajectory control.
-    120 frames surrounding the current frame are considered.
-    Trajectory positions and directions are predicted by the network and blended with the user input.
-    This class manages gait information as well (as it is linked to the trajectory points).
+    This class contains data and functionality for trajectory control.
+    All trajectory data inside this class should be maintained in global space.
 
     Returns:
         [type_in] -- [description]
     """
 
-    def __init__(self, config_store):
+    def __init__(self, data_configuration):
 
-        self.config_store = config_store
-
-        self.n_tr_samples = self.config_store['num_traj_samples']  # 10
-        self.traj_step = self.config_store['traj_step']  # 5
+        self.n_tr_samples = data_configuration['num_traj_samples']  # 10
+        self.traj_step = data_configuration['traj_step']  # 5
 
         # 12 * 10 = 120 fps trajectory window or 10 * 5 = 50fps trajectory window
         self.n_frames_tr_win = self.n_tr_samples * self.traj_step
         self.median_idx = self.n_frames_tr_win // 2
 
         self.n_dims = 3
-        unit_vecs = np.eye(self.n_dims, self.n_dims)
-        z_axis = 2
-        self.z_vec = unit_vecs[z_axis:z_axis + 1, :]
-        z_vec_mod = np.delete(self.z_vec, 1, 1)  # Removing Y component
 
         ### Trajectory info of the root
-        # Root positions contain all 3 components
-        self.traj_positions = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
-        self.traj_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
-        self.traj_rotations = np.zeros(self.n_frames_tr_win)
-        self.traj_directions = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
+        self.traj_root_pos = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
+        self.traj_root_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
+        self.traj_root_rotations = np.zeros(self.n_frames_tr_win)
+        self.traj_root_directions = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
         # TODO Set wrist positions to mean positions ==> Mabe take the positions from the mean position you have in
         #  norm
 
@@ -51,58 +36,19 @@ class Trajectory:
         # Wrist positions contain all 3 components
         self.traj_right_wrist_positions = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
         self.traj_right_wrist_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
+        self.traj_right_punch_labels = np.array([0] * self.n_frames_tr_win)
 
         # Wrist positions contain all 3 components
         self.traj_left_wrist_positions = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
         self.traj_left_wrist_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
+        self.traj_left_punch_labels = np.array([0] * self.n_frames_tr_win)
 
         # TODO Cleanup
-        # ### Trajectory info of the root
-        # # Root positions contain all 3 components
-        # self.traj_positions = np.zeros((self.n_frames_tr_win, self.n_dims))
-        # # self.traj_vels = np.tile(self.z_vec, (self.n_frames_tr_win, 1))
-        # self.traj_vels = np.zeros((self.n_frames_tr_win, self.n_dims))
-        # self.traj_rotations = np.zeros(self.n_frames_tr_win)
-        # self.traj_directions = np.zeros((self.n_frames_tr_win, self.n_dims))
-        #
-        # ### Trajectory info of the hand
-        # # Wrist positions contain all 3 components
-        # self.traj_right_wrist_positions = np.zeros((self.n_frames_tr_win, self.n_dims))
-        # # self.traj_right_wrist_vels = np.tile(self.z_vec, (self.n_frames_tr_win, 1))
-        # self.traj_right_wrist_vels = np.zeros((self.n_frames_tr_win, self.n_dims))
-        #
-        # # Wrist positions contain all 3 components
-        # self.traj_left_wrist_positions = np.zeros((self.n_frames_tr_win, self.n_dims))
-        # # self.traj_left_wrist_vels = np.tile(self.z_vec, (self.n_frames_tr_win, 1))
-        # self.traj_left_wrist_vels = np.zeros((self.n_frames_tr_win, self.n_dims))
 
         n_foot_joints = 2
         n_feet = 2  # left, right
         self.foot_drifting = np.zeros(n_foot_joints * n_feet)
         self.blend_bias = 2.0
-
-    def reset(self):
-        """
-        Resets the trajectory information and thus the character to 0,0,0 pointing to 0,0,1.
-
-        Keyword Arguments:
-            start_location {list} -- [description] (default: {[0,0,0]})
-            start_orientation {list} -- [description] (default: {[1,0,0,0]})
-            start_direction {list} -- [description] (default: {[0,0,1]})
-        """
-        self.traj_positions = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
-        self.traj_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
-        self.traj_rotations = np.zeros(self.n_frames_tr_win)
-        self.traj_directions = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
-
-        ### Trajectory info of the hand
-        # Wrist positions contain all 3 components
-        self.traj_right_wrist_positions = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
-        self.traj_right_wrist_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
-
-        # Wrist positions contain all 3 components
-        self.traj_left_wrist_positions = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
-        self.traj_left_wrist_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
 
     def get_input(self, root_position, root_rotation):
         """
@@ -127,8 +73,8 @@ class Trajectory:
         input_right_wrist_pos = np.zeros((self.n_dims * w))
         input_right_wrist_vels = np.zeros((self.n_dims * w))
 
-        pos = self.convert_global_to_local(self.traj_positions, root_position, root_rotation)
-        vels = self.convert_global_to_local(self.traj_vels, root_position, root_rotation, arg_type='vels')
+        pos = self.convert_global_to_local(self.traj_root_pos, root_position, root_rotation)
+        vels = self.convert_global_to_local(self.traj_root_vels, root_position, root_rotation, arg_type='vels')
         in_left_pos = self.convert_global_to_local(self.traj_left_wrist_positions, root_position, root_rotation,
                                                    arm='left')
         in_right_pos = self.convert_global_to_local(self.traj_right_wrist_positions, root_position, root_rotation,
@@ -163,96 +109,85 @@ class Trajectory:
             target_dir {np.array(3)} -- Direction
             target_vel {np.array(3)} -- Velocity in local space
         """
-        # a = self.get_global_root_tr()
 
         # computing future trajectory
         target_vel = target_vel.reshape(1, len(target_vel))
         target_vel = self.convert_local_to_global(target_vel, arg_type='vels')
 
-        trajectory_positions_blend = np.array(self.traj_positions)
+        trajectory_positions_blend = np.array(self.traj_root_pos)
         tr_mid_idx = self.median_idx
-        # print('######################################')
         for i in range(tr_mid_idx + 1, len(trajectory_positions_blend)):
             # adjust bias 0.5 to fit to dataset and responsivity (larger value -> more responsive)
-            # scale_pos = 1.0 - pow(1.0 - (i - tr_mid_idx) / (1.0 * (tr_mid_idx)), self.blend_bias)
-            scale_pos = 0.5
+            scale_pos = 1.0 - pow(1.0 - (i - tr_mid_idx) / (1.0 * tr_mid_idx), self.blend_bias)
 
             # ith pos = i-1 th pos + combo of curr velocity and user requested velocity
-            mixed_val = utils.glm_mix(self.traj_positions[i] - self.traj_positions[i - 1],
-                                      target_vel, scale_pos)
-
-            # print(mixed_val)
             trajectory_positions_blend[i] = trajectory_positions_blend[i - 1] + \
-                                            target_vel
-            # mixed_val
+                                            utils.glm_mix(self.traj_root_pos[i] - self.traj_root_pos[i - 1], target_vel,
+                                                          scale_pos)
 
-            self.traj_vels[i] = utils.glm_mix(self.traj_vels[i],
-                                              target_vel, scale_pos)
+            self.traj_root_vels[i] = utils.glm_mix(self.traj_root_vels[i],
+                                                   target_vel, scale_pos)
             # adjust scale bias 0.5 to fit to dataset and responsivity (larger value -> more responsive)
             scale_dir = scale_pos
-            self.traj_directions[i] = utils.mix_directions(self.traj_directions[i], target_dir,
-                                                           scale_dir)
-        # print('######################################')
+            self.traj_root_directions[i] = utils.mix_directions(self.traj_root_directions[i], target_dir,
+                                                                scale_dir)
 
         for i in range(tr_mid_idx + 1, len(trajectory_positions_blend)):
-            self.traj_positions[i] = trajectory_positions_blend[i]
-        # print('######################################')
+            self.traj_root_pos[i] = trajectory_positions_blend[i]
 
         # compute trajectory rotations
         for i in range(0, self.n_frames_tr_win):
-            self.traj_rotations[i] = utils.z_angle(self.traj_directions[i])
+            self.traj_root_rotations[i] = utils.z_angle(self.traj_root_directions[i])
 
-        # a = self.get_global_root_tr()
-
-    def compute_future_wrist_trajectory(self, target_right_wrist_pos, target_right_wrist_vels,
-                                        target_left_wrist_pos, target_left_wrist_vels):
+    def compute_future_wrist_trajectory(self, desired_right_punch_target, desired_left_punch_target,
+                                        desired_right_punch_label, desired_left_punch_label):
         """
         Performs blending of the future trajectory for predicted trajectory info passed in.
-        :param target_right_wrist_pos: local space
-        :param target_right_wrist_vels: local space
-        :param target_left_wrist_pos: local space
-        :param target_left_wrist_vels: local space
+        :param desired_right_punch_target: np.array(3), global space
+        :param desired_left_punch_target: np.array(3), global space
+        :param desired_left_punch_label: np.array(1)
+        :param desired_right_punch_label: np.array(1)
         :return:
         """
         # TODO Instead of blending future traj points with preds, blend with the goal i.e. the punch target
-
-        # computing future trajectory
-        # print('######################################')
-        # a = self.get_global_arm_tr()
-
         pred_samples_dims = self.n_tr_samples // 2
 
         for hand in ['left', 'right']:
+            calc_traj_labels = False
             if hand == 'left':
                 traj_pos_blend = np.array(self.traj_left_wrist_positions, dtype=np.float64)
                 traj_vels_blend = np.array(self.traj_left_wrist_vels, dtype=np.float64)
-                target_wrist_pos = self.convert_local_to_global(
-                    target_left_wrist_pos.reshape(pred_samples_dims, self.n_dims), arm=hand)
-                target_wrist_vels = self.convert_local_to_global(
-                    target_left_wrist_vels.reshape(pred_samples_dims, self.n_dims), arg_type='vels')
+                traj_labels_blend = np.array(self.traj_left_punch_labels)
+                desired_punch_target = desired_left_punch_target
+                desired_punch_label = desired_left_punch_label
             elif hand == 'right':
                 traj_pos_blend = np.array(self.traj_right_wrist_positions, dtype=np.float64)
                 traj_vels_blend = np.array(self.traj_right_wrist_vels, dtype=np.float64)
-                target_wrist_pos = self.convert_local_to_global(
-                    target_right_wrist_pos.reshape(pred_samples_dims, self.n_dims), arm=hand)
-                target_wrist_vels = self.convert_local_to_global(
-                    target_right_wrist_vels.reshape(pred_samples_dims, self.n_dims), arg_type='vels')
+                traj_labels_blend = np.array(self.traj_right_punch_labels)
+                desired_punch_target = desired_right_punch_target
+                desired_punch_label = desired_right_punch_label
 
             tr_mid_idx = self.median_idx
+            if np.sum(desired_punch_target) == 0:
+                traj_labels_blend = np.zeros(traj_labels_blend.shape)
+            else:
+                calc_traj_labels = True
+
             for i in range(tr_mid_idx + 1, len(traj_pos_blend)):
                 # adjust bias 0.5 to fit to dataset and responsivity (larger value -> more responsive)
-                # scale_pos = 1.0 - pow(1.0 - (i - tr_mid_idx) / (1.0 * (tr_mid_idx)), self.blend_bias)
-                scale_pos = 0.5
-                # print('wr ==> ', scale_pos)
+                scale_pos = 1.0 - pow(1.0 - (i - tr_mid_idx) / (1.0 * tr_mid_idx), self.blend_bias)
                 # iterates over predictions
                 # target_idx = i // self.traj_step - self.traj_step
-                target_idx = i // pred_samples_dims - pred_samples_dims
-
+                # target_idx = i // pred_samples_dims - pred_samples_dims
                 traj_pos_blend[i] = utils.glm_mix(traj_pos_blend[i],
-                                                  target_wrist_pos[target_idx], scale_pos)
+                                                  desired_punch_target, scale_pos)
 
                 traj_vels_blend[i] = utils.glm_mix(traj_vels_blend[i],
-                                                   target_wrist_vels[target_idx], scale_pos)
+                                                   traj_pos_blend[i] - traj_pos_blend[i - 1], scale_pos)
+
+                if calc_traj_labels:
+                    traj_labels_blend[i] = utils.glm_mix(traj_labels_blend[i],
+                                                         desired_punch_label, scale_pos)
 
                 if hand == 'left':
                     self.traj_left_wrist_positions[i] = traj_pos_blend[i]
@@ -261,9 +196,9 @@ class Trajectory:
                 elif hand == 'right':
                     self.traj_right_wrist_positions[i] = traj_pos_blend[i]
                     self.traj_right_wrist_vels[i] = traj_vels_blend[i]
-        # print('######################################')
 
-        # a = self.get_global_arm_tr()
+            if calc_traj_labels:
+                traj_labels_blend[tr_mid_idx:][traj_labels_blend[tr_mid_idx:] < 1] = 0
 
     def step_forward(self, pred_root_vel, pred_fwd_dir, wrist_vels_traj):
         """
@@ -275,21 +210,16 @@ class Trajectory:
         Returns:
             [type_in] -- [description]
         """
-        # a = self.get_global_root_tr()
-        # a = self.get_global_arm_tr()
-
-        # mix positions with velocity prediction
-        # tr_mid_idx = len(self.traj_positions) // 2
         tr_mid_idx = self.median_idx
         for i in range(0, tr_mid_idx):
-            self.traj_positions[i] = np.array(self.traj_positions[i + 1])
-            self.traj_vels[i] = np.array(self.traj_vels[i + 1])
+            self.traj_root_pos[i] = np.array(self.traj_root_pos[i + 1])
+            self.traj_root_vels[i] = np.array(self.traj_root_vels[i + 1])
             self.traj_right_wrist_positions[i] = np.array(self.traj_right_wrist_positions[i + 1])
             self.traj_left_wrist_positions[i] = np.array(self.traj_left_wrist_positions[i + 1])
             self.traj_right_wrist_vels[i] = np.array(self.traj_right_wrist_vels[i + 1])
             self.traj_left_wrist_vels[i] = np.array(self.traj_left_wrist_vels[i + 1])
-            self.traj_rotations[i] = np.array(self.traj_rotations[i + 1])
-            self.traj_directions[i] = np.array(self.traj_directions[i + 1])
+            self.traj_root_rotations[i] = np.array(self.traj_root_rotations[i + 1])
+            self.traj_root_directions[i] = np.array(self.traj_root_directions[i + 1])
 
         ## current trajectory
         pred_root_vel = utils.convert_to_zero_y_3d(pred_root_vel)
@@ -323,21 +253,18 @@ class Trajectory:
         left_tr_update = left_wr_v
 
         # print('tr:', self.traj_positions[idx])
-        self.traj_positions[idx] = self.traj_positions[idx] + trajectory_update
+        self.traj_root_pos[idx] = self.traj_root_pos[idx] + trajectory_update
         # print('tr nxt:', self.traj_positions[idx])
 
-        self.traj_vels[idx] = utils.glm_mix(self.traj_vels[idx], pred_root_vel, 0.9)
-        self.traj_directions[idx] = utils.rot_around_z_3d(self.traj_directions[idx],
-                                                          rotational_vel)
-        self.traj_rotations[idx] = utils.z_angle(self.traj_directions[idx])
+        self.traj_root_vels[idx] = utils.glm_mix(self.traj_root_vels[idx], pred_root_vel, 0.9)
+        self.traj_root_directions[idx] = utils.rot_around_z_3d(self.traj_root_directions[idx],
+                                                               rotational_vel)
+        self.traj_root_rotations[idx] = utils.z_angle(self.traj_root_directions[idx])
 
         self.traj_left_wrist_positions[idx] = self.traj_left_wrist_positions[idx] + left_tr_update
         self.traj_left_wrist_vels[idx] = left_wr_v
         self.traj_right_wrist_positions[idx] = self.traj_right_wrist_positions[idx] + right_tr_update
         self.traj_right_wrist_vels[idx] = right_wr_v
-
-        # a = self.get_global_root_tr()
-        # a = self.get_global_arm_tr()
 
     def update_from_predict(self, prediction):
         """
@@ -347,42 +274,11 @@ class Trajectory:
         Arguments:
             prediction {np.array(4 * (6 * 2))} -- vector containing the network output regarding future trajectory positions and directions
         """
-        # a = self.get_global_root_tr()
-        # a = self.get_global_arm_tr()
+        # TODO predict
 
         prediction = list(prediction)
-        pred_rp_tr, pred_rv_tr, pred_rwp_tr, pred_lwp_tr, pred_rwv_tr, pred_lwv_tr, pred_fwd_dir = prediction
+        pred_rp_tr, pred_rv_tr, pred_rwp_tr, pred_lwp_tr, pred_rwv_tr, pred_lwv_tr, pred_rpunch_tr, pred_lpunch_tr, pred_fwd_dir = prediction
         pred_fwd_dir = utils.convert_to_zero_y_3d(pred_fwd_dir)
-
-        # pred_rp_tr = utils.convert_to_zero_y_3d(pred_rp_tr.reshape(len(pred_rp_tr)//(self.n_dims-1), self.n_dims-1), axis=1).ravel()
-        # pred_rv_tr = utils.convert_to_zero_y_3d(pred_rv_tr.reshape(len(pred_rv_tr)//(self.n_dims-1), self.n_dims-1), axis=1).ravel()
-        # # pred_fwd_dir = utils.convert_to_zero_y_3d(pred_fwd_dir.reshape(len(pred_fwd_dir)//(self.n_dims-1), self.n_dims-1), axis=1).ravel()
-        #
-        # prediction = [pred_rp_tr, pred_rv_tr, pred_rwp_tr, pred_lwp_tr, pred_rwv_tr, pred_lwv_tr]
-        # for i in range(len(prediction)):
-        #     prediction[i] = prediction[i].reshape(len(prediction[i])//self.n_dims, self.n_dims)
-        #
-        #
-        # pred_rp_tr = self.convert_local_to_global(prediction[0])
-        # pred_rv_tr = self.convert_local_to_global(prediction[1])
-        # pred_rwp_tr = self.convert_local_to_global(prediction[2], arm = 'right')
-        # pred_lwp_tr = self.convert_local_to_global(prediction[3], arm = 'left')
-        # pred_rwv_tr = self.convert_local_to_global(prediction[4], arg_type='vels')
-        # pred_lwv_tr = self.convert_local_to_global(prediction[5], arg_type='vels')
-        # # pred_fwd_dir = self.convert_local_to_global(prediction[6], arg_type='dir')
-        # prediction = [pred_rp_tr, pred_rv_tr, pred_rwp_tr, pred_lwp_tr, pred_rwv_tr, pred_lwv_tr, pred_fwd_dir]
-        #
-        # pred_rp_tr = np.delete(prediction[0], 1, 1).ravel()
-        # pred_rv_tr = np.delete(prediction[1], 1, 1).ravel()
-        # pred_rwp_tr = prediction[2].ravel()
-        # pred_lwp_tr = prediction[3].ravel()
-        # pred_rwv_tr = prediction[4].ravel()
-        # pred_lwv_tr = prediction[5].ravel()
-        # # pred_fwd_dir = np.delete(prediction[6], 1, 1).ravel()
-        # pred_fwd_dir = utils.convert_to_zero_y_3d(pred_fwd_dir)
-
-        # root_rotation = self.traj_rotations[self.median_idx]
-        # root_pos = self.traj_positions[self.median_idx]
 
         n_d = self.n_dims
         # update future trajectory based on prediction. Future trajectory will solely depend on prediction and will be smoothed with the control signal by the next pre_render
@@ -390,21 +286,24 @@ class Trajectory:
             weight = ((i - self.n_frames_tr_win / 2) / self.traj_step) % 1.0
             # The following is only relevant to smooth between 0 / self.traj_step and 1 / self.traj_step steps
             # , if 120 points are used
-            self.traj_positions[i][0] = self.smooth_pred(i, 0, weight, pred_rp_tr[0::n_d - 1])
-            self.traj_positions[i][2] = self.smooth_pred(i, 1, weight, pred_rp_tr[1::n_d - 1])
+            self.traj_root_pos[i][0] = self.smooth_pred(i, 0, weight, pred_rp_tr[0::n_d - 1])
+            self.traj_root_pos[i][2] = self.smooth_pred(i, 1, weight, pred_rp_tr[1::n_d - 1])
             # self.traj_positions[i] = self.convert_local_to_global(self.traj_positions[i].reshape(1, n_d)).ravel()
-            self.traj_positions[i] = self.convert_local_to_global(self.traj_positions[i].reshape(1, n_d)).ravel()
+            self.traj_root_pos[i] = self.convert_local_to_global(self.traj_root_pos[i].reshape(1, n_d)).ravel()
 
-            self.traj_vels[i][0] = self.smooth_pred(i, 0, weight, pred_rv_tr[0::n_d - 1])
-            self.traj_vels[i][2] = self.smooth_pred(i, 1, weight, pred_rv_tr[1::n_d - 1])
-            self.traj_vels[i] = self.convert_local_to_global(self.traj_vels[i].reshape(1, n_d), arg_type='vels').ravel()
+            self.traj_root_vels[i][0] = self.smooth_pred(i, 0, weight, pred_rv_tr[0::n_d - 1])
+            self.traj_root_vels[i][2] = self.smooth_pred(i, 1, weight, pred_rv_tr[1::n_d - 1])
+            self.traj_root_vels[i] = self.convert_local_to_global(self.traj_root_vels[i].reshape(1, n_d),
+                                                                  arg_type='vels').ravel()
 
             # self.traj_directions[i][0] = pred_fwd_dir[0]
             # self.traj_directions[i][2] = pred_fwd_dir[1]
-            self.traj_directions[i] = utils.normalize(utils.glm_mix(self.traj_directions[i], pred_fwd_dir, 0.7))
-            self.traj_directions[i] = self.convert_local_to_global(self.traj_directions[i].reshape(1, n_d)).ravel()
+            self.traj_root_directions[i] = utils.normalize(
+                utils.glm_mix(self.traj_root_directions[i], pred_fwd_dir, 0.7))
+            self.traj_root_directions[i] = self.convert_local_to_global(
+                self.traj_root_directions[i].reshape(1, n_d)).ravel()
 
-            self.traj_rotations[i] = utils.z_angle(self.traj_directions[i])
+            self.traj_root_rotations[i] = utils.z_angle(self.traj_root_directions[i])
 
             for axis in range(3):
                 self.traj_right_wrist_positions[i][axis] = self.smooth_pred(i, axis, weight, pred_rwp_tr[axis::n_d])
@@ -421,9 +320,6 @@ class Trajectory:
             self.traj_left_wrist_vels[i] = self.convert_local_to_global(self.traj_left_wrist_vels[i].reshape(1, n_d),
                                                                         arg_type='vels', arm='left').ravel()
 
-        # a = self.get_global_root_tr()
-        # a = self.get_global_arm_tr()
-
     def smooth_pred(self, tr_frame, axis, weight, prediction_axis):
         """
         Function returns new prediction value at tr_frame by combining consecutive pred values
@@ -436,15 +332,6 @@ class Trajectory:
         :return:
         """
         half_pred_window = self.median_idx // self.traj_step
-        ## idxs for iterating from 0 to 23 below for traj window size 12
-        # pred_window_idx_1 = half_pred_window * 0 + (tr_frame // self.traj_step - half_pred_window)
-        # pred_window_idx_2 = half_pred_window * 0 + (tr_frame // self.traj_step - half_pred_window) + (
-        #                                     1 if tr_frame < (self.n_frames_tr_win - self.n_traj_samples + 1) else 0)
-
-        ## idxs for iteracting from 6 to 11 below for traj window size 12
-        # pred_window_idx_1 = tr_frame // self.traj_step
-        # pred_window_idx_2 = (tr_frame // self.traj_step) + (
-        #     1 if tr_frame < (self.n_frames_tr_win - self.n_traj_samples + 1) else 0)
 
         ## idxs for iteracting from 0 to 5 below for traj window size 12
         pred_window_idx_1 = tr_frame // self.traj_step - half_pred_window
@@ -457,7 +344,7 @@ class Trajectory:
         return new_pred
 
     def correct_foot_sliding(self, foot_sliding):
-        self.traj_positions[self.median_idx] += foot_sliding
+        self.traj_root_pos[self.median_idx] += foot_sliding
 
     def convert_global_to_local(self, arr_in, root_pos, root_rot, arg_type='pos', arm=None):
         arr = arr_in[:]
@@ -493,8 +380,8 @@ class Trajectory:
         arr = arr_in[:]
 
         # Info at mid trajectory is info at current frame
-        root_pos = self.traj_positions[self.median_idx]
-        root_rot = self.traj_rotations[self.median_idx]
+        root_pos = self.traj_root_pos[self.median_idx]
+        root_rot = self.traj_root_rotations[self.median_idx]
         for i in range(len(arr)):
             # if arg_type == 'pos':
             # if arm == 'left':
@@ -512,36 +399,39 @@ class Trajectory:
 
         return arr
 
-    def getWorldPosRot(self):
-        pos = np.array(self.traj_positions[self.median_idx])
+    def get_world_pos_rot(self):
+        pos = np.array(self.traj_root_pos[self.median_idx])
         pos[1] = 0.0
 
-        rot = self.traj_rotations[self.median_idx]
-        return (pos, rot)
+        rot = self.traj_root_rotations[self.median_idx]
+        return pos, rot
 
-    def getPreviousPosRot(self):
-        pos = np.array(self.traj_positions[self.median_idx - 1])
+    def get_previous_pos_rot(self):
+        pos = np.array(self.traj_root_pos[self.median_idx - 1])
         pos[1] = 0.0
 
-        rot = self.traj_rotations[self.median_idx - 1]
-        return (pos, rot)
+        rot = self.traj_root_rotations[self.median_idx - 1]
+        return pos, rot
 
-    def get_global_arm_tr(self):
-        n_d = self.n_dims
-        left_wr_tr = self.traj_left_wrist_positions[::self.traj_step]
-        right_wr_tr = self.traj_right_wrist_positions[::self.traj_step]
-        for i in range(self.n_frames_tr_win // self.traj_step):
-            right_wr_tr[i] = self.convert_local_to_global(
-                right_wr_tr[i].reshape(1, n_d), arm='right').ravel()
-            left_wr_tr[i] = self.convert_local_to_global(
-                left_wr_tr[i].reshape(1, n_d), arm='left').ravel()
-        return right_wr_tr, left_wr_tr
+    def reset(self):
+        """
+        Resets the trajectory information and thus the character to 0,0,0 pointing to 0,0,1.
 
-    def get_global_root_tr(self):
-        n_d = self.n_dims
-        root_tr = self.traj_positions[::self.traj_step]
-        for i in range(self.n_frames_tr_win // self.traj_step):
-            root_tr[i] = self.convert_local_to_global(
-                root_tr[i].reshape(1, n_d), arm='right').ravel()
-        root_cur = root_tr[self.median_idx // self.traj_step]
-        return root_tr, root_cur
+        Keyword Arguments:
+            start_location {list} -- [description] (default: {[0,0,0]})
+            start_orientation {list} -- [description] (default: {[1,0,0,0]})
+            start_direction {list} -- [description] (default: {[0,0,1]})
+        """
+        self.traj_root_pos = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
+        self.traj_root_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
+        self.traj_root_rotations = np.zeros(self.n_frames_tr_win)
+        self.traj_root_directions = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
+
+        ### Trajectory info of the hand
+        # Wrist positions contain all 3 components
+        self.traj_right_wrist_positions = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
+        self.traj_right_wrist_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
+
+        # Wrist positions contain all 3 components
+        self.traj_left_wrist_positions = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
+        self.traj_left_wrist_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
