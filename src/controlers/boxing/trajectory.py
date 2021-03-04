@@ -327,36 +327,49 @@ class Trajectory:
 
         # The predictions after applying _smooth_predictions will be producing entries for all trajectories
         # maintained in trajectory class
-        prediction = list(prediction)
-        prediction = [_smooth_predictions(pred_var) for pred_var in prediction]
+        # prediction = list(prediction)
+        # prediction = [_smooth_predictions(pred_var) for pred_var in prediction]
         pred_rp_tr, pred_rv_tr, pred_rwp_tr, pred_lwp_tr, pred_rwv_tr, pred_lwv_tr, pred_rpunch_tr, pred_lpunch_tr, \
-        pred_rpunch_tr, pred_lpunch_tr, pred_fwd_dir = prediction
+            = prediction
 
-        self.traj_root_pos[self.median_idx + 1:] = self.convert_local_to_global(utils.convert_to_zero_y_3d(pred_rp_tr))
-        self.traj_root_vels[self.median_idx + 1:] = self.convert_local_to_global(utils.convert_to_zero_y_3d(pred_rv_tr),
+        half_pred_window = self.median_idx // self.traj_step
+        pred_rp_tr = _smooth_predictions(pred_rp_tr.reshape(half_pred_window, self.n_dims - 1))
+        self.traj_root_pos[self.median_idx + 1:] = self.convert_local_to_global(utils.convert_to_zero_y_3d(pred_rp_tr, axis=1))
+        pred_rv_tr = _smooth_predictions(pred_rv_tr.reshape(half_pred_window, self.n_dims - 1))
+        self.traj_root_vels[self.median_idx + 1:] = self.convert_local_to_global(utils.convert_to_zero_y_3d(pred_rv_tr, axis=1),
                                                                                  arg_type='vels')
 
-        self.traj_root_directions[self.median_idx + 1:] = self.convert_local_to_global(
-            utils.normalize(utils.convert_to_zero_y_3d(pred_rp_tr)), arg_type="dir")
+        # TODO: Trajectory root is probably not required since there are not trajectory predictions for it
+        # TODO: similarly traj_root_rotations is probably not required since there are not trajectory predictions for it
+        # pred_rp_tr = _smooth_predictions(pred_rp_tr.reshape(self.n_frames_tr_win // self.traj_step, self.n_dims - 1))
+        # self.traj_root_directions[self.median_idx + 1:] = self.convert_local_to_global(
+        #     utils.normalize(utils.convert_to_zero_y_3d(pred_fwd_dir)), arg_type="dir")
 
-        pred_r_rot = np.array(
-            [utils.z_angle(self.traj_directions[i]) for i in range(self.median_idx + 1, self.n_frames_tr_win)])
-        self.traj_root_rotations[self.median_idx + 1:] = pred_r_rot
+        # pred_r_rot = np.array(
+        #     [utils.z_angle(self.traj_directions[i]) for i in range(self.median_idx + 1, self.n_frames_tr_win)])
+        # self.traj_root_rotations[self.median_idx + 1:] = pred_r_rot
 
+        pred_rwp_tr = _smooth_predictions(pred_rwp_tr.reshape(half_pred_window, self.n_dims))
         self.traj_right_wrist_pos[self.median_idx + 1:] = self.convert_local_to_global(pred_rwp_tr)
+
+        pred_rwv_tr = _smooth_predictions(pred_rwv_tr.reshape(half_pred_window, self.n_dims))
         self.traj_right_wrist_vels[self.median_idx + 1:] = self.convert_local_to_global(pred_rwv_tr, arg_type='vels',
                                                                                         arm="right")
 
+        pred_rpunch_tr = _smooth_predictions(pred_rpunch_tr.reshape(half_pred_window, 1))
         pred_rpunch_tr[pred_rpunch_tr < 1] = 0
-        self.traj_right_punch_labels[self.median_idx + 1:] = pred_rpunch_tr
+        self.traj_right_punch_labels[self.median_idx + 1:] = pred_rpunch_tr.ravel()
 
         # Wrist positions contain all 3 components
+        pred_lwp_tr = _smooth_predictions(pred_lwp_tr.reshape(half_pred_window, self.n_dims))
         self.traj_left_wrist_pos[self.median_idx + 1:] = self.convert_local_to_global(pred_lwp_tr)
+        pred_lwv_tr = _smooth_predictions(pred_lwv_tr.reshape(half_pred_window, self.n_dims))
         self.traj_left_wrist_vels[self.median_idx + 1:] = self.convert_local_to_global(pred_lwv_tr, arg_type='vels',
                                                                                        arm="left")
 
+        pred_lpunch_tr = _smooth_predictions(pred_lpunch_tr.reshape(half_pred_window, 1))
         pred_lpunch_tr[pred_lpunch_tr < 1] = 0
-        self.traj_left_punch_labels[self.median_idx + 1:] = pred_lpunch_tr
+        self.traj_left_punch_labels[self.median_idx + 1:] = pred_lpunch_tr.ravel()
 
         # update future trajectory based on prediction. Future trajectory will solely depend on prediction and will be smoothed with the control signal by the next pre_render
         # for i in range(self.median_idx + 1, self.n_frames_tr_win):
@@ -426,6 +439,9 @@ class Trajectory:
     def convert_global_to_local(self, arr_in, root_pos, root_rot, arg_type='pos', arm=None):
         arr = arr_in[:]
 
+        if arm == "left" or "right":
+            root_pos[1] = 0
+
         for i in range(len(arr)):
             curr_point = arr[i]
             if arg_type == 'pos':
@@ -459,6 +475,9 @@ class Trajectory:
         # Info at mid trajectory is info at current frame
         root_pos = self.traj_root_pos[self.median_idx]
         root_rot = self.traj_root_rotations[self.median_idx]
+        if arm == "left" or "right":
+            root_pos[1] = 0
+
         for i in range(len(arr)):
             # if arg_type == 'pos':
             # if arm == 'left':

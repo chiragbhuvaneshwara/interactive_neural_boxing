@@ -16,7 +16,7 @@ CONTROLLER_SAVE_IN_OUT_DIR = 'src/controlers/boxing/controller_in_out'
 
 frd_win_epochs = 'boxing_fr_' + str(FRD) + '_' + str(WINDOW) + '_' + str(EPOCHS)
 trained_base_path = 'models/mann_tf2/' + frd_win_epochs
-target_file = os.path.join(trained_base_path, 'model_weights_std_in_out.zip')
+target_file = os.path.join(trained_base_path, 'model_weights.zip')
 
 mann_config_path = os.path.join(trained_base_path, 'mann_config.json')
 with open(mann_config_path) as json_file:
@@ -38,6 +38,7 @@ my_plotter = simple_matplotlib_plotter.Plotter()
 target = [0, 0, 0, 0, 0, 0]
 # Left Punch
 # target = [0, 0, 0, -0.347354, 0.578946, -0.521855]
+label = [0, 1]
 target = [0, 0, 0, 0.30000001192092896, 1.6000000238418579, -0.75]
 # Right Punch
 # target = [0.30000001192092896, 1.6000000238418579, -0.75, 0.0, 0.0, 0.0]
@@ -46,7 +47,7 @@ in_data_collection = []
 out_data_collection = []
 poses = []
 for f in range(100):
-    in_data, out_data = bc.pre_render(target, space="global")
+    in_data, out_data = bc.pre_render(target, label, space="global")
     # in_data, out_data = bc.pre_render(target, space="local")
     in_data_collection.append(np.hstack(in_data))
     out_data_collection.append(np.hstack(out_data))

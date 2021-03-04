@@ -72,7 +72,7 @@ class TQuaternion(object):
 
 def TVector3_2np(x):
     # np.array(x[0], x[1], -x[2])
-    x = [x[0], x[1], -x[2]]
+    x = [-x[0], x[1], x[2]]
     return x
     # return np.array([x.x, x.y, x.z])
 

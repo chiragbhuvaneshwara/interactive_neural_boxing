@@ -17,8 +17,8 @@ epochs = 100
 server_to_main_dir = '../../..'
 controller_in_out_dir = 'src/controlers/boxing/controller_in_out'
 frd_win_epochs = 'boxing_fr_' + str(frd) + '_' + str(window) + '_' + str(epochs)
-trained_base_path = 'trained_models/mann_tf2/' + frd_win_epochs
-target_file = os.path.join(server_to_main_dir, trained_base_path, 'model_weights_std_in_out.zip')
+trained_base_path = 'models/mann_tf2/' + frd_win_epochs
+target_file = os.path.join(server_to_main_dir, trained_base_path, 'model_weights.zip')
 mann_config_path = os.path.join(server_to_main_dir, trained_base_path, 'mann_config.json')
 with open(mann_config_path) as json_file:
     mann_config = json.load(json_file)
@@ -69,8 +69,18 @@ def fetchFrame():
         punch_in = request.get_json()
         # print(punch_in)
         punch_hand = punch_in["hand"]
-        punch_target = TVector3_2np(punch_in["target_right"]) + TVector3_2np(punch_in["target_left"])
-        bc.pre_render(punch_target, space='global')
+
+        punch_right_target = TVector3_2np(punch_in["target_right"])
+        punch_left_target = TVector3_2np(punch_in["target_left"])
+        if sum(punch_right_target) == 0 and sum(punch_left_target) == 0:
+            label = [0, 0]
+        elif sum(punch_right_target) != 0 and sum(punch_left_target) == 0:
+            label = [1, 0]
+        elif sum(punch_right_target) == 0 and sum(punch_left_target) != 0:
+            label = [0, 1]
+
+        punch_target = punch_right_target + punch_left_target
+        bc.pre_render(punch_target, label, space='global')
         posture = char2TPosture()
         bc.post_render()
         json_str = json.dumps(posture, default=serialize)

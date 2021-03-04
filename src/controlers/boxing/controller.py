@@ -158,7 +158,8 @@ class BoxingController(Controller):
         # input_data = np.delete(input_data, 0, 1)
         # self.input.data = input_data.ravel()
         input_data = self.input.data.reshape(1, len(self.input.data))
-        output_data = self.network.forward_pass(self.network, input_data, self.network.norm, self.bone_map)
+        output_data = self.network.forward_pass(self.network, input_data, self.network.norm,
+                                                [self.in_col_demarcation_ids, self.out_col_demarcation_ids])
         if np.isnan(output_data).any():
             raise Exception('Nans found in: ', np.argwhere(np.isnan(output_data)), '\n Input: ', input_data)
 
@@ -474,6 +475,7 @@ class MANNOutput(object):
         rwp_tr, lwp_tr = self.get_wrist_pos_traj()
         rwv_tr, lwv_tr = self.get_wrist_vels_traj()
         rpunch_tr, lpunch_tr = self.get_punch_labels_traj()
-        pred_dir = self.get_root_new_forward()
+        # pred_dir = self.get_root_new_forward()
 
-        return rp_tr, rv_tr, rwp_tr, lwp_tr, rwv_tr, lwv_tr, rpunch_tr, lpunch_tr, pred_dir
+        return rp_tr, rv_tr, rwp_tr, lwp_tr, rwv_tr, lwv_tr, rpunch_tr, lpunch_tr
+        # , pred_dir
