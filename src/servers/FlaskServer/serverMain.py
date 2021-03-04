@@ -41,8 +41,8 @@ print(zp.bone_map)
 def char2TPosture():
     posture = copy.deepcopy(zp)
     pose = bc.get_pose()
-    tr = bc.getTrajectroy()
-    # arm_tr = bc.getTrajectroy()
+    tr = bc.get_trajectroy_for_vis()
+    # arm_tr = bc.get_trajectroy_for_vis()
     # arm_tr = bc.getGlobalRoot()
     for i in range(len(pose)):
         posture.bones[i].position = np_2TVector3(pose[i])

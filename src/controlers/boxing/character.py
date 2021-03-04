@@ -110,7 +110,7 @@ class Character:
             curr_joint_vel = self.convert_global_to_local(curr_joint_vel, prp, prr, type_in='vels')
             joint_vel[i * 3:i * 3 + 3] = curr_joint_vel.ravel()
 
-        return (joint_pos, joint_vel)
+        return joint_pos, joint_vel
 
     def convert_global_to_local(self, arr, root_pos, root_rot, type_in='pos'):
         type_arg = type_in.split("_")

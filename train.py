@@ -81,6 +81,7 @@ OUT_BASE_PATH = os.path.join("models", "mann_tf2")
 frd_win = 'boxing_fr_' + str(FRD) + '_' + str(WINDOW)
 
 if not DEVELOP:
+    #TODO Rename dataset config file in file system to dataset_config.json instead of config.json
     dataset_config_path = os.path.join("data", frd_win, "config.json")
     dataset_npz_path = os.path.join('data', frd_win, 'train.npz')
 elif DEVELOP:
