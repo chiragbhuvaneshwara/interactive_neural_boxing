@@ -101,6 +101,12 @@ def global_to_local_pos(pos, root_pos, root_rot):
     return rot_around_z_3d(pos - root_pos, root_rot, inverse=True)  # self.char.joint_positions[i]#
 
 
-# TODO Give a better name
-def convert_to_zero_y_3d(arr, axis=None):
+def xz_to_x0yz(arr, axis=None):
+    """
+    To be used for root projections as they are expected to lie on the ground i.e zeros in y axis.
+    Converts input from x, z i.e 2D to x, y, z i.e 3D.
+    :param arr: np.array(2) or np.array(n_rows,2)
+    :param axis: None       or 1 (when adding entire array of zeros to array of shape (n_rows,2))
+    :return: np.array(3)    or np.array(n_rows, 3)
+    """
     return np.insert(arr, 1, 0, axis)

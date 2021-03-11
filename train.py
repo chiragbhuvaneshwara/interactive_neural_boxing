@@ -4,9 +4,6 @@ import os
 import glob
 
 
-# TODO Cleanup
-
-
 def generate_id_sequence(column_demarcation_ids, key):
     return [i for i in range(column_demarcation_ids[key][0], column_demarcation_ids[key][1])]
 
@@ -54,8 +51,6 @@ def get_gating_indices(x_ids, joint_ids):
     w_l_id = joint_ids["LeftWrist"] * 3
     wrist_end_effector_velocities_ids = generate_id_sequence(x_ids, 'x_local_vel')[w_r_id: w_r_id + 3] + \
                                         generate_id_sequence(x_ids, 'x_local_vel')[w_l_id: w_l_id + 3]
-    # TODO Update gating indices to include trajectory of hands when using trajectory of hands
-    # TODO Setup rest of gating input close to MANN paper
 
     # Gating input for OG MANN:
     # foot end effector velocities,
@@ -81,7 +76,7 @@ OUT_BASE_PATH = os.path.join("models", "mann_tf2")
 frd_win = 'boxing_fr_' + str(FRD) + '_' + str(WINDOW)
 
 if not DEVELOP:
-    #TODO Rename dataset config file in file system to dataset_config.json instead of config.json
+    # TODO Rename dataset config file in file system to dataset_config.json instead of config.json
     dataset_config_path = os.path.join("data", frd_win, "config.json")
     dataset_npz_path = os.path.join('data', frd_win, 'train.npz')
 elif DEVELOP:

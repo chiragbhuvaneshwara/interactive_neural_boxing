@@ -2,35 +2,34 @@ import numpy as np
 
 
 class TPosture(object):
-    """
-    Attributes:
-     - bones
-     - bone_map
-     - location
-     - rotation
 
-    """
+    def __init__(self, bones=None, bone_map=None, location=None, rotation=None, trajectory=None):
+        """
 
-    def __init__(self, bones=None, bone_map=None, location=None, rotation=None, arm_tr=None):
+        :param bones:
+        :param bone_map:
+        :param location:
+        :param rotation:
+        :param trajectory:
+        """
         self.bones = bones
         self.bone_map = bone_map
         self.location = location
         self.rotation = rotation
-        self.arm_tr = arm_tr
+        self.traj = trajectory
 
 
 class TBone(object):
-    """
-    Attributes:
-     - name
-     - position
-     - rotation
-     - children
-     - parent
-
-    """
 
     def __init__(self, name=None, position=None, rotation=None, children=None, parent=None, ):
+        """
+
+        :param name:
+        :param position:
+        :param rotation:
+        :param children:
+        :param parent:
+        """
         self.name = name
         self.position = position
         self.rotation = rotation
@@ -39,49 +38,51 @@ class TBone(object):
 
 
 class TVector3(object):
-    """
-    Attributes:
-     - x
-     - y
-     - z
-
-    """
 
     def __init__(self, x=None, y=None, z=None, ):
+        """
+
+        :param x:
+        :param y:
+        :param z:
+        """
         self.x = x
         self.y = y
         self.z = z
 
 
 class TQuaternion(object):
-    """
-    Attributes:
-     - w
-     - x
-     - y
-     - z
-
-    """
 
     def __init__(self, w=None, x=None, y=None, z=None, ):
+        """
+
+        :param w:
+        :param x:
+        :param y:
+        :param z:
+        """
         self.w = w
         self.x = x
         self.y = y
         self.z = z
 
 
-def TVector3_2np(x):
-    # np.array(x[0], x[1], -x[2])
+def tvector3_to_np(x):
     x = [-x[0], x[1], x[2]]
     return x
-    # return np.array([x.x, x.y, x.z])
 
 
-def np_2TVector3(x):
+def np_to_tvector3(x):
     return TVector3(x[0], x[1], x[2])
 
 
 def build_zero_posture(base_controller, position_str="position"):
+    """
+
+    :param base_controller:
+    :param position_str:
+    :return:
+    """
     zp = base_controller.zero_posture
     bonelist = []
     mapping = {}
@@ -95,23 +96,22 @@ def build_zero_posture(base_controller, position_str="position"):
             position = position / 100
         else:
             position = position
-        position = np_2TVector3(position)
+        position = np_to_tvector3(position)
 
         rotation = TQuaternion(float(bone["local_rotation"][0]), float(bone["local_rotation"][1]),
                                float(bone["local_rotation"][2]), float(bone["local_rotation"][3]))
         tb = TBone(bone["name"], position, rotation, children, bone["parent"])
         bonelist.append(tb)
 
-    # arm_tr = {'rwt': [0]*10, 'lwt': [0]*10}
-    arm_tr = {'rt': [0]*10, 'rt_v': [0]*10, 'rwt': [0]*10, 'lwt': [0]*10, 'rwt_v': [0]*10, 'lwt_v': [0]*10}
+    traj = {'rt': [0] * 10, 'rt_v': [0] * 10, 'rwt': [0] * 10, 'lwt': [0] * 10, 'rwt_v': [0] * 10, 'lwt_v': [0] * 10}
 
-    return TPosture(bonelist, mapping, [0,0,0], 0.0, arm_tr)
+    return TPosture(bonelist, mapping, [0, 0, 0], 0.0, traj)
 
 
 def serialize(obj):
-    """JSON serializer for objects not serializable by default json code"""
-
-    # if isinstance(obj, TBone):
-        # print(obj.__dict__)
-
+    """
+    JSON serializer for objects not serializable by default json code
+    :param obj:
+    :return:
+    """
     return obj.__dict__

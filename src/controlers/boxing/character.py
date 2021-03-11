@@ -1,4 +1,8 @@
 """author: Chirag Bhuvaneshwara """
+
+# TODO : Ensure that all manipulations in methods or fuctions are applied to copies of arrays and not the arrays
+#  themselves
+
 import numpy as np
 from ... import utils
 
@@ -113,29 +117,35 @@ class Character:
         return joint_pos, joint_vel
 
     def convert_global_to_local(self, arr, root_pos, root_rot, type_in='pos'):
+
+        arr_copy = np.array(arr)
+        root_pos_copy = np.array(root_pos)
+        root_rot_copy = np.array(root_rot)
+
         type_arg = type_in.split("_")
-        for i in range(len(arr)):
+        for i in range(len(arr_copy)):
             if type_arg[0] == 'pos':
                 if len(type_arg) > 1 and type_arg[1] == "hand":
-                    root_pos[1] = 0
-                arr[i] -= root_pos
+                    root_pos_copy[1] = 0
+                arr_copy[i] -= root_pos_copy
 
-            arr[i] = utils.rot_around_z_3d(arr[i], root_rot, inverse=True)
+            arr_copy[i] = utils.rot_around_z_3d(arr_copy[i], root_rot_copy, inverse=True)
 
-        return arr
+        return arr_copy
 
     def convert_local_to_global(self, arr, type_in='pos'):
-        root_pos = self.root_position
-        root_rot = self.root_rotation
+        arr_copy = np.array(arr)
+        root_pos = np.array(self.root_position)
+        root_rot = np.array(self.root_rotation)
         type_arg = type_in.split("_")
 
-        for i in range(len(arr)):
-            arr[i] = utils.rot_around_z_3d(arr[i], root_rot)
+        for i in range(len(arr_copy)):
+            arr_copy[i] = utils.rot_around_z_3d(arr_copy[i], root_rot)
             if type_arg[0] == 'pos':
                 if len(type_arg) > 1 and type_arg[1] == "hand":
                     root_pos[1] = 0
-                arr[i] = arr[i] + root_pos
-        return arr
+                arr_copy[i] = arr_copy[i] + root_pos
+        return arr_copy
 
     def reset(self, root_position=np.array([0.0, 0.0, 0.0]), start_orientation=0.0):
         self.root_position = root_position

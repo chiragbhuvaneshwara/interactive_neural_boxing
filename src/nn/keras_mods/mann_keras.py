@@ -7,7 +7,7 @@ from src.nn.keras_mods.network_instantiater import TrainNetwork, InstantiateNetw
 from sklearn import preprocessing
 
 from zipfile import ZipFile
-
+# TODO Replace with mann_2
 # TODO Verify and understand if MANN network is setup correctly
 # TODO Verify if required ==> Doesn't this mean that the weights are always initialized the same way?
 rng = np.random.RandomState(23456)
@@ -337,13 +337,13 @@ class MANN(tf.keras.Model):
         y_std = np.array(norm['y_std'], dtype=np.float64)
         x_input = (x - x_mean) / x_std
 
-        print("#####################################")
+        # print("#####################################")
         tmp = x_input.ravel()
         r_p_label = tmp[
                     col_demarcation_ids[0]['x_right_punch_labels'][0]:col_demarcation_ids[0]['x_right_punch_labels'][1]]
         l_p_label = tmp[
                     col_demarcation_ids[0]['x_left_punch_labels'][0]:col_demarcation_ids[0]['x_left_punch_labels'][1]]
-        print('rph:', r_p_label, 'lph:', l_p_label)
+        # print('rph:', r_p_label, 'lph:', l_p_label)
 
         y_prediction = mann(x_input)
         if np.isnan(y_prediction).any():
@@ -355,7 +355,7 @@ class MANN(tf.keras.Model):
                     col_demarcation_ids[1]['y_right_punch_labels'][0]:col_demarcation_ids[1]['y_right_punch_labels'][1]]
         l_p_label = tmp[
                     col_demarcation_ids[1]['y_left_punch_labels'][0]:col_demarcation_ids[1]['y_left_punch_labels'][1]]
-        print('rph:', r_p_label, 'lph:', l_p_label)
+        # print('rph:', r_p_label, 'lph:', l_p_label)
 
         if np.isnan(y_prediction).any():
             raise Exception('Nans found')
