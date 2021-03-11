@@ -85,7 +85,7 @@ namespace MultiMosiServer
             {
                 this.x = x;
                 this.y = y;
-                this.z = -z;
+                this.z = z;
             }
         }
 
@@ -121,7 +121,7 @@ namespace MultiMosiServer
             public Dictionary<string, int> Bone_map { get; set; }
             public TVector3 Location { get; set; }
             public double Rotation { get; set; }
-            public ArmTr arm_tr { get; set; }
+            public ArmTr traj { get; set; }
 
         }
 

@@ -34,6 +34,9 @@ namespace MultiMosiServer
             httpWebRequest.ContentType = "application/json";
             httpWebRequest.Method = "POST";
 
+            // TODO: Set timeout correctly when not debugging
+            httpWebRequest.Timeout = System.Threading.Timeout.Infinite;
+
             //string json = JsonUtility.ToJson(VarToPost);
 
             using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
@@ -64,50 +67,6 @@ namespace MultiMosiServer
 
         }
 
-        public string UpdatePunchTarget(string TargetHand)
-        {
-            punchInput punch_in = new punchInput();
-
-            if (TargetHand == "right")
-            {
-                Vector3 l_hand_pos = GameObject.Find("LeftWrist_end").transform.position;
-                //Debug.Log(l_hand_pos);
-                var punchTargetTransform = GetPunchTargetTransform();
-                Vector3 target = punchTargetTransform.position;
-
-
-                punch_in.hand = "right";
-                punch_in.target_left = new double[] { l_hand_pos.x, l_hand_pos.y, l_hand_pos.z };
-                punch_in.target_right = new double[] { target.x, target.y, target.z };
-            }
-            else if (TargetHand == "left")
-            {
-                Vector3 r_hand_pos = GameObject.Find("RightWrist_end").transform.position;
-                //Debug.Log(r_hand_pos);
-                var punchTargetTransform = GetPunchTargetTransform();
-                Vector3 target = punchTargetTransform.position;
-
-
-                punch_in.hand = "left";
-                punch_in.target_left = new double[] { target.x, target.y, target.z };
-                punch_in.target_right = new double[] { r_hand_pos.x, r_hand_pos.y, r_hand_pos.z };
-            }
-
-            string punch_input = JsonConvert.SerializeObject(punch_in);
-            string json_obj = JsonPostWithResp("punch_in", punch_input);
-            
-            //string data_1 = JObject.Parse(json_obj)["status"].ToString();
-            BonePositions bp = JsonConvert.DeserializeObject<BonePositions>(json_obj);
-
-
-            //Debug.Log("******************************");
-            //Debug.Log(bp.pose);
-            //Debug.Log(bp.message);
-            //Debug.Log(bp.status);
-
-            return json_obj;
-        }
-
 
         public TPosture UpdatePunchTargetFetchPosture(string TargetHand)
         {
@@ -124,7 +83,7 @@ namespace MultiMosiServer
                 punch_in.hand = "right";
                 //punch_in.target_left = new double[] { l_hand_pos.x, l_hand_pos.y, l_hand_pos.z };
                 punch_in.target_left = new double[] { 0, 0, 0};
-                punch_in.target_right = new double[] { -target.x, target.y, target.z };
+                punch_in.target_right = new double[] { target.x, target.y, target.z };
             }
             else if (TargetHand == "left")
             {
@@ -136,7 +95,7 @@ namespace MultiMosiServer
 
 
                 punch_in.hand = "left";
-                punch_in.target_left = new double[] { -target.x, target.y, target.z};
+                punch_in.target_left = new double[] { target.x, target.y, target.z};
                 punch_in.target_right = new double[] { 0, 0, 0};
             }
             else if (TargetHand == "none")
@@ -223,31 +182,31 @@ namespace MultiMosiServer
         public Vector3 GetTrPos(string tr_name, int i)
         //public void GetArmTrPos(string tr_name, int i)
         {
-            //Debug.Log(Tvec2vec(this.posture.arm_tr.rwt[i]).x);
-            //Debug.Log(this.posture.arm_tr.rwt.Count);
+            //Debug.Log(Tvec2vec(this.posture.traj.rwt[i]).x);
+            //Debug.Log(this.posture.traj.rwt.Count);
             if (tr_name == "root")
             {
-                return Tvec2vec(this.posture.arm_tr.rt[i]);
+                return Tvec2vec(this.posture.traj.rt[i]);
             }
             else if (tr_name == "root_vel")
             {
-                return Tvec2vec(this.posture.arm_tr.rt_v[i]);
+                return Tvec2vec(this.posture.traj.rt_v[i]);
             }
             else if (tr_name == "right_wrist")
             {
-                return Tvec2vec(this.posture.arm_tr.rwt[i]);
+                return Tvec2vec(this.posture.traj.rwt[i]);
             }
             else if (tr_name == "left_wrist")
             {
-                return Tvec2vec(this.posture.arm_tr.lwt[i]);
+                return Tvec2vec(this.posture.traj.lwt[i]);
             }
             else if (tr_name == "right_wrist_vel")
             {
-                return Tvec2vec(this.posture.arm_tr.rwt_v[i]);
+                return Tvec2vec(this.posture.traj.rwt_v[i]);
             }
             else if (tr_name == "left_wrist_vel")
             {
-                return Tvec2vec(this.posture.arm_tr.lwt_v[i]);
+                return Tvec2vec(this.posture.traj.lwt_v[i]);
             }
             else
             {
