@@ -266,8 +266,8 @@ class MANN(tf.keras.Model):
             # if "_local" in k:
             #     y_std[v[0]: v[1]] *= (joint_weights.repeat(3))
 
-        x_std[x_std == 0] = 1.0
-        y_std[y_std == 0] = 1.0
+        x_std[x_std == 0] = 0.01
+        y_std[y_std == 0] = 0.01
 
         norm = {"x_mean": x_mean.tolist(),
                 "y_mean": y_mean.tolist(),

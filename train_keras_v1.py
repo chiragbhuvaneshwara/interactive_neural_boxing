@@ -87,16 +87,6 @@ elif DEVELOP:
 
 frd_win_epochs = frd_win + '_' + str(EPOCHS)
 setup_output_dir(OUT_BASE_PATH, frd_win_epochs)
-# if frd_win_epochs not in os.listdir(output_base_path):
-#     print('Creating new output dir')
-#     os.mkdir(os.path.join(output_base_path, frd_win_epochs))
-#     out_dir = os.path.join(output_base_path, frd_win_epochs)
-# else:
-#     print('Emptying output dir')
-#     files = glob.glob(os.path.join(output_base_path, frd_win_epochs, '*'))
-#     for f in files:
-#         os.remove(f)
-#     out_dir = os.path.join(output_base_path, frd_win_epochs)
 out_dir = os.path.join(OUT_BASE_PATH, frd_win_epochs)
 model_wts_path = os.path.join(out_dir, "model_weights.zip")
 mann_config_path = os.path.join(out_dir, 'mann_config.json')
@@ -105,17 +95,7 @@ norm_path = os.path.join(out_dir, 'data_norm.json')
 ############################################
 with open(dataset_config_path) as f:
     dataset_config = json.load(f)
-# endJoints = config_store['endJoints']
-# n_joints = config_store['numJoints']
-# use_rotations = config_store['use_rotations']
-# n_gaits = config_store['n_gaits']
-# use_footcontacts = config_store['use_footcontacts']
-# foot_left = config_store['foot_left']
-# foot_right = config_store['foot_right']
-# zero_posture = config_store['zero_posture']
-# col_names = config_store['col_names']
-# frd = config_store['frd']
-# window = config_store['window']
+
 bone_map = dataset_config['bone_map']
 col_demarcation_ids = dataset_config['col_demarcation_ids']
 x_col_demarcation = col_demarcation_ids[0]

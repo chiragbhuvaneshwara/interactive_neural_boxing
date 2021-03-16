@@ -138,3 +138,6 @@ src/controlers/boxing/controller_in_out/*
 
 /models/mann_tf2/*
 !/models/mann_tf2/.gitkeep
+
+/models/mann_tf2_v2/*
+!/models/mann_tf2_v2/.gitkeep
