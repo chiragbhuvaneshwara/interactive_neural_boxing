@@ -5,7 +5,8 @@ import numpy as np
 import tensorflow as tf
 import os
 from datetime import datetime
-from src.nn.mann_keras_v2.mann import MANN, loss_func, prepare_mann_data, EpochWriter, GatingChecker
+from src.nn.mann_keras_v2.mann import MANN, loss_func, prepare_mann_data, get_variation_gating, save_network
+    # EpochWriter, GatingChecker
 
 tf.keras.backend.set_floatx("float32")
 
@@ -66,11 +67,23 @@ def get_gating_indices(x_ids, joint_ids):
     return gating_ids
 
 
-def train_boxing_data(data_npz_path, data_config_path, output_dir, epochs=30, batchsize=32):
-    logdir = setup_dir(os.path.join(output_dir, "logs"))
-    epoch_dir = setup_dir(os.path.join(output_dir, "epochs"))
+def train_boxing_data(data_npz_path, data_config_path, output_dir, checkpoint_dir, epochs=30, batchsize=32):
+    # logdir = setup_dir(os.path.join(output_dir, "logs"))
+    # epoch_dir = setup_dir(os.path.join(output_dir, "epochs"))
+    # epoch_dir = os.path.join(epoch_dir, "epoch_%d")
+    # checkpoint_dir = setup_dir(os.path.join(output_dir, "checkpoints"))
+    logdir = os.path.join(output_dir, "logs")
+    epoch_dir = os.path.join(output_dir, "epochs")
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    if not os.path.exists(logdir):
+        os.makedirs(logdir)
+    if not os.path.exists(epoch_dir):
+        os.makedirs(epoch_dir)
+    if not os.path.exists(checkpoint_dir):
+        os.makedirs(checkpoint_dir)
     epoch_dir = os.path.join(epoch_dir, "epoch_%d")
-    checkpoint_dir = setup_dir(os.path.join(output_dir, "checkpoints"))
+
     norm_path = os.path.join(output_dir, 'data_norm.json')
 
     with open(data_config_path) as f:
@@ -94,17 +107,41 @@ def train_boxing_data(data_npz_path, data_config_path, output_dir, epochs=30, ba
     learning_rate = tf.keras.experimental.CosineDecayRestarts(0.0001, 10 * (len(X) // batchsize))
     optimizer = tf.keras.optimizers.Adam(learning_rate)
 
-    network = MANN(input_dim, output_dim, 512, 64, 6, gating_indices)
+    network = MANN(input_dim, output_dim, 512, 64, 6, gating_indices, batch_size=batchsize)
     network.compile(optimizer=optimizer, loss=loss_func)
 
-    tensorboard = tf.keras.callbacks.TensorBoard(log_dir=logdir, write_graph=True, write_images=False,
+    class EpochWriter(tf.keras.callbacks.Callback):
+        def __init__(self, path, checkpoint_folder, Xmean, Ymean, Xstd, Ystd):
+            super().__init__()
+            self.path = path
+            self.checkpoint_folder = os.path.join(checkpoint_folder, "epoch_%d")
+            self.Xmean = Xmean
+            self.Ymean = Ymean
+            self.Xstd = Xstd
+            self.Ystd = Ystd
+
+        def on_epoch_end(self, epoch, logs=None):
+            save_network(self.path % epoch, self.model, self.Xmean, self.Ymean, self.Xstd, self.Ystd)
+            print("\nModel saved to ", self.path % epoch)
+
+    class GatingChecker(tf.keras.callbacks.Callback):
+        def __init__(self, X, batch_size):
+            super().__init__()
+            self.X = X
+            self.batch_size = batch_size
+
+        def on_epoch_begin(self, epoch, logs=None):
+            # print("epoch start")
+            # a = 0
+            get_variation_gating(self.model, self.X, self.batch_size)
+
+    tensorboard = tf.keras.callbacks.TensorBoard(log_dir=os.path.join(logdir), write_graph=True, write_images=False,
                                                  histogram_freq=0, update_freq="batch")
     cp_callback = EpochWriter(epoch_dir, checkpoint_dir, x_mean, y_mean, x_std, y_std)
-    # TODO: What is happening here?
-    X = X[:(len(X) // batchsize) * batchsize, :]
+    # X = X[:(len(X) // batchsize) * batchsize, :]
+    X = X[:(500 // batchsize) * batchsize, :]
     Y = Y[:len(X), :]
-
-    gating_checker = GatingChecker(X)
+    gating_checker = GatingChecker(X, batchsize)
     epochs_executed = 0
 
     print(X.shape, input_dim, output_dim)
@@ -119,7 +156,7 @@ if __name__ == '__main__':
     EPOCHS = 100
     FRD = 1
     WINDOW = 15
-    OUT_BASE_PATH = setup_dir(os.path.join("models", "mann_tf2_v2"))
+    OUT_BASE_PATH = os.path.join("models", "mann_tf2_v2")
     ############################################
     frd_win = 'boxing_fr_' + str(FRD) + '_' + str(WINDOW)
     current_timestamp = datetime.now().strftime("%Y%m%d_%H-%M-%S")
@@ -128,14 +165,24 @@ if __name__ == '__main__':
         # TODO Rename dataset config file in file system to dataset_config.json instead of config.json
         dataset_config_path = os.path.join("data", frd_win, "config.json")
         dataset_npz_path = os.path.join('data', frd_win, 'train.npz')
-    elif DEVELOP:
+        batch_size = 32
         EPOCHS = 2
-        OUT_BASE_PATH = setup_dir(os.path.join(OUT_BASE_PATH, "dev"))
+
+    elif DEVELOP:
+        OUT_BASE_PATH = os.path.join(OUT_BASE_PATH, "dev")
         dataset_config_path = os.path.join("data", "dev", frd_win, "config.json")
         dataset_npz_path = os.path.join('data', 'dev', frd_win, 'train.npz')
+        batch_size = 2
+        EPOCHS = 2
 
     frd_win_epochs = frd_win + '_' + str(EPOCHS)
-    out_dir = setup_dir(os.path.join(OUT_BASE_PATH, frd_win_epochs))
-    out_dir = setup_dir(os.path.join(out_dir, current_timestamp))
-
-    train_boxing_data(dataset_npz_path, dataset_config_path, out_dir, epochs=EPOCHS)
+    # out_dir = setup_dir(os.path.join(OUT_BASE_PATH, frd_win_epochs))
+    # out_dir = setup_dir(os.path.join(out_dir, current_timestamp))
+    out_dir = setup_dir(os.path.join(OUT_BASE_PATH, frd_win_epochs, current_timestamp))
+    checkpoint_dir = setup_dir(os.path.join("training", current_timestamp, "check"))
+    # train_boxing_data(dataset_npz_path, dataset_config_path, out_dir, epoch_out_dir, epochs=EPOCHS, batchsize= batch_size)
+    # train_boxing_data(dataset_npz_path, dataset_config_path, out_dir, checkpoint_dir, epochs=EPOCHS, batchsize=batch_size)
+    train_boxing_data(dataset_npz_path, dataset_config_path,
+                      os.path.join("training_nsm", current_timestamp, "out"),
+                      os.path.join("training", current_timestamp, "check"),
+                      epochs=EPOCHS, batchsize=batch_size)

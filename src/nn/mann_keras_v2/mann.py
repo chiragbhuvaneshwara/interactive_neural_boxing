@@ -68,28 +68,34 @@ class MANN(tf.keras.Model):
             e = tf.expand_dims(experts, 0)
             e = tf.tile(e, [self.batch_size, 1, 1, 1])
             w = tf.expand_dims(tf.expand_dims(expert_weights, -1), -1)
+            # print("interpolate: ", w, e)
             r = w * e
             return tf.reduce_sum(r, axis=1)
 
     @tf.function
     def gating_network(self, inputs, training=None):
         if training:
-            print("training not done")
+            print("training not none")
             H0 = tf.nn.dropout(inputs, self.dropout_prob)
         else:
             H0 = inputs
 
+        # print("gh1 " , self.weight_knots[0], H0)
+        # print(tf.matmul(self.weight_knots[0], H0), self.bias_knots[0])
         H1 = tf.matmul(self.weight_knots[0], H0) + self.bias_knots[0]
         H1 = tf.nn.elu(H1)
-        # TODO verify if not Training is None vs if training is not None
         if not training is None:
             H1 = tf.nn.dropout(H1, self.dropout_prob)
 
+        # print("gh2 " , self.weight_knots[1],  H1)
+        # print(tf.matmul(self.weight_knots[1], H1), self.bias_knots[1])
         H2 = tf.matmul(self.weight_knots[1], H1) + self.bias_knots[1]
         H2 = tf.nn.elu(H2)
         if not training is None:
             H2 = tf.nn.dropout(H2, self.dropout_prob)
 
+        # print("gh3 " , self.weight_knots[2], H2)
+        # print(tf.matmul(self.weight_knots[2], H2), self.bias_knots[2])
         H3 = tf.matmul(self.weight_knots[2], H2) + self.bias_knots[2]
         H3 = tf.nn.softmax(H3, axis=1)
         return H3
@@ -104,6 +110,9 @@ class MANN(tf.keras.Model):
         w0 = self.interpolate(self.weight_knots[3], expert_weights)
         b0 = self.interpolate(self.bias_knots[3], expert_weights)
 
+        # print("H1 " , w0, H0)
+        # print(tf.matmul(w0, H0), b0)
+
         H1 = tf.matmul(w0, H0) + b0
         H1 = tf.nn.elu(H1)
         if not training is None:
@@ -112,14 +121,19 @@ class MANN(tf.keras.Model):
         w1 = self.interpolate(self.weight_knots[4], expert_weights)
         b1 = self.interpolate(self.bias_knots[4], expert_weights)
 
+        # print("H2 " , w1, H1)
+        # print(tf.matmul(w1, H1), b1)
+
         H2 = tf.matmul(w1, H1) + b1
         H2 = tf.nn.elu(H2)
-
         if not training is None:
             H2 = tf.nn.dropout(H2, self.dropout_prob)
 
         w2 = self.interpolate(self.weight_knots[5], expert_weights)
         b2 = self.interpolate(self.bias_knots[5], expert_weights)
+
+        # print("H3 " , w2, H2)
+        # print(tf.matmul(w2, H2), b2)
 
         H3 = tf.matmul(w2, H2) + b2
 
@@ -127,9 +141,14 @@ class MANN(tf.keras.Model):
 
     @tf.function
     def call(self, inputs, training=None):
+        # self.batch_size.assign(inputs.shape[0])
+
         expert_input = tf.expand_dims(tf.gather(inputs, self.gating_indices, axis=1), -1)
         motion_input = tf.expand_dims(inputs, -1)
+        # print("einpput:", expert_input)
         expert_weights = self.gating_network(expert_input, training)[..., 0]
+        # print("gating: ", expert_weights)
+        # print("motion in:", motion_input)
         output = self.motion_network(motion_input, expert_weights, training)[..., 0]
 
         return tf.concat([output, expert_weights], axis=-1)
@@ -170,7 +189,7 @@ def prepare_mann_data(dataset, dataset_config):
     return x_train_norm, y_train_norm, norm
 
 
-def save_network(path, network, x_in_mean, y_out_mean, x_in_std, y_in_std):
+def save_network(path, network, x_in_mean, y_out_mean, x_in_std, y_out_std):
     if os.path.exists(path):
         os.remove(path)
 
@@ -182,10 +201,10 @@ def save_network(path, network, x_in_mean, y_out_mean, x_in_std, y_in_std):
     tf.saved_model.save(network, os.path.join(path, "saved_model"))
     if not os.path.exists(os.path.join(path, "means")):
         os.makedirs(os.path.join(path, "means"))
-    x_in_mean.astype("float32").tofile(os.path.join(path, "means", "x_mean.bin"))
-    y_out_mean.astype("float32").tofile(os.path.join(path, "means", "y_mean.bin"))
-    x_in_std.astype("float32").tofile(os.path.join(path, "means", "x_std.bin"))
-    y_in_std.astype("float32").tofile(os.path.join(path, "means", "y_std.bin"))
+    x_in_mean.astype("float32").tofile(os.path.join(path, "means", "Xmean.bin"))
+    y_out_mean.astype("float32").tofile(os.path.join(path, "means", "Ymean.bin"))
+    x_in_std.astype("float32").tofile(os.path.join(path, "means", "Xstd.bin"))
+    y_out_std.astype("float32").tofile(os.path.join(path, "means", "Ystd.bin"))
 
 
 def load_mann(path):
@@ -195,13 +214,15 @@ def load_mann(path):
     return mann2
 
 
-def get_variation_gating(network, input_data):
+def get_variation_gating(network, input_data, batch_size):
     gws = []
     for i in range(10):
-        bi = input_data[i * 32:(i + 1) * 32, :]
+        bi = input_data[i * batch_size:(i + 1) * batch_size, :]
         out = network(bi)
-        # TODO Add variable to control the expert weights output below
+        # TODO Setup var for extracting gating outputs
         gws.append(out[:, -6:])
+    #
+    # gws.append(tensor.numpy())
     print("\nChecking the gating variability: ")
     print("  mean: ", np.mean(np.concatenate(gws, axis=0), axis=0))
     print("  std: ", np.std(np.concatenate(gws, axis=0), axis=0))
@@ -226,12 +247,15 @@ class EpochWriter(tf.keras.callbacks.Callback):
 
 
 class GatingChecker(tf.keras.callbacks.Callback):
-    def __init__(self, X):
+    def __init__(self, X, batch_size):
         super().__init__()
         self.X = X
+        self.batch_size = batch_size
 
     def on_epoch_begin(self, epoch, logs=None):
-        get_variation_gating(self.model, self.X)
+        # print("epoch start")
+        # a = 0
+        get_variation_gating(self.model, self.X, self.batch_size)
 
 
 def loss_func(y, yt):
