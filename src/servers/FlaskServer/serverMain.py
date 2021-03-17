@@ -21,7 +21,7 @@ frd_win = 'boxing_fr_' + str(frd) + '_' + str(window)
 dataset_path = os.path.join(DATASET_OUTPUT_BASE_PATH, frd_win, 'train.npz')
 controller_in_out_dir = 'src/controlers/boxing/controller_in_out'
 frd_win_epochs = 'boxing_fr_' + str(frd) + '_' + str(window) + '_' + str(epochs)
-trained_base_path = 'models/mann_tf2/' + frd_win_epochs
+trained_base_path = 'saved_models/mann_tf2/' + frd_win_epochs
 target_file = os.path.join(server_to_main_dir, trained_base_path, 'model_weights.zip')
 mann_config_path = os.path.join(server_to_main_dir, trained_base_path, 'mann_config.json')
 with open(mann_config_path) as json_file:

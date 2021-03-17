@@ -15,7 +15,7 @@ EPOCHS = 100
 CONTROLLER_SAVE_IN_OUT_DIR = 'src/controlers/boxing/controller_in_out'
 
 frd_win_epochs = 'boxing_fr_' + str(FRD) + '_' + str(WINDOW) + '_' + str(EPOCHS)
-trained_base_path = 'models/mann_tf2/' + frd_win_epochs
+trained_base_path = 'saved_models/mann_tf2/' + frd_win_epochs
 target_file = os.path.join(trained_base_path, 'model_weights.zip')
 
 mann_config_path = os.path.join(trained_base_path, 'mann_config.json')

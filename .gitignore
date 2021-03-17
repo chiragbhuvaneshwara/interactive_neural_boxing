@@ -136,11 +136,11 @@ src/controlers/boxing/controller_in_out/*
 
 /tmp
 
-/models/mann_tf2/*
-!/models/mann_tf2/.gitkeep
+/saved_models/mann_tf2/*
+!/saved_models/mann_tf2/.gitkeep
 
-/models/mann_tf2_v2/*
-!/models/mann_tf2_v2/.gitkeep
+/saved_models/mann_tf2_v2/*
+!/saved_models/mann_tf2_v2/.gitkeep
 
 training
 training_nsm

@@ -71,7 +71,7 @@ DEVELOP = False
 EPOCHS = 100
 FRD = 1
 WINDOW = 15
-OUT_BASE_PATH = os.path.join("models", "mann_tf2")
+OUT_BASE_PATH = os.path.join("saved_models", "mann_tf2")
 ############################################
 frd_win = 'boxing_fr_' + str(FRD) + '_' + str(WINDOW)
 
@@ -81,7 +81,7 @@ if not DEVELOP:
     dataset_npz_path = os.path.join('data', frd_win, 'train.npz')
 elif DEVELOP:
     EPOCHS = 2
-    OUT_BASE_PATH = os.path.join("models", "mann_tf2", "dev")
+    OUT_BASE_PATH = os.path.join("saved_models", "mann_tf2", "dev")
     dataset_config_path = os.path.join("data", "dev", frd_win, "config.json")
     dataset_npz_path = os.path.join('data', 'dev', frd_win, 'train.npz')
 

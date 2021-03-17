@@ -156,7 +156,7 @@ if __name__ == '__main__':
     EPOCHS = 100
     FRD = 1
     WINDOW = 15
-    OUT_BASE_PATH = os.path.join("models", "mann_tf2_v2")
+    OUT_BASE_PATH = os.path.join("saved_models", "mann_tf2_v2")
     ############################################
     frd_win = 'boxing_fr_' + str(FRD) + '_' + str(WINDOW)
     current_timestamp = datetime.now().strftime("%Y%m%d_%H-%M-%S")
