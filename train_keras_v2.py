@@ -5,8 +5,9 @@ import numpy as np
 import tensorflow as tf
 import os
 from datetime import datetime
-from src.nn.mann_keras_v2.mann import MANN, loss_func, prepare_mann_data, get_variation_gating, save_network
-    # EpochWriter, GatingChecker
+from src.nn.mann import MANN, loss_func, prepare_mann_data, get_variation_gating, save_network, EpochWriter, \
+    GatingChecker, load_mann
+from pathlib import Path
 
 tf.keras.backend.set_floatx("float32")
 
@@ -67,21 +68,19 @@ def get_gating_indices(x_ids, joint_ids):
     return gating_ids
 
 
-def train_boxing_data(data_npz_path, data_config_path, output_dir, checkpoint_dir, epochs=30, batchsize=32):
-    # logdir = setup_dir(os.path.join(output_dir, "logs"))
-    # epoch_dir = setup_dir(os.path.join(output_dir, "epochs"))
-    # epoch_dir = os.path.join(epoch_dir, "epoch_%d")
-    # checkpoint_dir = setup_dir(os.path.join(output_dir, "checkpoints"))
+def train_boxing_data(data_npz_path, data_config_path, output_dir, frd_win_epochs_data, epochs=30, batchsize=32):
     logdir = os.path.join(output_dir, "logs")
     epoch_dir = os.path.join(output_dir, "epochs")
+
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
+    with open(os.path.join(output_dir, frd_win_epochs_data + '.json'), 'w') as outfile:
+        json.dump(frd_win_epochs_data, outfile)
+
     if not os.path.exists(logdir):
         os.makedirs(logdir)
     if not os.path.exists(epoch_dir):
         os.makedirs(epoch_dir)
-    if not os.path.exists(checkpoint_dir):
-        os.makedirs(checkpoint_dir)
     epoch_dir = os.path.join(epoch_dir, "epoch_%d")
 
     norm_path = os.path.join(output_dir, 'data_norm.json')
@@ -110,36 +109,11 @@ def train_boxing_data(data_npz_path, data_config_path, output_dir, checkpoint_di
     network = MANN(input_dim, output_dim, 512, 64, 6, gating_indices, batch_size=batchsize)
     network.compile(optimizer=optimizer, loss=loss_func)
 
-    class EpochWriter(tf.keras.callbacks.Callback):
-        def __init__(self, path, checkpoint_folder, Xmean, Ymean, Xstd, Ystd):
-            super().__init__()
-            self.path = path
-            self.checkpoint_folder = os.path.join(checkpoint_folder, "epoch_%d")
-            self.Xmean = Xmean
-            self.Ymean = Ymean
-            self.Xstd = Xstd
-            self.Ystd = Ystd
-
-        def on_epoch_end(self, epoch, logs=None):
-            save_network(self.path % epoch, self.model, self.Xmean, self.Ymean, self.Xstd, self.Ystd)
-            print("\nModel saved to ", self.path % epoch)
-
-    class GatingChecker(tf.keras.callbacks.Callback):
-        def __init__(self, X, batch_size):
-            super().__init__()
-            self.X = X
-            self.batch_size = batch_size
-
-        def on_epoch_begin(self, epoch, logs=None):
-            # print("epoch start")
-            # a = 0
-            get_variation_gating(self.model, self.X, self.batch_size)
-
     tensorboard = tf.keras.callbacks.TensorBoard(log_dir=os.path.join(logdir), write_graph=True, write_images=False,
                                                  histogram_freq=0, update_freq="batch")
-    cp_callback = EpochWriter(epoch_dir, checkpoint_dir, x_mean, y_mean, x_std, y_std)
-    # X = X[:(len(X) // batchsize) * batchsize, :]
-    X = X[:(500 // batchsize) * batchsize, :]
+    cp_callback = EpochWriter(epoch_dir, x_mean, y_mean, x_std, y_std)
+    X = X[:(len(X) // batchsize) * batchsize, :]
+    # X = X[:(100 // batchsize) * batchsize, :]
     Y = Y[:len(X), :]
     gating_checker = GatingChecker(X, batchsize)
     epochs_executed = 0
@@ -165,7 +139,7 @@ if __name__ == '__main__':
         # TODO Rename dataset config file in file system to dataset_config.json instead of config.json
         dataset_config_path = os.path.join("data", frd_win, "config.json")
         dataset_npz_path = os.path.join('data', frd_win, 'train.npz')
-        batch_size = 32
+        batch_size = 2
         EPOCHS = 2
 
     elif DEVELOP:
@@ -176,13 +150,7 @@ if __name__ == '__main__':
         EPOCHS = 2
 
     frd_win_epochs = frd_win + '_' + str(EPOCHS)
-    # out_dir = setup_dir(os.path.join(OUT_BASE_PATH, frd_win_epochs))
-    # out_dir = setup_dir(os.path.join(out_dir, current_timestamp))
-    out_dir = setup_dir(os.path.join(OUT_BASE_PATH, frd_win_epochs, current_timestamp))
-    checkpoint_dir = setup_dir(os.path.join("training", current_timestamp, "check"))
-    # train_boxing_data(dataset_npz_path, dataset_config_path, out_dir, epoch_out_dir, epochs=EPOCHS, batchsize= batch_size)
-    # train_boxing_data(dataset_npz_path, dataset_config_path, out_dir, checkpoint_dir, epochs=EPOCHS, batchsize=batch_size)
-    train_boxing_data(dataset_npz_path, dataset_config_path,
-                      os.path.join("training_nsm", current_timestamp, "out"),
-                      os.path.join("training", current_timestamp, "check"),
-                      epochs=EPOCHS, batchsize=batch_size)
+    out_dir = os.path.join(OUT_BASE_PATH, frd_win_epochs, current_timestamp)
+    # out_dir = os.path.join(OUT_BASE_PATH)
+    train_boxing_data(dataset_npz_path, dataset_config_path, out_dir, frd_win_epochs, epochs=EPOCHS,
+                      batchsize=batch_size)
