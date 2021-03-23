@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 from src.nn.mann import MANN, loss_func, prepare_mann_data, get_variation_gating, save_network, EpochWriter, \
     GatingChecker, load_mann
-from pathlib import Path
+import argparse
 
 tf.keras.backend.set_floatx("float32")
 
@@ -126,7 +126,15 @@ def train_boxing_data(data_npz_path, data_config_path, output_dir, frd_win_epoch
 
 
 if __name__ == '__main__':
-    DEVELOP = False
+    args_parser = argparse.ArgumentParser()
+    args_parser.add_argument("-d", "--develop", help="Run on subset",
+                             action="store_true", default=False)
+    args_parser.add_argument("-l", "--local", help="Flag indicating remote machine or local machine",
+                             action="store_true", default=False)
+    args = args_parser.parse_args()
+    DEVELOP = args.develop
+    LOCAL = args.local
+
     EPOCHS = 100
     FRD = 1
     WINDOW = 15
@@ -139,10 +147,10 @@ if __name__ == '__main__':
         # TODO Rename dataset config file in file system to dataset_config.json instead of config.json
         dataset_config_path = os.path.join("data", frd_win, "config.json")
         dataset_npz_path = os.path.join('data', frd_win, 'train.npz')
-        batch_size = 2
-        EPOCHS = 2
+        batch_size = 32
 
     elif DEVELOP:
+        print('Dev Mode')
         OUT_BASE_PATH = os.path.join(OUT_BASE_PATH, "dev")
         dataset_config_path = os.path.join("data", "dev", frd_win, "config.json")
         dataset_npz_path = os.path.join('data', 'dev', frd_win, 'train.npz')
@@ -150,7 +158,18 @@ if __name__ == '__main__':
         EPOCHS = 2
 
     frd_win_epochs = frd_win + '_' + str(EPOCHS)
-    out_dir = os.path.join(OUT_BASE_PATH, frd_win_epochs, current_timestamp)
-    # out_dir = os.path.join(OUT_BASE_PATH)
+    if LOCAL:
+        print('Local machine dev')
+        OUT_BASE_PATH = os.path.join("local_dev_saved_models")
+        dataset_config_path = os.path.join("data", "dev", frd_win, "config.json")
+        dataset_npz_path = os.path.join('data', 'dev', frd_win, 'train.npz')
+        batch_size = 2
+        EPOCHS = 2
+        out_dir = os.path.join(OUT_BASE_PATH)
+
+
+    elif not LOCAL:
+        out_dir = os.path.join(OUT_BASE_PATH, frd_win_epochs, current_timestamp)
+
     train_boxing_data(dataset_npz_path, dataset_config_path, out_dir, frd_win_epochs, epochs=EPOCHS,
                       batchsize=batch_size)

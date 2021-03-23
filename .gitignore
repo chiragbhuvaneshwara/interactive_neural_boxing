@@ -2,7 +2,7 @@ data/*
 !data/README.txt
 trained_models/*
 !trained_models/README.txt
-.vscode/*
+.vscode
 .idea
 kubectl/tmp
 
@@ -141,6 +141,8 @@ src/controlers/boxing/controller_in_out/*
 
 /saved_models/mann_tf2_v2/*
 !/saved_models/mann_tf2_v2/.gitkeep
+
+local_dev_saved_models
 
 training
 training_nsm
