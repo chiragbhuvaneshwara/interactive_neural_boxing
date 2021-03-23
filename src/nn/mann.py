@@ -198,8 +198,6 @@ def save_network(path, network, x_in_mean, y_out_mean, x_in_std, y_out_std):
     if not os.path.exists(path):
         os.makedirs(path)
 
-    print("save to : ", path)
-
     network.save(os.path.join(path, "model"))
     tf.saved_model.save(network, os.path.join(path, "saved_model"))
     if not os.path.exists(os.path.join(path, "means")):
@@ -247,10 +245,6 @@ class EpochWriter(tf.keras.callbacks.Callback):
         self.Ystd = Ystd
 
     def on_epoch_end(self, epoch, logs=None):
-        print("\nModel saved to ", self.path % epoch)
-        print(os.getcwd())
-        # if not os.path.exists(self.path%epoch):
-        #     raise ValueError("WTH")
         save_network(self.path % epoch, self.model, self.Xmean, self.Ymean, self.Xstd, self.Ystd)
         print("\nModel saved to ", self.path % epoch)
 

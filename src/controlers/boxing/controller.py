@@ -126,6 +126,7 @@ class BoxingController(Controller):
         self.input.set_curr_punch_labels(curr_right_p_label, curr_left_p_label)
 
         right_shoulder_lp, left_shoulder_lp = self.output.get_shoulder_local_pos()
+        #TODO: Update traj_labels only in post_render in update_from_predict i.e these 2 vecs are autoregressive ==> Similar to NSM
         self.traj.compute_future_wrist_trajectory(right_p_target, left_p_target, curr_right_p_label, curr_left_p_label,
                                                   right_shoulder_lp, left_shoulder_lp)
 
@@ -189,6 +190,7 @@ class BoxingController(Controller):
                                self.output.get_wrist_local_vel(), self.input.get_curr_punch_labels())
 
         # 1. update and smooth trajectory
+        #TODO: Update traj_labels only here i.e these 2 vecs are autoregressive ==> Similar to NSM
         self.traj.update_from_predict(self.output.get_next_traj())
 
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
