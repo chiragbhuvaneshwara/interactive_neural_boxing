@@ -73,10 +73,10 @@ def prepare_input_data(i, handler, col_demarcation_done=True):
         x_left_wrist_vels_tr,
         x_right_punch_labels_tr,
         x_left_punch_labels_tr,
-        x_right_punch_labels,
-        x_left_punch_labels,
-        x_right_punch_target,  # local wrt r in mid frame
-        x_left_punch_target,  # local wrt r in mid frame
+        x_right_punch_labels,                                   #TODO:Janis said remove
+        x_left_punch_labels,                                   #TODO:Janis said remove
+        x_right_punch_target,  # local wrt r in mid frame                                   #TODO:Janis said remove
+        x_left_punch_target,  # local wrt r in mid frame                                   #TODO:Janis said remove
         x_local_pos,
         x_local_vel
     ]
@@ -143,9 +143,8 @@ def prepare_output_data(i, handler, col_demarcation_done=True):
     y_curr_frame = [
         y_root_velocity,
         y_root_new_forward,
-        # y_punch_dphase,
-        y_right_punch_labels,
-        y_left_punch_labels,
+        y_right_punch_labels,                                   #TODO:Janis said remove
+        y_left_punch_labels,                                   #TODO:Janis said remove
         y_right_foot_contacts,
         y_left_foot_contacts,
         y_root_pos_tr,
@@ -154,8 +153,8 @@ def prepare_output_data(i, handler, col_demarcation_done=True):
         y_left_wrist_pos_tr,
         y_right_wrist_vels_tr,
         y_left_wrist_vels_tr,
-        y_right_punch_labels_tr,
-        y_left_punch_labels_tr,
+        y_right_punch_labels_tr,                                   #TODO:Janis said remove
+        y_left_punch_labels_tr,                                   #TODO:Janis said remove
         y_local_pos,
         y_local_vel
     ]

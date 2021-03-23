@@ -5,6 +5,7 @@ from process_folder import process_folder
 import numpy as np
 import pandas as pd
 import json
+import argparse
 
 
 # TODO: try to pip install mosi_utils_anim instead of having it in the repo
@@ -26,13 +27,27 @@ def setup_output_dir(output_base_path, output_directory):
 
 
 ####################### CONTROL PARAMS ###################################
-DEVELOP = False
-INPUT_BASE_PATH = '../boxing-blender-data-gen'
-OUTPUT_BASE_PATH = '../boxing-mosi-dev-vinn/data/'
-if DEVELOP:
+args_parser = argparse.ArgumentParser()
+args_parser.add_argument("-d", "--develop", help="Run on subset",
+                         action="store_true", default=False)
+args_parser.add_argument("-l", "--local", help="Flag indicating remote machine or local machine",
+                         action="store_true", default=False)
+args = args_parser.parse_args()
+DEVELOP = args.develop
+LOCAL = args.local
+
+if LOCAL:
+    print('Local machine dev')
     INPUT_BASE_PATH = '../VCS-boxing-predictor'
     OUTPUT_BASE_PATH = '../VCS-MOSI-DEV-VINN/mosi_dev_vinn/data/'
+elif not LOCAL:
+    INPUT_BASE_PATH = '../boxing-blender-data-gen'
+    OUTPUT_BASE_PATH = '../boxing-mosi-dev-vinn/data/'
+
+if DEVELOP:
+    print('Dev mode')
     OUTPUT_BASE_PATH += '/dev'
+
 PUNCH_PHASE_PATH = INPUT_BASE_PATH + '/Blender_Code_Snippets/data_annotation_res/new_data/tertiary/'
 BVH_PATH = INPUT_BASE_PATH + "/Data/boxing_chirag/hq/processed/"
 FRAME_RATE_DIV = 1
