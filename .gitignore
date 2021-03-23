@@ -1,5 +1,6 @@
 data/*
 !data/README.txt
+!data/dev/.gitkeep
 trained_models/*
 !trained_models/README.txt
 .vscode
