@@ -1,7 +1,7 @@
 import json
 import os
 from src.controlers.boxing.controller import BoxingController
-from src.nn.keras_mods.mann_keras import MANN as MANNTF
+from src.nn.mann_keras_v1.mann_keras import MANN as MANNTF
 from simple_plotter import simple_matplotlib_plotter
 import numpy as np
 # from src.controlers.character import *

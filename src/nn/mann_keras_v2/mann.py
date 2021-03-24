@@ -155,6 +155,44 @@ class MANN(tf.keras.Model):
 
         return tf.concat([output, expert_weights], axis=-1)
 
+    @staticmethod
+    def forward_pass(mann, x, norm, col_demarcation_ids):
+
+        x_mean = np.array(norm['x_mean'], dtype=np.float64)
+        x_std = np.array(norm['x_std'], dtype=np.float64)
+        y_mean = np.array(norm['y_mean'], dtype=np.float64)
+        y_std = np.array(norm['y_std'], dtype=np.float64)
+        x_input = (x - x_mean) / x_std
+
+        # print("#####################################")
+        tmp = x_input.ravel()
+        r_p_label = tmp[
+                    col_demarcation_ids[0]['x_right_punch_labels'][0]:col_demarcation_ids[0]['x_right_punch_labels'][1]]
+        l_p_label = tmp[
+                    col_demarcation_ids[0]['x_left_punch_labels'][0]:col_demarcation_ids[0]['x_left_punch_labels'][1]]
+        # print('rph:', r_p_label, 'lph:', l_p_label)
+
+        y_prediction = np.array(mann(x_input)).ravel()
+        if np.isnan(y_prediction).any():
+            raise Exception('Nans found')
+
+        gating_weights = y_prediction[-6:]
+        y_prediction =y_prediction[:-6]
+        y_prediction = np.array(y_prediction * y_std + y_mean).ravel()
+
+
+        tmp = y_prediction
+        r_p_label = tmp[
+                    col_demarcation_ids[1]['y_right_punch_labels'][0]:col_demarcation_ids[1]['y_right_punch_labels'][1]]
+        l_p_label = tmp[
+                    col_demarcation_ids[1]['y_left_punch_labels'][0]:col_demarcation_ids[1]['y_left_punch_labels'][1]]
+        # print('rph:', r_p_label, 'lph:', l_p_label)
+
+        if np.isnan(y_prediction).any():
+            raise Exception('Nans found')
+
+        return y_prediction
+
 
 def prepare_mann_data(dataset, dataset_config):
     data = np.load(dataset)
@@ -215,6 +253,10 @@ def load_mann(path):
     mann2.batch_size = 1
     print("model loaded")
     return mann2
+
+
+def load_binary(path):
+    return np.fromfile(path, dtype=np.float32)
 
 
 def get_variation_gating(network, input_data, batch_size):

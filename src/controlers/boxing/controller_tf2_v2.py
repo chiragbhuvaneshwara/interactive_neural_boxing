@@ -1,6 +1,6 @@
 """author: Chirag Bhuvaneshwara """
 import numpy as np
-from src.nn.mann_keras_v1.mann_keras import MANN
+from src.nn.mann_keras_v2.mann import MANN
 from ..abstract_controller import Controller
 from .trajectory import Trajectory
 from .character import Character
@@ -18,15 +18,15 @@ class BoxingController(Controller):
         [type_in] -- [description]
     """
 
-    def __init__(self, network: MANN, data_config, dataset_npz_path):  # xdim, ydim, end_joints = 5, numJoints = 21):
+    def __init__(self, network: MANN, data_config, dataset_npz_path, norm):  # xdim, ydim, end_joints = 5, numJoints = 21):
 
         # jd = config_store['joint_indices']
         # self.hand_left = jd['LeftWrist']
         # self.hand_right = jd['RightWrist']
 
         self.network = network
-        self.xdim = network.input_dim
-        self.ydim = network.output_dim
+        self.xdim = network.input_size
+        self.ydim = network.output_size
 
         self.endJoints = data_config["end_joints"]
         self.n_joints = data_config["num_joints"] + self.endJoints
@@ -62,7 +62,8 @@ class BoxingController(Controller):
         self.char = Character(data_config)
         self.config_store = data_config
         self.dataset_npz_path = dataset_npz_path
-        self.__initialize(self.dataset_npz_path)
+        self.norm = norm
+        self.__initialize()
 
     # TODO: Exp with punch target as curr wrist pos when not punching instead of 0 vector used in present implementation
     # TODO: Exp with only punch target and punch action and without any trajectory of the hands
@@ -157,12 +158,12 @@ class BoxingController(Controller):
         # input_data = np.delete(input_data, 0, 1)
         # self.input.data = input_data.ravel()
         input_data = self.input.data.reshape(1, len(self.input.data))
-        output_data = self.network.forward_pass(self.network, input_data, self.network.norm,
+        output_data = self.network.forward_pass(self.network, input_data, self.norm,
                                                 [self.in_col_demarcation_ids, self.out_col_demarcation_ids])
         if np.isnan(output_data).any():
             raise Exception('Nans found in: ', np.argwhere(np.isnan(output_data)), '\n Input: ', input_data)
 
-        self.output.data = output_data.numpy().ravel()
+        self.output.data = output_data
 
         # 6. Process Prediction i.e. apply rotations and set traj foot drifting
         self.char.root_position, self.char.root_rotation = self.traj.get_world_pos_rot()
@@ -208,7 +209,7 @@ class BoxingController(Controller):
         self.char.reset(start_location, start_orientation)
         # self.traj.reset(start_location, start_orientation, start_direction)
         self.traj.reset()
-        self.__initialize(self.dataset_npz_path)
+        self.__initialize()
         print('###################################')
         print('RESET DONE')
         print('###################################')
@@ -252,13 +253,13 @@ class BoxingController(Controller):
     def get_world_pos_rot(self):
         return np.array(self.char.root_position), float(self.char.root_rotation)
 
-    def __initialize(self, dataset_npz_path):
+    def __initialize(self):
         self.traj.traj_left_punch_labels = np.zeros(self.traj.traj_left_punch_labels.shape)
         self.traj.traj_right_punch_labels = np.zeros(self.traj.traj_right_punch_labels.shape)
 
         # TODO Maybe Get only init local positions from a frame in the mocap data that you think is in neutral position.
         #  Get the rest of the variables from norm?
-        data = np.load(dataset_npz_path)
+        data = np.load(self.dataset_npz_path)
         x_train = data["x"]
         y_train = data["y"]
 
@@ -266,8 +267,8 @@ class BoxingController(Controller):
         tmp_output = MANNOutput(y_train[100].ravel(), self.n_joints, self.endJoints, self.bone_map,
                                 self.out_col_demarcation_ids)
 
-        self.input.data = np.array(self.network.norm["x_mean"], dtype=np.float64)
-        self.output.data = np.array(self.network.norm["y_mean"], dtype=np.float64)
+        self.input.data = np.array(self.norm["x_mean"], dtype=np.float64)
+        self.output.data = np.array(self.norm["y_mean"], dtype=np.float64)
 
         # r_in, l_in = tmp_input.get_wrist_pos_traj()
         # self.input.set_wrist_pos_tr(r_in, l_in)

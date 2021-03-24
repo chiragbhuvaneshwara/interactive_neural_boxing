@@ -1,9 +1,9 @@
 import copy
 
 from flask import Flask, request
-from src.controlers.boxing.controller import BoxingController
+from src.controlers.boxing.controller_tf2_v2 import BoxingController
+from src.nn.mann_keras_v2.mann import load_mann, load_binary
 import json, os
-from src.nn.keras_mods.mann_keras import MANN as MANNTF
 from flask import jsonify
 from src.servers.FlaskServer.utils import *
 
@@ -21,21 +21,30 @@ frd_win = 'boxing_fr_' + str(frd) + '_' + str(window)
 dataset_path = os.path.join(DATASET_OUTPUT_BASE_PATH, frd_win, 'train.npz')
 controller_in_out_dir = 'src/controlers/boxing/controller_in_out'
 frd_win_epochs = 'boxing_fr_' + str(frd) + '_' + str(window) + '_' + str(epochs)
-trained_base_path = 'saved_models/mann_tf2/' + frd_win_epochs
-target_file = os.path.join(server_to_main_dir, trained_base_path, 'model_weights.zip')
-mann_config_path = os.path.join(server_to_main_dir, trained_base_path, 'mann_config.json')
-with open(mann_config_path) as json_file:
-    mann_config = json.load(json_file)
+trained_base_path = 'saved_models/mann_tf2_v2/' + frd_win_epochs + '/20210323_14-51-07/epochs/epoch_98'
+target_file = os.path.join(trained_base_path, 'saved_model')
 
-mann = MANNTF(mann_config)
-mann.load_discrete_weights(target_file)
+x_mean, y_mean = load_binary(os.path.join(trained_base_path, "means", "Xmean.bin")), \
+                 load_binary(os.path.join(trained_base_path, "means", "Ymean.bin"))
+x_std, y_std = load_binary(os.path.join(trained_base_path, "means", "Xstd.bin")), \
+               load_binary(os.path.join(trained_base_path, "means", "Ystd.bin"))
+
+norm = {
+    'x_mean': x_mean,
+    'y_mean': y_mean,
+    'x_std': x_std,
+    'y_std': y_std
+}
+
+mann = load_mann(os.path.join(trained_base_path, "saved_model"))
+
 dataset_config = "data/boxing_fr_" + str(frd) + "_" + str(window) + "/config.json"
 dataset_config = os.path.join(server_to_main_dir, dataset_config)
 
 with open(dataset_config) as f:
     config_store = json.load(f)
 
-bc = BoxingController(mann, config_store, dataset_path)
+bc = BoxingController(mann, config_store, dataset_path, norm)
 zp = build_zero_posture(bc)
 
 print(zp.bones)

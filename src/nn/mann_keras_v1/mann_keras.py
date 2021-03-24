@@ -3,7 +3,7 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.keras import layers, models
 
-from src.nn.keras_mods.network_instantiater import TrainNetwork, InstantiateNetworkFromConfig
+from src.nn.mann_keras_v1.network_instantiater import TrainNetwork, InstantiateNetworkFromConfig
 from sklearn import preprocessing
 
 from zipfile import ZipFile

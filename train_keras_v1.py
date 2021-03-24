@@ -1,4 +1,4 @@
-from src.nn.keras_mods.mann_keras import MANN as MANNTF
+from src.nn.mann_keras_v1.mann_keras import MANN as MANNTF
 import json
 import os
 import glob
