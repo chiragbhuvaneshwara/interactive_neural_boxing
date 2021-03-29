@@ -33,7 +33,7 @@ def prepare_col_demarcation_ids(**args):
 def prepare_input_data(i, handler, col_demarcation_done=True):
     # TODO Add docstring after simplifying inputs i.e after moving all these input vars inside the handler
 
-    punch_labels = handler.punch_labels
+    punch_labels = handler.punch_labels_binary
     punch_target = handler.punch_targets
     local_positions = handler.get_root_local_joint_positions()
     local_velocities = handler.get_root_local_joint_velocities()
@@ -96,7 +96,7 @@ def prepare_input_data(i, handler, col_demarcation_done=True):
 def prepare_output_data(i, handler, col_demarcation_done=True):
     # TODO Add docstring after simplifying inputs i.e after moving all these input vars inside the handler
 
-    punch_labels = handler.punch_labels
+    punch_labels = handler.punch_labels_binary
     punch_target = handler.punch_targets
     local_positions = handler.get_root_local_joint_positions()
     local_velocities = handler.get_root_local_joint_velocities()

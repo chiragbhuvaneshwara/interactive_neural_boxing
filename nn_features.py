@@ -60,6 +60,7 @@ class FeatureExtractor:
         self.__global_positions = []
 
         self.punch_labels = {}
+        self.punch_labels_binary = {}
         self.delta_punch_labels = {}
         self.punch_targets = {}
         self.__bone_local_velocities = {}
@@ -165,6 +166,11 @@ class FeatureExtractor:
                 (1.0 - hand_punch_labels[:-1] + hand_punch_labels[1:])[hand_delta_punch_labels < 0]
 
             self.punch_labels[hand_id] = hand_punch_labels
+
+            p_labs = np.array(hand_punch_labels)
+            p_labs[np.where(p_labs < 0)] = 0
+            self.punch_labels_binary[hand_id] = p_labs
+
             self.delta_punch_labels[hand_id] = hand_delta_punch_labels
 
             # return self.__punch_labels[hand_id], self.__delta_punch_labels[hand_id]
