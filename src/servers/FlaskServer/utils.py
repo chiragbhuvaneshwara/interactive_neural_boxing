@@ -68,12 +68,16 @@ class TQuaternion(object):
 
 
 def tvector3_to_np(x):
-    x = [-x[0], x[1], x[2]]
+    x = [x[0], x[1], -x[2]]
     return x
 
 
-def np_to_tvector3(x):
-    return TVector3(x[0], x[1], x[2])
+def np_to_tvector3(x, vis=False):
+    if not vis:
+        return TVector3(x[0], x[1], -x[2])
+    else:
+        return TVector3(x[0], x[1], x[2])
+
 
 
 def build_zero_posture(base_controller, position_str="position"):

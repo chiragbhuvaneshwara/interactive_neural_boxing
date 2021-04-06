@@ -1,4 +1,7 @@
 import copy
+import uvicorn
+from fastapi import FastAPI
+
 
 from flask import Flask, request
 from src.controlers.boxing.controller_tf2_v2 import BoxingController
@@ -9,7 +12,8 @@ from src.servers.FlaskServer.utils import *
 
 # TODO setup better names for variables used in Flask server
 print(os.getcwd())
-app = Flask(__name__)
+# app = Flask(__name__)
+app = FastAPI()
 
 frd = 1
 window = 15
@@ -21,8 +25,7 @@ frd_win = 'boxing_fr_' + str(frd) + '_' + str(window)
 dataset_path = os.path.join(DATASET_OUTPUT_BASE_PATH, frd_win, 'train.npz')
 controller_in_out_dir = 'src/controlers/boxing/controller_in_out'
 frd_win_epochs = 'boxing_fr_' + str(frd) + '_' + str(window) + '_' + str(epochs)
-# trained_base_path = 'saved_models/mann_tf2_v2/' + frd_win_epochs + '/20210323_14-51-07/epochs/epoch_98'
-trained_base_path = 'saved_models/mann_tf2_v2/' + frd_win_epochs + '/20210329_14-09-09/epochs/epoch_99'
+trained_base_path = 'saved_models/mann_tf2_v2/' + frd_win_epochs + '/20210323_14-51-07/epochs/epoch_98'
 target_file = os.path.join(trained_base_path, 'saved_model')
 
 x_mean, y_mean = load_binary(os.path.join(trained_base_path, "means", "Xmean.bin")), \
@@ -65,8 +68,7 @@ def controller_to_posture():
     for i in range(len(tr_keys)):
         curr_tr = tr[i]
         for j in range(len(curr_tr)):
-            posture.traj[tr_keys[i]][j] = np_to_tvector3(curr_tr[j], vis=True)
-            # posture.traj[tr_keys[i]][j] = curr_tr[j]
+            posture.traj[tr_keys[i]][j] = np_to_tvector3(curr_tr[j])
 
     posture.location = np_to_tvector3(root_pos)
     posture.rotation = root_rot

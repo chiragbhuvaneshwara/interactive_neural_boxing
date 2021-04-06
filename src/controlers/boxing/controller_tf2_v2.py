@@ -80,10 +80,11 @@ class BoxingController(Controller):
         # User input direction but for simplicity using predicted direction
         # direction = self.output.get_root_new_forward()
 
-        direction = np.array([0, 0])
+        # direction = np.array([0, 0])
+        direction = np.array([0, 1])
         direction = utils.xz_to_x0yz(direction)
-        # target_vel_speed = .00025 * np.linalg.norm(direction)
-        target_vel_speed = np.linalg.norm(direction)
+        target_vel_speed = .025 * np.linalg.norm(direction)
+        # target_vel_speed = np.linalg.norm(direction)
         self.target_vel = utils.glm_mix(self.target_vel, target_vel_speed * direction, 0.9)
         # self.target_vel = utils.xz_to_x0yz(self.output.get_root_vel())
         target_vel_dir = self.target_dir if utils.euclidian_length(self.target_vel) \
@@ -192,7 +193,7 @@ class BoxingController(Controller):
 
         # 1. update and smooth trajectory
         #TODO: Update traj_labels only here i.e these 2 vecs are autoregressive ==> Similar to NSM
-        self.traj.update_from_predict(self.output.get_next_traj())
+        self.traj.update_from_predict(self.output.get_next_traj(), self.input.get_curr_punch_labels())
 
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
@@ -242,8 +243,8 @@ class BoxingController(Controller):
         step = self.traj_step
         # right_wr_tr, left_wr_tr = self.traj.get_global_arm_tr()
         right_wr_tr, left_wr_tr = tr.traj_right_wrist_pos[::step], tr.traj_left_wrist_pos[::step]
-        print(right_wr_tr)
-        print(left_wr_tr)
+        # print(right_wr_tr)
+        # print(left_wr_tr)
         root_tr = tr.traj_root_pos[::step]
         root_vels_tr = tr.traj_root_vels[::step]
         right_wr_vels_tr = tr.traj_right_wrist_vels[::step]
