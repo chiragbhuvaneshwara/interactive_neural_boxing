@@ -45,11 +45,11 @@ bc = BoxingController(mann, config_store, dataset_path, norm)
 my_plotter = simple_matplotlib_plotter.Plotter()
 # right target coordinates, left target coordinates
 # Neutral Postion
+label = [0, 0]
 target = [0, 0, 0, 0, 0, 0]
 # Left Punch
-# target = [0, 0, 0, -0.347354, 0.578946, -0.521855]
-label = [0, 1]
-target = [0, 0, 0, 0.30000001192092896, 1.6000000238418579, -0.75]
+# label = [0, 1]
+# target = [0, 0, 0, 0.30000001192092896, 1.6000000238418579, -0.75]
 # Right Punch
 # target = [0.30000001192092896, 1.6000000238418579, -0.75, 0.0, 0.0, 0.0]
 
@@ -76,8 +76,8 @@ Y_df.to_csv(os.path.join(CONTROLLER_SAVE_IN_OUT_DIR, "Y_controller.csv"))
 
 
 
-print('start')
-poses = poses
-pos2 = np.array(poses)
-my_plotter.animated(pos2)
+# print('start')
+# poses = poses
+# pos2 = np.array(poses)
+# my_plotter.animated(pos2)
 print('done')

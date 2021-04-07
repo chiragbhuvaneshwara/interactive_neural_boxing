@@ -366,10 +366,10 @@ class Trajectory:
         self.traj_right_wrist_vels[self.median_idx + 1:] = self.convert_local_to_global(pred_rwv_tr, arg_type='vels',
                                                                                         arm="right")
 
-        if curr_punch_labels["right"] != 0:
-            pred_rpunch_tr = _smooth_predictions(pred_rpunch_tr.reshape(half_pred_window, 1))
-            pred_rpunch_tr[pred_rpunch_tr < 1] = 0
-            self.traj_right_punch_labels[self.median_idx + 1:] = pred_rpunch_tr.ravel()
+        # if curr_punch_labels["right"] != 0:
+        pred_rpunch_tr = _smooth_predictions(pred_rpunch_tr.reshape(half_pred_window, 1))
+        pred_rpunch_tr[pred_rpunch_tr < 1] = 0
+        self.traj_right_punch_labels[self.median_idx + 1:] = pred_rpunch_tr.ravel()
 
         # Wrist positions contain all 3 components
         pred_lwp_tr = _smooth_predictions(pred_lwp_tr.reshape(half_pred_window, self.n_dims))
@@ -379,10 +379,10 @@ class Trajectory:
         self.traj_left_wrist_vels[self.median_idx + 1:] = self.convert_local_to_global(pred_lwv_tr, arg_type='vels',
                                                                                        arm="left")
 
-        if curr_punch_labels["left"] != 0:
-            pred_lpunch_tr = _smooth_predictions(pred_lpunch_tr.reshape(half_pred_window, 1))
-            pred_lpunch_tr[pred_lpunch_tr < 1] = 0
-            self.traj_left_punch_labels[self.median_idx + 1:] = pred_lpunch_tr.ravel()
+        # if curr_punch_labels["left"] != 0:
+        pred_lpunch_tr = _smooth_predictions(pred_lpunch_tr.reshape(half_pred_window, 1))
+        pred_lpunch_tr[pred_lpunch_tr < 1] = 0
+        self.traj_left_punch_labels[self.median_idx + 1:] = pred_lpunch_tr.ravel()
 
     def correct_foot_sliding(self, foot_sliding):
         self.traj_root_pos[self.median_idx] += foot_sliding

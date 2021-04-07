@@ -65,7 +65,7 @@ def controller_to_posture():
     for i in range(len(tr_keys)):
         curr_tr = tr[i]
         for j in range(len(curr_tr)):
-            posture.traj[tr_keys[i]][j] = np_to_tvector3(curr_tr[j], vis=True)
+            posture.traj[tr_keys[i]][j] = np_to_tvector3(curr_tr[j])
             # posture.traj[tr_keys[i]][j] = curr_tr[j]
 
     posture.location = np_to_tvector3(root_pos)
@@ -79,6 +79,9 @@ def fetch_frame():
 
     if request.method == 'POST':
         punch_in = request.get_json()
+
+        dir = punch_in["movement_dir"]
+
         punch_hand = punch_in["hand"]
 
         punch_right_target = tvector3_to_np(punch_in["target_right"])
@@ -96,7 +99,7 @@ def fetch_frame():
             label = [0, 1]
 
         punch_target = punch_right_target + punch_left_target
-        bc.pre_render(punch_target, label, space='global')
+        bc.pre_render(punch_target, label, dir,space='global')
         posture = controller_to_posture()
         bc.post_render()
         json_str = json.dumps(posture, default=serialize)
@@ -109,15 +112,20 @@ def fetch_frame():
 
 @app.route('/fetch_zp', methods=['GET', 'POST'])
 def get_zero_posture():
-    print(request.get_json()["name"])
-    if request.method == 'POST' and request.get_json()["name"] == "fetch_zp":
+    if request.method == 'POST':
+        print(request.get_json()["name"])
+        if request.method == 'POST' and request.get_json()["name"] == "fetch_zp":
+            posture = controller_to_posture()
+            return json.dumps(posture, default=serialize)
+        elif request.method == 'POST' and request.get_json()["name"] == "fetch_zp_reset":
+            posture = controller_to_posture()
+            bc.reset()
+            return json.dumps(posture, default=serialize)
+    elif request.method == 'GET':
         posture = controller_to_posture()
-        return json.dumps(posture, default=serialize)
-    elif request.method == 'POST' and request.get_json()["name"] == "fetch_zp_reset":
-        posture = controller_to_posture()
-        # TODO Check reset
         bc.reset()
         return json.dumps(posture, default=serialize)
+
     else:
         print("Problem")
 

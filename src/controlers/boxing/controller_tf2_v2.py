@@ -67,7 +67,7 @@ class BoxingController(Controller):
 
     # TODO: Exp with punch target as curr wrist pos when not punching instead of 0 vector used in present implementation
     # TODO: Exp with only punch target and punch action and without any trajectory of the hands
-    def pre_render(self, punch_targets, punch_labels, space='local'):
+    def pre_render(self, punch_targets, punch_labels, dir, space='local'):
         """
         This function is called before rendering. It prepares character and trajectory to be rendered.
 
@@ -78,15 +78,13 @@ class BoxingController(Controller):
 
         """
         # User input direction but for simplicity using predicted direction
-        # direction = self.output.get_root_new_forward()
-
+        direction = np.array(dir)*-1
         # direction = np.array([0, 0])
-        direction = np.array([0, 1])
+        # direction = np.array([0, 1])
         direction = utils.xz_to_x0yz(direction)
-        target_vel_speed = .025 * np.linalg.norm(direction)
-        # target_vel_speed = np.linalg.norm(direction)
+        # target_vel_speed = .0025 * np.linalg.norm(direction)
+        target_vel_speed = 0.05 * np.linalg.norm(direction)
         self.target_vel = utils.glm_mix(self.target_vel, target_vel_speed * direction, 0.9)
-        # self.target_vel = utils.xz_to_x0yz(self.output.get_root_vel())
         target_vel_dir = self.target_dir if utils.euclidian_length(self.target_vel) \
                                             < 1e-05 else utils.normalize(self.target_vel)
         self.target_dir = utils.mix_directions(self.target_dir, target_vel_dir, 0.9)
@@ -120,9 +118,6 @@ class BoxingController(Controller):
             raise ValueError("space variable accepts only local or global")
 
         # 3. Update/calculate trajectory based on input
-        right_pos_traj_target, left_pos_traj_target = self.output.get_wrist_pos_traj()
-        right_vels_traj_target, left_vels_traj_target = self.output.get_wrist_vels_traj()
-
         curr_right_p_label = np.array(punch_labels[0])
         curr_left_p_label = np.array(punch_labels[1])
         self.input.set_curr_punch_labels(curr_right_p_label, curr_left_p_label)
@@ -132,9 +127,6 @@ class BoxingController(Controller):
         self.traj.compute_future_wrist_trajectory(right_p_target, left_p_target, curr_right_p_label, curr_left_p_label,
                                                   right_shoulder_lp, left_shoulder_lp)
 
-        pred_pos_traj = self.output.get_root_pos_traj()
-        pred_vels_traj = self.output.get_root_vel_traj()
-        pred_fwd_dir_target = self.output.get_root_new_forward()
         self.traj.compute_future_root_trajectory(self.target_dir, self.target_vel)
 
         # 3. Set Trajectory input
@@ -154,10 +146,6 @@ class BoxingController(Controller):
         self.input.set_local_vel(joint_vel.ravel())
 
         # 5. Predict: Get MANN Output
-        # in_data_df = pd.read_csv(path)
-        # input_data = in_data_df.iloc[[row_num]].values
-        # input_data = np.delete(input_data, 0, 1)
-        # self.input.data = input_data.ravel()
         input_data = self.input.data.reshape(1, len(self.input.data))
         output_data = self.network.forward_pass(self.network, input_data, self.norm,
                                                 [self.in_col_demarcation_ids, self.out_col_demarcation_ids])
@@ -235,7 +223,8 @@ class BoxingController(Controller):
 
         # root_pos, root_rot = self.traj.get_world_pos_rot()
         root_pos, root_rot = np.array(self.char.root_position), np.array(self.char.root_rotation)
-        pos, vel = self.char.get_local_joint_pos_vel(root_pos, root_rot)
+        # pos, vel = self.char.get_local_joint_pos_vel(root_pos, root_rot)
+        pos = self.char.joint_positions
         return np.reshape(pos, (self.char.joints, 3))
 
     def get_trajectroy_for_vis(self):
@@ -246,6 +235,9 @@ class BoxingController(Controller):
         # print(right_wr_tr)
         # print(left_wr_tr)
         root_tr = tr.traj_root_pos[::step]
+        print('-------------------')
+        print(root_tr)
+        print('-------------------')
         root_vels_tr = tr.traj_root_vels[::step]
         right_wr_vels_tr = tr.traj_right_wrist_vels[::step]
         left_wrist_vels_tr = tr.traj_left_wrist_vels[::step]
