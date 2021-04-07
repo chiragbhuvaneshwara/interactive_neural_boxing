@@ -242,34 +242,57 @@ public partial class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //if (Input.GetMouseButton(0))
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButton(0))
+        //if (Input.GetMouseButtonDown(0))
         {
-            leftMousePressed = true;
-            if (leftMousePressed)
-            {
-                server.ManagedUpdate("left");
-                leftMousePressed = false;
-            }
+            //leftMousePressed = true;
+            //if (leftMousePressed)
+            //{
+            List<int> dir = new List<int> { 0, 0};
+            server.ManagedUpdate("left", dir);
+            //    leftMousePressed = false;
+            //}
         }
-        //else if (Input.GetMouseButton(1))
-        else if (Input.GetMouseButtonDown(1))
+        else if (Input.GetMouseButton(1))
+        //else if (Input.GetMouseButtonDown(1))
         {
-            rightMousePressed = true;
-            if (rightMousePressed)
-            {
-                server.ManagedUpdate("right");
-                rightMousePressed = false;
-            }
+            //rightMousePressed = true;
+            //if (rightMousePressed)
+            //{
+            List<int> dir = new List<int> { 0, 0 };
+            server.ManagedUpdate("right", dir);
+            //rightMousePressed = false;
+            //}
         }
         else if (Input.GetMouseButton(2))
         {
             midMousePressed = true;
             midMousePressed = false;
         }
+        else if (Input.GetKey(KeyCode.A))
+        {
+            List<int> dir = new List<int> { -1, 0 };
+            server.ManagedUpdate("none", dir);
+        }
+        else if (Input.GetKey(KeyCode.D))
+        {
+            List<int> dir = new List<int> { 1, 0 };
+            server.ManagedUpdate("none", dir);
+        }
+        else if (Input.GetKey(KeyCode.W))
+        {
+            List<int> dir = new List<int> { 0, 1 };
+            server.ManagedUpdate("none", dir);
+        }
+        else if (Input.GetKey(KeyCode.S))
+        {
+            List<int> dir = new List<int> { 0, -1 };
+            server.ManagedUpdate("none", dir);
+        }
         else
         {
-            server.ManagedUpdate("none");
+            List<int> dir = new List<int> { 0, 0 };
+            server.ManagedUpdate("none", dir);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using System.Net;
@@ -26,7 +27,21 @@ namespace MultiMosiServer
 
         public float global_scale = 1.0f;
 
-        //public string JsonPostWithResp(string route, dynamic VarToPost)
+        public string GetZpJson(string route)
+        {
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://127.0.0.1:5000/" + route);
+            //request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+
+            var httpResponse = (HttpWebResponse)request.GetResponse();
+
+            var streamReader = new StreamReader(httpResponse.GetResponseStream());
+            string json_obj = streamReader.ReadToEnd();
+            streamReader.Close();
+
+            return json_obj;
+        }
+
+
         public string JsonPostWithResp(string route, string VarToPost)
         {
             var httpWebRequest = (HttpWebRequest)WebRequest.Create("http://127.0.0.1:5000/" + route);
@@ -68,28 +83,24 @@ namespace MultiMosiServer
         }
 
 
-        public TPosture UpdatePunchTargetFetchPosture(string TargetHand)
+        public TPosture UpdatePunchTargetFetchPosture(string TargetHand, List<int> MovementDir)
         {
             punchInput punch_in = new punchInput();
 
             if (TargetHand == "right")
             {
                 Vector3 l_hand_pos = GameObject.Find("LeftWrist_end").transform.position;
-                //Debug.Log(l_hand_pos);
                 var punchTargetTransform = GetPunchTargetTransform();
                 Vector3 target = punchTargetTransform.position;
 
 
                 punch_in.hand = "right";
-                //punch_in.target_left = new double[] { l_hand_pos.x, l_hand_pos.y, l_hand_pos.z };
                 punch_in.target_left = new double[] { 0, 0, 0};
                 punch_in.target_right = new double[] { target.x, target.y, target.z };
             }
             else if (TargetHand == "left")
             {
                 Vector3 r_hand_pos = GameObject.Find("RightWrist_end").transform.position;
-                //Debug.Log("r_hand_p:");
-                //Debug.Log(r_hand_pos);
                 var punchTargetTransform = GetPunchTargetTransform();
                 Vector3 target = punchTargetTransform.position;
 
@@ -105,19 +116,12 @@ namespace MultiMosiServer
                 punch_in.target_right = new double[] {0, 0, 0};
             }
 
+            punch_in.movement_dir = MovementDir;
+
             string punch_input = JsonConvert.SerializeObject(punch_in);
-            //Debug.Log(punch_input);
             string json_obj = JsonPostWithResp("fetch_frame", punch_input);
 
             TPosture posture = JsonConvert.DeserializeObject<TPosture>(json_obj);
-
-
-            //Debug.Log("******************************");
-            //Debug.Log(posture.Bones[0].name);
-            ////Debug.Log(posture.Bone_map.Hips);
-            //Debug.Log(posture.Bone_map["Hips"]);
-            //Debug.Log(posture.Location.x);
-            //Debug.Log(posture.Rotation);
 
             return posture;
         }
@@ -130,7 +134,8 @@ namespace MultiMosiServer
             zp_command.name = "fetch_zp_reset";
 
             string zp_com_json = JsonConvert.SerializeObject(zp_command);
-            string zp_json_obj = JsonPostWithResp("fetch_zp", zp_com_json);
+            //string zp_json_obj = JsonPostWithResp("fetch_zp", zp_com_json);
+            string zp_json_obj = GetZpJson("fetch_zp");
 
             TPosture posture = JsonConvert.DeserializeObject<TPosture>(zp_json_obj);
 
@@ -151,11 +156,11 @@ namespace MultiMosiServer
 
         private TVector3 vec2Tvec(Vector3 x)
         {
-            return new TVector3(-x.x, x.y, x.z);
+            return new TVector3(x.x, x.y, x.z);
         }
         private Vector3 Tvec2vec(TVector3 x)
         {
-            return new Vector3(-(float)x.x, (float)x.y, (float)x.z);
+            return new Vector3((float)x.x, (float)x.y, (float)x.z);
         }
 
         public Vector3 GetJointPosition(string bone_name)
@@ -222,12 +227,12 @@ namespace MultiMosiServer
         //}
 
 
-        public void ManagedUpdate(string TargetHand) // void Update()
+        public void ManagedUpdate(string TargetHand, List<int> MovementDir) // void Update()
         {
             if (this.active)
             {
                 //TODO: Setup root to get posture with bones, bone_map, root_global_loc, root_global_rot
-                this.posture = this.UpdatePunchTargetFetchPosture(TargetHand);
+                this.posture = this.UpdatePunchTargetFetchPosture(TargetHand, MovementDir);
             }
         }
     }
