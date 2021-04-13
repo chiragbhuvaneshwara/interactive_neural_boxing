@@ -83,7 +83,7 @@ namespace MultiMosiServer
         }
 
 
-        public TPosture UpdatePunchTargetFetchPosture(string TargetHand, List<int> MovementDir)
+        public TPosture UpdatePunchTargetFetchPosture(string TargetHand, List<float> MovementDir)
         {
             punchInput punch_in = new punchInput();
 
@@ -142,12 +142,10 @@ namespace MultiMosiServer
             return posture;
         }
 
-        //TODO: setup a route in the backend to register a new connection and assign the connection a unique ID.
         public void Start()
         {
             if (this.posture == null)
             {
-                //TODO: setup a route to get zero posture
                 this.posture = this.getZeroPosture();
             }
 
@@ -168,7 +166,6 @@ namespace MultiMosiServer
             return Tvec2vec(this.posture.Bones[this.posture.Bone_map[bone_name]].position);
         }
 
-        //TODO: setup a route
         public Vector3 GetGlobalLocation()
         {
             Vector3 pos = Tvec2vec(this.posture.Location) * this.global_scale;
@@ -176,7 +173,6 @@ namespace MultiMosiServer
             return pos;
         }
 
-        //TODO: setup a route
         public Quaternion GetGlobalRotation()
         {
             double rot = this.posture.Rotation;
@@ -219,7 +215,6 @@ namespace MultiMosiServer
             }
         }
 
-        ////TODO: setup a route in the backend to terminate a connection with the specified unique ID.
         //public void stop()
         //{
         //    Debug.Log("Stoped motion server");
@@ -227,11 +222,10 @@ namespace MultiMosiServer
         //}
 
 
-        public void ManagedUpdate(string TargetHand, List<int> MovementDir) // void Update()
+        public void ManagedUpdate(string TargetHand, List<float> MovementDir) // void Update()
         {
             if (this.active)
             {
-                //TODO: Setup root to get posture with bones, bone_map, root_global_loc, root_global_rot
                 this.posture = this.UpdatePunchTargetFetchPosture(TargetHand, MovementDir);
             }
         }

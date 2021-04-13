@@ -11,7 +11,7 @@ namespace MultiMosiServer
             [SerializeField] public string hand;
             [SerializeField] public double[] target_left;
             [SerializeField] public double[] target_right;
-            [SerializeField] public List<int> movement_dir;
+            [SerializeField] public List<float> movement_dir;
 
         }
 

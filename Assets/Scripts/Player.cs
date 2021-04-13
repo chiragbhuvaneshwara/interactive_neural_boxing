@@ -33,7 +33,6 @@ public partial class Player : MonoBehaviour
 
     private void initializeBones(Transform t)
     {
-        //TODO: update for Xsens Awinda skeleton
         if (t.name.Contains("end"))
         {
             // End condition: end joint of final bone reached
@@ -174,7 +173,6 @@ public partial class Player : MonoBehaviour
     private void processTransforms(Transform t)
     {
         
-        //TODO: update for Xsens Awinda skeleton
         if (t.name.Contains("end"))
         {
             // End condition: end joint of final bone reached
@@ -242,13 +240,50 @@ public partial class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        List<float> dir = new List<float> { 0, 0 };
+        int numActiveHorizDirKeys = 0;
+        int numActiveVertDirKeys = 0;
+        if (Input.GetKey(KeyCode.A))
+        {
+            //dir = new List<float> { -1, 0 };
+            numActiveHorizDirKeys += 1;
+            dir[0] += -1;
+            //server.ManagedUpdate("none", dir);
+        }
+        if (Input.GetKey(KeyCode.D))
+        {
+            //dir = new List<float> { 1, 0 };
+            numActiveHorizDirKeys += 1;
+            dir[0] += 1;
+            //server.ManagedUpdate("none", dir);
+        }
+        if (Input.GetKey(KeyCode.W))
+        {
+            //dir = new List<float> { 0, 1 };
+            numActiveVertDirKeys += 1;
+            dir[1] += 1;
+            //server.ManagedUpdate("none", dir);
+        }
+        if (Input.GetKey(KeyCode.S))
+        {
+            //dir = new List<float> { 0, -1 };
+            numActiveVertDirKeys += 1;
+            dir[1] += -1;
+            //server.ManagedUpdate("none", dir);
+        }
+
+        if (numActiveVertDirKeys==1 && numActiveVertDirKeys == 1)
+        {
+            dir[0] = dir[0] / 2;
+            dir[1] = dir[1] / 2;
+        }
+        
         if (Input.GetMouseButton(0))
         //if (Input.GetMouseButtonDown(0))
         {
             //leftMousePressed = true;
             //if (leftMousePressed)
             //{
-            List<int> dir = new List<int> { 0, 0};
             server.ManagedUpdate("left", dir);
             //    leftMousePressed = false;
             //}
@@ -259,7 +294,6 @@ public partial class Player : MonoBehaviour
             //rightMousePressed = true;
             //if (rightMousePressed)
             //{
-            List<int> dir = new List<int> { 0, 0 };
             server.ManagedUpdate("right", dir);
             //rightMousePressed = false;
             //}
@@ -269,29 +303,9 @@ public partial class Player : MonoBehaviour
             midMousePressed = true;
             midMousePressed = false;
         }
-        else if (Input.GetKey(KeyCode.A))
-        {
-            List<int> dir = new List<int> { -1, 0 };
-            server.ManagedUpdate("none", dir);
-        }
-        else if (Input.GetKey(KeyCode.D))
-        {
-            List<int> dir = new List<int> { 1, 0 };
-            server.ManagedUpdate("none", dir);
-        }
-        else if (Input.GetKey(KeyCode.W))
-        {
-            List<int> dir = new List<int> { 0, 1 };
-            server.ManagedUpdate("none", dir);
-        }
-        else if (Input.GetKey(KeyCode.S))
-        {
-            List<int> dir = new List<int> { 0, -1 };
-            server.ManagedUpdate("none", dir);
-        }
         else
         {
-            List<int> dir = new List<int> { 0, 0 };
+            //dir = new List<float> { 0, 0 };
             server.ManagedUpdate("none", dir);
         }
     }
