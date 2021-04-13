@@ -4,9 +4,6 @@ import math
 from ... import utils
 
 
-# TODO : Ensure that all manipulations in methods or fuctions are applied to copies of arrays and not the arrays
-#  themselves
-
 
 class Trajectory:
     """
@@ -70,7 +67,6 @@ class Trajectory:
         tr_root_pos_local = self.convert_global_to_local(self.traj_root_pos, root_position, root_rotation)
         tr_root_vels_local = self.convert_global_to_local(self.traj_root_vels, root_position, root_rotation,
                                                           arg_type='vels')
-        # TODO Setup convert_local_to_global and vice versa to not change the y position of wrists
         tr_right_pos_local = self.convert_global_to_local(self.traj_right_wrist_pos, root_position, root_rotation,
                                                           arg_type='pos', arm='right')
         tr_left_pos_local = self.convert_global_to_local(self.traj_left_wrist_pos, root_position, root_rotation,
@@ -151,7 +147,8 @@ class Trajectory:
         :return:
         """
 
-        # TODO Instead of blending future traj points with preds, blend with the goal i.e. the punch target
+        # TODO blend future traj points blend with the goal i.e. the punch target when the punch target is within a
+        #  certain threshold distance from the shoulder/root of the character
 
         def _loc_to_glob(lp):
             pos = np.array(lp)
@@ -181,7 +178,6 @@ class Trajectory:
                 # no_punch_target = np.array([0,0,0])
                 desired_punch_label = desired_right_punch_label
 
-            # TODO setup desired punch target to be current wrist
             tr_mid_idx = self.median_idx
             if np.sum(desired_punch_target_in) == 0:
                 desired_punch_target = np.array(no_punch_target)
@@ -203,8 +199,6 @@ class Trajectory:
                 elif no_punch_mode:
                     break
                 # else:
-                # TODO For Trying to do nothing i.e punch target as zero vec for both right and left, does not
-                #  changing the trajectory make sense in case of previous trajectory describing punch
                 # break
                 # traj_pos_blend[i] = utils.glm_mix(traj_pos_blend[i],
                 #                                   traj_pos_blend[i], scale_pos)
@@ -225,7 +219,6 @@ class Trajectory:
                     self.traj_right_wrist_pos[i] = traj_pos_blend[i]
                     self.traj_right_wrist_vels[i] = traj_vels_blend[i]
 
-            # TODO: Fix implementation
             # if calc_traj_labels:
             #     pred_tr = traj_labels_blend[tr_mid_idx:]
             #     pred_tr[np.logical_and(pred_tr < 1, pred_tr > -1)] = 0
@@ -268,14 +261,12 @@ class Trajectory:
             tr_update = self.convert_local_to_global(tr_update, arg_type='vels')
             return tr_update
 
-        # TODO something wrong with traj_update ==> root keeps moving
         idx = self.median_idx
         root_tr_update = _curr_frame_update(pred_root_vel, xz_to_x0yz=True)
         self.traj_root_pos[idx] = self.traj_root_pos[idx] + root_tr_update
         # self.traj_root_pos[idx] = self.traj_root_pos[idx] + np.array([0, 0, 0])
         self.traj_root_vels[idx] = utils.glm_mix(self.traj_root_vels[idx], root_tr_update, 0.9)
 
-        # TODO Predicted forward direction seems to indicate motion but it should be 0 maybe?
         pred_fwd_dir = pred_fwd_dir.ravel()
         pred_fwd_dir_x, pred_fwd_dir_z = pred_fwd_dir[0], pred_fwd_dir[1]
         rotational_vel = math.atan2(pred_fwd_dir_x, pred_fwd_dir_z)
@@ -401,7 +392,6 @@ class Trajectory:
                 curr_point -= root_pos_copy
                 # arr_copy[i] -= root_pos
 
-            # TODO Cleanup
             # arr_copy[i] = utils.rot_around_z_3d(arr_copy[i], root_rot, inverse=True)
             curr_point = utils.rot_around_z_3d(curr_point, root_rot_copy, inverse=True)
             # curr_point = utils.rot_around_z_3d(curr_point, root_rot)

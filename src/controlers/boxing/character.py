@@ -1,7 +1,5 @@
 """author: Chirag Bhuvaneshwara """
 
-# TODO : Ensure that all manipulations in methods or functions are applied to copies of arrays and not the arrays
-#  themselves
 
 import numpy as np
 from ... import utils

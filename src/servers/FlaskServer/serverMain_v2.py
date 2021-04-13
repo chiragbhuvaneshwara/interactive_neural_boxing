@@ -75,7 +75,7 @@ def controller_to_posture():
 
 @app.route('/fetch_frame', methods=['GET', 'POST'])
 def fetch_frame():
-    # TODO First time of fetching wrist pos tr is incorrect ==>
+    # TODO (Dont remember why) First time of fetching wrist pos tr is incorrect ==>
 
     if request.method == 'POST':
         punch_in = request.get_json()
@@ -87,8 +87,8 @@ def fetch_frame():
         punch_right_target = tvector3_to_np(punch_in["target_right"])
         punch_left_target = tvector3_to_np(punch_in["target_left"])
 
-        print(punch_left_target)
-        print(punch_right_target)
+        # print(punch_left_target)
+        # print(punch_right_target)
 
         # TODO POST punch_labels from the backend
         if sum(punch_right_target) == 0 and sum(punch_left_target) == 0:
