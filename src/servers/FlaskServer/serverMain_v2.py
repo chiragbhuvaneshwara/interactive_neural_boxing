@@ -1,5 +1,4 @@
 import copy
-
 from flask import Flask, request
 from src.controlers.boxing.controller_tf2_v2 import BoxingController
 from src.nn.mann_keras_v2.mann import load_mann, load_binary

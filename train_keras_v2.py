@@ -5,7 +5,10 @@ import numpy as np
 import tensorflow as tf
 import os
 from datetime import datetime
-from src.nn.mann import MANN, loss_func, prepare_mann_data, get_variation_gating, save_network, EpochWriter, \
+import shutil
+# from src.nn.mann import MANN, loss_func, prepare_mann_data, get_variation_gating, save_network, EpochWriter, \
+#     GatingChecker, load_mann
+from src.nn.mann_keras_v2.mann import MANN, loss_func, prepare_mann_data, get_variation_gating, save_network, EpochWriter, \
     GatingChecker, load_mann
 import argparse
 
@@ -161,6 +164,8 @@ if __name__ == '__main__':
     if LOCAL:
         print('Local machine dev')
         OUT_BASE_PATH = os.path.join("local_dev_saved_models")
+        shutil.rmtree(OUT_BASE_PATH, ignore_errors=False, onerror=None)
+        os.mkdir(OUT_BASE_PATH)
         dataset_config_path = os.path.join("data", "dev", frd_win, "config.json")
         dataset_npz_path = os.path.join('data', 'dev', frd_win, 'train.npz')
         batch_size = 2
