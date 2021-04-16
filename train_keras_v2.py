@@ -6,9 +6,8 @@ import tensorflow as tf
 import os
 from datetime import datetime
 import shutil
-# from src.nn.mann import MANN, loss_func, prepare_mann_data, get_variation_gating, save_network, EpochWriter, \
-#     GatingChecker, load_mann
-from src.nn.mann_keras_v2.mann import MANN, loss_func, prepare_mann_data, get_variation_gating, save_network, EpochWriter, \
+from src.nn.mann_keras_v2.mann import MANN, loss_func, prepare_mann_data, get_variation_gating, save_network, \
+    EpochWriter, \
     GatingChecker, load_mann
 import argparse
 
@@ -17,18 +16,6 @@ tf.keras.backend.set_floatx("float32")
 gpus = tf.config.experimental.list_physical_devices('GPU')
 for gpu in gpus:
     tf.config.experimental.set_memory_growth(gpu, True)
-
-
-def setup_dir(path):
-    if not os.path.exists(path):
-        os.makedirs(path)
-    return path
-
-
-def save_json(path, data):
-    with open(path, 'w') as outfile:
-        json.dump(data, outfile)
-    print('Created:', path)
 
 
 def get_gating_indices(x_ids, joint_ids):

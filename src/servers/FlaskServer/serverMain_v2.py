@@ -1,9 +1,9 @@
 import copy
+import math
 from flask import Flask, request
 from src.controlers.boxing.controller_tf2_v2 import BoxingController
 from src.nn.mann_keras_v2.mann import load_mann, load_binary
 import json, os
-from flask import jsonify
 from src.servers.FlaskServer.utils import *
 
 # TODO setup better names for variables used in Flask server
@@ -13,14 +13,12 @@ app = Flask(__name__)
 frd = 1
 window = 15
 epochs = 100
-# server_to_main_dir = '../../../'
 server_to_main_dir = ''
 DATASET_OUTPUT_BASE_PATH = server_to_main_dir + 'data/'
 frd_win = 'boxing_fr_' + str(frd) + '_' + str(window)
 dataset_path = os.path.join(DATASET_OUTPUT_BASE_PATH, frd_win, 'train.npz')
 controller_in_out_dir = 'src/controlers/boxing/controller_in_out'
 frd_win_epochs = 'boxing_fr_' + str(frd) + '_' + str(window) + '_' + str(epochs)
-# trained_base_path = 'saved_models/mann_tf2_v2/' + frd_win_epochs + '/20210323_14-51-07/epochs/epoch_98'
 trained_base_path = 'saved_models/mann_tf2_v2/' + frd_win_epochs + '/20210329_14-09-09/epochs/epoch_99'
 target_file = os.path.join(trained_base_path, 'saved_model')
 
@@ -65,7 +63,6 @@ def controller_to_posture():
         curr_tr = tr[i]
         for j in range(len(curr_tr)):
             posture.traj[tr_keys[i]][j] = np_to_tvector3(curr_tr[j])
-            # posture.traj[tr_keys[i]][j] = curr_tr[j]
 
     posture.location = np_to_tvector3(root_pos)
     posture.rotation = root_rot
@@ -86,9 +83,6 @@ def fetch_frame():
         punch_right_target = tvector3_to_np(punch_in["target_right"])
         punch_left_target = tvector3_to_np(punch_in["target_left"])
 
-        # print(punch_left_target)
-        # print(punch_right_target)
-
         # TODO POST punch_labels from the backend
         if sum(punch_right_target) == 0 and sum(punch_left_target) == 0:
             label = [0, 0]
@@ -98,7 +92,7 @@ def fetch_frame():
             label = [0, 1]
 
         punch_target = punch_right_target + punch_left_target
-        bc.pre_render(punch_target, label, dir,space='global')
+        bc.pre_render(punch_target, label, dir, space='global')
         posture = controller_to_posture()
         bc.post_render()
         json_str = json.dumps(posture, default=serialize)
@@ -118,11 +112,13 @@ def get_zero_posture():
             return json.dumps(posture, default=serialize)
         elif request.method == 'POST' and request.get_json()["name"] == "fetch_zp_reset":
             posture = controller_to_posture()
-            bc.reset()
+            # bc.reset()
+            bc.reset([0, 0, 0], 0.0, [0, 0, 0])
             return json.dumps(posture, default=serialize)
     elif request.method == 'GET':
         posture = controller_to_posture()
-        bc.reset()
+        # bc.reset()
+        bc.reset([0, 0, 0], 0.0, [0, 0, 0])
         return json.dumps(posture, default=serialize)
 
     else:

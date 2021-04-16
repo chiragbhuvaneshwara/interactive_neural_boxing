@@ -1,7 +1,7 @@
 """author: Chirag Bhuvaneshwara """
 
-
 import numpy as np
+import math
 from ... import utils
 
 
@@ -27,6 +27,7 @@ class Character:
 
         # angle of rotation around up axis -> utils.z_angle(new_forward_dir) + old_root_rotation --> [-2*pi, + 2* pi]
         self.root_rotation = 0.0
+        # self.root_rotation = math.pi
         # root position projected to ground (y-axis = 0)
         self.root_position = np.array([0.0, 0.0, 0.0])
 
@@ -63,35 +64,6 @@ class Character:
                 self.joint_positions[j] = pos
 
             self.joint_velocities[j] = vel
-
-    def compute_foot_sliding(self, joint_positions, joint_velocities, foot_contacts=[0, 0, 0, 0]):
-        def compute_foot_movement(j):
-            local_pos = np.array(
-                [joint_positions[j * 3 + 0], joint_positions[j * 3 + 1], joint_positions[j * 3 + 2]],
-                dtype=np.float64).reshape(3, )
-            pos = utils.rot_around_z_3d(local_pos, self.root_rotation) + self.root_position
-            local_vel = np.array(
-                [joint_velocities[j * 3 + 0], joint_velocities[j * 3 + 1], joint_velocities[j * 3 + 2]],
-                dtype=np.float64).reshape(3, )
-            vel = utils.rot_around_z_3d(local_vel, self.root_rotation)
-            return self.joint_positions[j] - utils.glm_mix(self.joint_positions[j] + vel, pos, 0.5)
-
-        global_foot_drift = np.array([0.0, 0.0, 0.0])
-        if foot_contacts[0]:
-            global_foot_drift += compute_foot_movement(self.foot_left[0])
-        if foot_contacts[1]:
-            global_foot_drift += compute_foot_movement(self.foot_left[1])
-        if foot_contacts[2]:
-            global_foot_drift += compute_foot_movement(self.foot_right[0])
-        if foot_contacts[3]:
-            global_foot_drift += compute_foot_movement(self.foot_right[1])
-
-        if (np.sum(foot_contacts) > 0):
-            global_foot_drift /= np.sum(foot_contacts)
-            global_foot_drift[1] = 0.0
-        # print("foot correction: ", foot_contacts, global_foot_drift)
-        # return np.array([0.0, 0.0, 0.0])
-        return global_foot_drift
 
     def get_local_joint_pos_vel(self, prev_root_pos, prev_root_rot):
         joint_pos = np.array([0.0] * (self.joints * 3), dtype=np.float64)

@@ -1,5 +1,3 @@
-import json
-
 import numpy as np
 import tensorflow as tf
 import os
@@ -25,7 +23,6 @@ class MANN(tf.keras.Model):
         self.gating_input = len(gating_indices)
 
     def get_config(self):
-        # config = super(MANN, self).get_config()
         config = {"input_size": self.input_size, "output_size": self.output_size, "hidden_size": self.hidden_size,
                   "gating_hidden": self.gating_hidden, "expert_nodes": self.expert_nodes,
                   "gating_indices": self.gating_indices, "batch_size": 1, "dropout_prob": self.dropout_prob}
@@ -70,7 +67,6 @@ class MANN(tf.keras.Model):
             e = tf.expand_dims(experts, 0)
             e = tf.tile(e, [self.batch_size, 1, 1, 1])
             w = tf.expand_dims(tf.expand_dims(expert_weights, -1), -1)
-            # print("interpolate: ", w, e)
             r = w * e
             return tf.reduce_sum(r, axis=1)
 
@@ -82,22 +78,16 @@ class MANN(tf.keras.Model):
         else:
             H0 = inputs
 
-        # print("gh1 " , self.weight_knots[0], H0)
-        # print(tf.matmul(self.weight_knots[0], H0), self.bias_knots[0])
         H1 = tf.matmul(self.weight_knots[0], H0) + self.bias_knots[0]
         H1 = tf.nn.elu(H1)
         if not training is None:
             H1 = tf.nn.dropout(H1, self.dropout_prob)
 
-        # print("gh2 " , self.weight_knots[1],  H1)
-        # print(tf.matmul(self.weight_knots[1], H1), self.bias_knots[1])
         H2 = tf.matmul(self.weight_knots[1], H1) + self.bias_knots[1]
         H2 = tf.nn.elu(H2)
         if not training is None:
             H2 = tf.nn.dropout(H2, self.dropout_prob)
 
-        # print("gh3 " , self.weight_knots[2], H2)
-        # print(tf.matmul(self.weight_knots[2], H2), self.bias_knots[2])
         H3 = tf.matmul(self.weight_knots[2], H2) + self.bias_knots[2]
         H3 = tf.nn.softmax(H3, axis=1)
         return H3
@@ -112,9 +102,6 @@ class MANN(tf.keras.Model):
         w0 = self.interpolate(self.weight_knots[3], expert_weights)
         b0 = self.interpolate(self.bias_knots[3], expert_weights)
 
-        # print("H1 " , w0, H0)
-        # print(tf.matmul(w0, H0), b0)
-
         H1 = tf.matmul(w0, H0) + b0
         H1 = tf.nn.elu(H1)
         if not training is None:
@@ -122,9 +109,6 @@ class MANN(tf.keras.Model):
 
         w1 = self.interpolate(self.weight_knots[4], expert_weights)
         b1 = self.interpolate(self.bias_knots[4], expert_weights)
-
-        # print("H2 " , w1, H1)
-        # print(tf.matmul(w1, H1), b1)
 
         H2 = tf.matmul(w1, H1) + b1
         H2 = tf.nn.elu(H2)
@@ -134,23 +118,15 @@ class MANN(tf.keras.Model):
         w2 = self.interpolate(self.weight_knots[5], expert_weights)
         b2 = self.interpolate(self.bias_knots[5], expert_weights)
 
-        # print("H3 " , w2, H2)
-        # print(tf.matmul(w2, H2), b2)
-
         H3 = tf.matmul(w2, H2) + b2
 
         return H3
 
     @tf.function
     def call(self, inputs, training=None):
-        # self.batch_size.assign(inputs.shape[0])
-
         expert_input = tf.expand_dims(tf.gather(inputs, self.gating_indices, axis=1), -1)
         motion_input = tf.expand_dims(inputs, -1)
-        # print("einpput:", expert_input)
         expert_weights = self.gating_network(expert_input, training)[..., 0]
-        # print("gating: ", expert_weights)
-        # print("motion in:", motion_input)
         output = self.motion_network(motion_input, expert_weights, training)[..., 0]
 
         return tf.concat([output, expert_weights], axis=-1)
@@ -177,9 +153,8 @@ class MANN(tf.keras.Model):
             raise Exception('Nans found')
 
         gating_weights = y_prediction[-6:]
-        y_prediction =y_prediction[:-6]
+        y_prediction = y_prediction[:-6]
         y_prediction = np.array(y_prediction * y_std + y_mean).ravel()
-
 
         tmp = y_prediction
         r_p_label = tmp[
@@ -265,8 +240,7 @@ def get_variation_gating(network, input_data, batch_size):
         out = network(bi)
         # TODO Setup var for extracting gating outputs
         gws.append(out[:, -6:])
-    #
-    # gws.append(tensor.numpy())
+
     print("\nChecking the gating variability: ")
     print("  mean: ", np.mean(np.concatenate(gws, axis=0), axis=0))
     print("  std: ", np.std(np.concatenate(gws, axis=0), axis=0))
@@ -276,11 +250,9 @@ def get_variation_gating(network, input_data, batch_size):
 
 
 class EpochWriter(tf.keras.callbacks.Callback):
-    # def __init__(self, path, checkpoint_folder, Xmean, Ymean, Xstd, Ystd):
     def __init__(self, path, Xmean, Ymean, Xstd, Ystd):
         super().__init__()
         self.path = path
-        # self.checkpoint_folder = os.path.join(checkpoint_folder, "epoch_%d")
         self.Xmean = Xmean
         self.Ymean = Ymean
         self.Xstd = Xstd
@@ -298,8 +270,6 @@ class GatingChecker(tf.keras.callbacks.Callback):
         self.batch_size = batch_size
 
     def on_epoch_begin(self, epoch, logs=None):
-        # print("epoch start")
-        # a = 0
         get_variation_gating(self.model, self.X, self.batch_size)
 
 

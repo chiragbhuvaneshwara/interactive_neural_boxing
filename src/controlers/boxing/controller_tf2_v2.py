@@ -1,4 +1,6 @@
 """author: Chirag Bhuvaneshwara """
+import math
+
 import numpy as np
 from src.nn.mann_keras_v2.mann import MANN
 from ..abstract_controller import Controller
@@ -15,16 +17,13 @@ class BoxingController(Controller):
         [type_in] -- [description]
     """
 
-    def __init__(self, network: MANN, data_config, dataset_npz_path, norm):  # xdim, ydim, end_joints = 5, numJoints = 21):
-
-        # jd = config_store['joint_indices']
-        # self.hand_left = jd['LeftWrist']
-        # self.hand_right = jd['RightWrist']
+    def __init__(self, network: MANN, data_config, dataset_npz_path, norm):
 
         self.network = network
         self.xdim = network.input_size
         self.ydim = network.output_size
 
+        self.data_config = data_config
         self.endJoints = data_config["end_joints"]
         self.n_joints = data_config["num_joints"] + self.endJoints
         self.use_rotations = data_config["use_rotations"]
@@ -74,16 +73,13 @@ class BoxingController(Controller):
         Returns:
 
         """
-        print('##############')
-        print(dir)
-        print('##############')
+        # print('##############')
+        # print(dir)
+        # print('##############')
 
-        #TODO: Supply direction in right hand coordinate system used in Python to pre_render instead of *-1
-        direction = np.array(dir)*-1
-        # direction = np.array([1, 1])
-        # direction = np.array([0, 1])
+        # TODO: Supply direction in right hand coordinate system used in Python to pre_render instead of *-1
+        direction = np.array(dir) * -1
         direction = utils.xz_to_x0yz(direction)
-        # target_vel_speed = .0025 * np.linalg.norm(direction)
         target_vel_speed = 0.05 * np.linalg.norm(direction)
         self.target_vel = utils.glm_mix(self.target_vel, target_vel_speed * direction, 0.9)
         target_vel_dir = self.target_dir if utils.euclidian_length(self.target_vel) \
@@ -124,7 +120,7 @@ class BoxingController(Controller):
         self.input.set_curr_punch_labels(curr_right_p_label, curr_left_p_label)
 
         right_shoulder_lp, left_shoulder_lp = self.output.get_shoulder_local_pos()
-        #TODO: (Dont remember why) Update traj_labels only in post_render in update_from_predict i.e these 2 vecs are autoregressive ==> Similar to NSM
+        # TODO: (Dont remember why) Update traj_labels only in post_render in update_from_predict i.e these 2 vecs are autoregressive ==> Similar to NSM
         self.traj.compute_future_wrist_trajectory(right_p_target, left_p_target, curr_right_p_label, curr_left_p_label,
                                                   right_shoulder_lp, left_shoulder_lp)
 
@@ -180,9 +176,11 @@ class BoxingController(Controller):
                                self.output.get_wrist_local_vel(), self.input.get_curr_punch_labels())
 
         # 1. update and smooth trajectory
-        #TODO: Update traj_labels only here i.e these 2 vecs are autoregressive ==> Similar to NSM
+        # TODO: Update traj_labels only here i.e these 2 vecs are autoregressive ==> Similar to NSM
         self.traj.update_from_predict(self.output.get_next_traj(), self.input.get_curr_punch_labels())
 
+        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        print(self.traj.traj_right_punch_labels)
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
     def reset(self, start_location=np.array([0.0, 0.0, 0.0]), start_orientation=0,
@@ -195,22 +193,14 @@ class BoxingController(Controller):
             start_orientation {[type_in]} -- [description]
             start_direction {[type_in]} -- [description]
         """
+        # self.char.reset(start_location, start_orientation)
         self.char.reset(start_location, start_orientation)
-        # self.traj.reset(start_location, start_orientation, start_direction)
-        self.traj.reset()
+        right_shoulder_lp, left_shoulder_lp = self.output.get_shoulder_local_pos()
+        self.traj.reset(right_shoulder_lp, left_shoulder_lp, start_location, start_orientation, start_direction)
         self.__initialize()
         print('###################################')
         print('RESET DONE')
         print('###################################')
-
-    def copy(self):
-        """
-        Should copy the controler. At the moment, just creates a new, blank controler.
-
-        Returns:
-            [type_in] -- [description]
-        """
-        return Controller(self.network, self.config_store)
 
     def get_pose(self):
         """
