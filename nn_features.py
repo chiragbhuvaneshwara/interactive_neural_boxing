@@ -596,7 +596,7 @@ class FeatureExtractor:
             - global_positions[frame:frame + 1, 0])
 
         root_dirs = np.array(forward[start_from:frame + self.window:step])
-        print(root_dirs[len(root_dirs)//2])
+        # print(root_dirs[len(root_dirs)//2])
         # headdirs = np.array(head_directions[start_from:frame + self.window:step])
 
         root_vels = np.array(root_vel[start_from:frame + self.window:step])
