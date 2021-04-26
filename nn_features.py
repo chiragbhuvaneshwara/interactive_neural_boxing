@@ -190,8 +190,8 @@ class FeatureExtractor:
 
         joints_from_bvh = bvhreader.node_names.keys()
         joints_from_bvh = [joint for joint in joints_from_bvh if len(joint.split('_')) == 1]
-        print('The joints in the bvh in order are:')
-        [print(i, joint) for i, joint in enumerate(joints_from_bvh)]
+        # print('The joints in the bvh in order are:')
+        # [print(i, joint) for i, joint in enumerate(joints_from_bvh)]
         self.joint_id_map = {joint: i for i, joint in enumerate(joints_from_bvh)}
 
         skeleton = SkeletonBuilder().load_from_bvh(bvhreader)
