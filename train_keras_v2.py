@@ -25,8 +25,8 @@ def get_gating_indices(x_ids, joint_ids):
     wrist_velocities_tr_ids = _generate_id_sequence(x_ids, 'x_right_wrist_vels_tr') + \
                               _generate_id_sequence(x_ids, 'x_left_wrist_vels_tr')
 
-    punch_labels_tr_ids = _generate_id_sequence(x_ids, 'x_right_punch_labels_tr') + \
-                          _generate_id_sequence(x_ids, 'x_left_punch_labels_tr')
+    # punch_labels_tr_ids = _generate_id_sequence(x_ids, 'x_right_punch_labels_tr') + \
+    #                       _generate_id_sequence(x_ids, 'x_left_punch_labels_tr')
 
     current_punch_labels_ids = _generate_id_sequence(x_ids, 'x_right_punch_labels') + \
                                _generate_id_sequence(x_ids, 'x_left_punch_labels')
@@ -47,8 +47,15 @@ def get_gating_indices(x_ids, joint_ids):
     # foot end effector velocities,
     # the current action variables
     # and the desired velocity of the character
+    # TODO: try not to include punch targets
+    # gating_ids = wrist_velocities_tr_ids + \
+    #              punch_labels_tr_ids + \
+    #              punch_target_ids + \
+    #              wrist_end_effector_velocities_ids \
+    #              + \
+    #              current_punch_labels_ids + \
+    #              foot_end_effector_velocities_ids
     gating_ids = wrist_velocities_tr_ids + \
-                 punch_labels_tr_ids + \
                  punch_target_ids + \
                  wrist_end_effector_velocities_ids \
                  + \
@@ -73,7 +80,7 @@ def train_boxing_data(data_npz_path, data_config_path, output_dir, frd_win_epoch
         os.makedirs(epoch_dir)
     epoch_dir = os.path.join(epoch_dir, "epoch_%d")
 
-    norm_path = os.path.join(output_dir, 'data_norm.json')
+    # norm_path = os.path.join(output_dir, 'data_norm.json')
 
     with open(data_config_path) as f:
         dataset_config = json.load(f)
