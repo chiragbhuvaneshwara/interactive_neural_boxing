@@ -29,8 +29,10 @@ class FeatureExtractor:
     def __init__(self, bvh_file_path, window,
                  # type="flat",
                  to_meters=1, forward_dir=np.array([0.0, 0.0, 1.0]),
-                 shoulder_joints=[8, 12], hip_joints=[15, 19], fid_l=[21, 22],
-                 fid_r=[17, 18],
+                 shoulder_joints={'r': 8, 'l': 12},  # [right, left]
+                 hip_joints={'r': 15, 'l': 19},  # [right, left]
+                 fid_l={'a': 21, 't': 22},  # [ankle, toe]
+                 fid_r={'a': 17, 't': 18},  # [ankle, toe]
                  head_id=6,
                  hid_l=14,
                  hid_r=10,
@@ -122,10 +124,10 @@ class FeatureExtractor:
         """
         Sets the joint ids to axis neuron motion capture suit's skeleton
         """
-        self.shoulder_joints = [36, 13]
-        self.hip_joints = [4, 1]
-        self.foot_left = [6, 6]
-        self.foot_right = [3, 3]
+        self.shoulder_joints = {'r': 13, 'l': 36}  # TODO Check which is right and left
+        self.hip_joints = {'r': 1, 'l': 4}
+        self.foot_left = {'a': 6, 't': 6}
+        self.foot_right = {'a': 3, 't': 3}
         self.head = 12
         self.n_joints = 59
         self.to_meters = 100
@@ -134,10 +136,10 @@ class FeatureExtractor:
         """
         Sets the joint ids to xsens awinda motion capture suit's skeleton
         """
-        self.shoulder_joints = [8, 12]
-        self.hip_joints = [15, 19]
-        self.foot_left = [21, 22]
-        self.foot_right = [17, 18]
+        self.shoulder_joints = {'r': 8, 'l': 12}  # [right, left]
+        self.hip_joints = {'r': 15, 'l': 19}
+        self.foot_left = {'a': 21, 't': 22}       # [ankle, toe]
+        self.foot_right = {'a': 17, 't': 18}
         self.head = 6
         self.hand_left = 14
         self.hand_right = 10
@@ -188,8 +190,8 @@ class FeatureExtractor:
 
         joints_from_bvh = bvhreader.node_names.keys()
         joints_from_bvh = [joint for joint in joints_from_bvh if len(joint.split('_')) == 1]
-        # print('The joints in the bvh in order are:')
-        # [print(i, joint) for i, joint in enumerate(joints_from_bvh)]
+        print('The joints in the bvh in order are:')
+        [print(i, joint) for i, joint in enumerate(joints_from_bvh)]
         self.joint_id_map = {joint: i for i, joint in enumerate(joints_from_bvh)}
 
         skeleton = SkeletonBuilder().load_from_bvh(bvhreader)
@@ -253,8 +255,8 @@ class FeatureExtractor:
             :return forward_dirs (np.array(n_frames, 3))
         """
         if len(self.__forwards) == 0:
-            sdr_l, sdr_r = self.shoulder_joints[0], self.shoulder_joints[1]
-            hip_l, hip_r = self.hip_joints[0], self.hip_joints[1]
+            sdr_l, sdr_r = self.shoulder_joints['l'], self.shoulder_joints['r']
+            hip_l, hip_r = self.hip_joints['l'], self.hip_joints['r']
             global_positions = np.array(self.__global_positions)
             across = (
                     (global_positions[:, sdr_l] - global_positions[:, sdr_r]) +
@@ -500,7 +502,7 @@ class FeatureExtractor:
             :param velfactor=np.array([0.05, 0.05])
                 :return feet_l, feet_r  (np.array(n_frames, 1), dtype = np.float)
         """
-        fid_l, fid_r = self.foot_left, self.foot_right
+        fid_l, fid_r = [self.foot_left['a'], self.foot_left['t']], [self.foot_right['a'], self.foot_right['t']]
         velfactor = velfactor / self.to_meters
 
         global_positions = np.array(self.__global_positions)
@@ -594,7 +596,7 @@ class FeatureExtractor:
             - global_positions[frame:frame + 1, 0])
 
         root_dirs = np.array(forward[start_from:frame + self.window:step])
-
+        print(root_dirs[len(root_dirs)//2])
         # headdirs = np.array(head_directions[start_from:frame + self.window:step])
 
         root_vels = np.array(root_vel[start_from:frame + self.window:step])
@@ -602,8 +604,10 @@ class FeatureExtractor:
         left_wrist_vels = np.array(left_wrist_vel[start_from:frame + self.window:step])
         right_wrist_vels = np.array(right_wrist_vel[start_from:frame + self.window:step])
 
-        left_punch_labels = np.array(self.punch_labels[self.hand_left][start_from:frame + self.window:step])
-        right_punch_labels = np.array(self.punch_labels[self.hand_right][start_from:frame + self.window:step])
+        # left_punch_labels = np.array(self.punch_labels[self.hand_left][start_from:frame + self.window:step])
+        # right_punch_labels = np.array(self.punch_labels[self.hand_right][start_from:frame + self.window:step])
+        left_punch_labels = np.array(self.punch_labels_binary[self.hand_left][start_from:frame + self.window:step])
+        right_punch_labels = np.array(self.punch_labels_binary[self.hand_right][start_from:frame + self.window:step])
 
         for j in range(len(root_pos)):
             # multiplying by root_rotation is rotating vectors to point to forward direction
@@ -622,7 +626,8 @@ class FeatureExtractor:
         return_items = [root_pos, left_wrist_pos, right_wrist_pos, head_pos, root_dirs,
                         # headdirs,
                         root_vels, left_wrist_vels, right_wrist_vels,
-                        left_punch_labels, right_punch_labels]
+                        left_punch_labels, right_punch_labels
+                        ]
 
         keys = list(map(retrieve_name, return_items))
         return_tr_items = {k: v for k, v in zip(keys, return_items)}

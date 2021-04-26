@@ -71,8 +71,8 @@ def prepare_input_data(i, handler, col_demarcation_done=True):
         x_left_wrist_pos_tr,  # local wrt r in mid frame (TODO then wrt wrist in mid frame)
         x_right_wrist_vels_tr,
         x_left_wrist_vels_tr,
-        x_right_punch_labels_tr,
-        x_left_punch_labels_tr,
+        # x_right_punch_labels_tr,
+        # x_left_punch_labels_tr,
         x_right_punch_labels,                                   #TODO:Janis said remove
         x_left_punch_labels,                                   #TODO:Janis said remove
         x_right_punch_target,  # local wrt r in mid frame                                   #TODO:Janis said remove
@@ -136,8 +136,8 @@ def prepare_output_data(i, handler, col_demarcation_done=True):
     # y_punch_dphase = punch_dphase[i].ravel()
 
     # TODO You have changed foot contacts from l, r to r, l. Ensure that controller can process r, l
-    y_right_foot_contacts = handler.foot_contacts[handler.foot_right[0]][i]
-    y_left_foot_contacts = handler.foot_contacts[handler.foot_left[0]][i]
+    y_right_foot_contacts = handler.foot_contacts[handler.foot_right['a']][i]
+    y_left_foot_contacts = handler.foot_contacts[handler.foot_left['a']][i]
     # y_foot_contacts = np.concatenate([feet_r[i], feet_l[i]], axis=-1)
 
     y_curr_frame = [
@@ -153,8 +153,8 @@ def prepare_output_data(i, handler, col_demarcation_done=True):
         y_left_wrist_pos_tr,
         y_right_wrist_vels_tr,
         y_left_wrist_vels_tr,
-        y_right_punch_labels_tr,                                   #TODO:Janis said remove
-        y_left_punch_labels_tr,                                   #TODO:Janis said remove
+        # y_right_punch_labels_tr,                                   #TODO:Janis said remove
+        # y_left_punch_labels_tr,                                   #TODO:Janis said remove
         y_local_pos,
         y_local_vel
     ]
@@ -276,7 +276,7 @@ def process_folder(bvh_path, punch_phase_path, frame_rate_div, forward_direction
     for b_f, p_f in zip(bvh_files, punch_phase_files):
         print(b_f, '\n', p_f)
         handler = FeatureExtractor(b_f, window, forward_dir=forward_direction)
-        x_cur_file, y_per_file, dataset_config = process_data(handler, p_f, frame_rate_div, develop)
+        x_cur_file, y_per_file, dataset_config = process_data(handler, p_f, frame_rate_div, develop=False)
         x_per_folder.append(x_cur_file)
         y_per_folder.append(y_per_file)
         if develop:
