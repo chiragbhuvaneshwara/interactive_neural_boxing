@@ -116,12 +116,14 @@ def get_zero_posture():
             # bc.reset()
             # bc.reset([0, 0, 0], math.pi, [0, 0, 0])
             bc.reset([0, 0, 0], 0.0, [0, 0, 0])
+            # bc.reset([0, 0, 0], 0.0, [0, 0, 1])
             return json.dumps(posture, default=serialize)
     elif request.method == 'GET':
         posture = controller_to_posture()
         # bc.reset()
         # bc.reset([0, 0, 0], -math.pi, [0, 0, 0])
         bc.reset([0, 0, 0], 0.0, [0, 0, 0])
+        # bc.reset([0, 0, 0], 0.0, [0, 0, 1])
         return json.dumps(posture, default=serialize)
 
     else:

@@ -489,7 +489,8 @@ class Trajectory:
         # print(self.traj_root_rotations)
         #TODO control rotations using these dirs
         # self.traj_root_directions = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
-        self.traj_root_directions = np.array([[0.0, 0.0, 1.0]] * self.n_frames_tr_win)
+        # self.traj_root_directions = np.array([[0.0, 0.0, 1.0]] * self.n_frames_tr_win)
+        self.traj_root_directions = np.array([start_direction] * self.n_frames_tr_win)
 
         ### Trajectory info of the hand
         # Wrist positions contain all 3 components

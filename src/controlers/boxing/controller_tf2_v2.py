@@ -78,7 +78,8 @@ class BoxingController(Controller):
         # print('##############')
 
         # TODO: Supply direction in right hand coordinate system used in Python to pre_render instead of *-1
-        direction = np.array(dir) * -1
+        # direction = np.array(dir) * -1
+        direction = np.array(dir) * 1
         direction = utils.xz_to_x0yz(direction)
         target_vel_speed = 0.05 * np.linalg.norm(direction)
         self.target_vel = utils.glm_mix(self.target_vel, target_vel_speed * direction, 0.9)
