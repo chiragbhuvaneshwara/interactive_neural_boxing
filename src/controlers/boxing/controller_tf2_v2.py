@@ -127,14 +127,17 @@ class BoxingController(Controller):
         self.traj.compute_future_root_trajectory(self.target_dir, self.target_vel)
 
         # 3. Set Trajectory input
+        # root_pos_tr, root_vels_tr, right_wrist_pos_tr, left_wrist_pos_tr, right_wrist_vels_tr, \
+        # left_wrist_vels_tr, right_labels_tr, left_labels_tr = self.traj.get_input(
+        #     self.char.root_position, self.char.root_rotation)
         root_pos_tr, root_vels_tr, right_wrist_pos_tr, left_wrist_pos_tr, right_wrist_vels_tr, \
-        left_wrist_vels_tr, right_labels_tr, left_labels_tr = self.traj.get_input(
+        left_wrist_vels_tr = self.traj.get_input(
             self.char.root_position, self.char.root_rotation)
         self.input.set_root_pos_tr(root_pos_tr)
         self.input.set_root_vels_tr(root_vels_tr)
         self.input.set_wrist_pos_tr(right_wrist_pos_tr, left_wrist_pos_tr)
         self.input.set_wrist_vels_tr(right_wrist_vels_tr, left_wrist_vels_tr)
-        self.input.set_punch_labels_tr(right_labels_tr, left_labels_tr)
+        # self.input.set_punch_labels_tr(right_labels_tr, left_labels_tr)
 
         # 4. Prepare and Set Joint Input
         # Steps 3 and 4 will update MANNInput Class completely to the NN's required input for current frame
@@ -180,7 +183,7 @@ class BoxingController(Controller):
         self.traj.update_from_predict(self.output.get_next_traj(), self.input.get_curr_punch_labels())
 
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        print(self.traj.traj_right_punch_labels)
+        # print(self.traj.traj_right_punch_labels)
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
     def reset(self, start_location=np.array([0.0, 0.0, 0.0]), start_orientation=0,
@@ -237,8 +240,8 @@ class BoxingController(Controller):
         return np.array(self.char.root_position), float(self.char.root_rotation)
 
     def __initialize(self):
-        self.traj.traj_left_punch_labels = np.zeros(self.traj.traj_left_punch_labels.shape)
-        self.traj.traj_right_punch_labels = np.zeros(self.traj.traj_right_punch_labels.shape)
+        # self.traj.traj_left_punch_labels = np.zeros(self.traj.traj_left_punch_labels.shape)
+        # self.traj.traj_right_punch_labels = np.zeros(self.traj.traj_right_punch_labels.shape)
 
         # TODO Maybe Get only init local positions from a frame in the mocap data that you think is in neutral position.
         #  Get the rest of the variables from norm?
@@ -472,10 +475,11 @@ class MANNOutput(object):
         rv_tr = self.get_root_vel_traj()
         rwp_tr, lwp_tr = self.get_wrist_pos_traj()
         rwv_tr, lwv_tr = self.get_wrist_vels_traj()
-        rpunch_tr, lpunch_tr = self.get_punch_labels_traj()
+        # rpunch_tr, lpunch_tr = self.get_punch_labels_traj()
         # pred_dir = self.get_root_new_forward()
 
-        return rp_tr, rv_tr, rwp_tr, lwp_tr, rwv_tr, lwv_tr, rpunch_tr, lpunch_tr
+        return rp_tr, rv_tr, rwp_tr, lwp_tr, rwv_tr, lwv_tr, \
+               # rpunch_tr, lpunch_tr
         # , pred_dir
 
     def set_wrist_pos_tr(self, right_wrist_pos_traj, left_wrist_pos_traj):

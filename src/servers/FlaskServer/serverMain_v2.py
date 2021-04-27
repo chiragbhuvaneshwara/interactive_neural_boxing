@@ -19,7 +19,8 @@ frd_win = 'boxing_fr_' + str(frd) + '_' + str(window)
 dataset_path = os.path.join(DATASET_OUTPUT_BASE_PATH, frd_win, 'train.npz')
 controller_in_out_dir = 'src/controlers/boxing/controller_in_out'
 frd_win_epochs = 'boxing_fr_' + str(frd) + '_' + str(window) + '_' + str(epochs)
-trained_base_path = 'saved_models/mann_tf2_v2/' + frd_win_epochs + '/20210329_14-09-09/epochs/epoch_99'
+# trained_base_path = 'saved_models/mann_tf2_v2/' + frd_win_epochs + '/20210329_14-09-09/epochs/epoch_99'
+trained_base_path = 'saved_models/mann_tf2_v2/' + frd_win_epochs + '/20210426_15-06-43/epochs/epoch_99'
 target_file = os.path.join(trained_base_path, 'saved_model')
 
 x_mean, y_mean = load_binary(os.path.join(trained_base_path, "means", "Xmean.bin")), \
@@ -113,11 +114,13 @@ def get_zero_posture():
         elif request.method == 'POST' and request.get_json()["name"] == "fetch_zp_reset":
             posture = controller_to_posture()
             # bc.reset()
+            # bc.reset([0, 0, 0], math.pi, [0, 0, 0])
             bc.reset([0, 0, 0], 0.0, [0, 0, 0])
             return json.dumps(posture, default=serialize)
     elif request.method == 'GET':
         posture = controller_to_posture()
         # bc.reset()
+        # bc.reset([0, 0, 0], -math.pi, [0, 0, 0])
         bc.reset([0, 0, 0], 0.0, [0, 0, 0])
         return json.dumps(posture, default=serialize)
 

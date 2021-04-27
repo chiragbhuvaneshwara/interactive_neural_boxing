@@ -73,7 +73,7 @@ class MANN(tf.keras.Model):
     @tf.function
     def gating_network(self, inputs, training=None):
         if training:
-            print("training not none")
+            # print("training not none")
             H0 = tf.nn.dropout(inputs, self.dropout_prob)
         else:
             H0 = inputs
@@ -188,8 +188,8 @@ def prepare_mann_data(dataset, dataset_config):
     for k, v in y_col_demarcation_ids.items():
         y_std[v[0]: v[1]] = y_std[v[0]: v[1]].mean()
 
-    x_std[x_std == 0] = 0.01
-    y_std[y_std == 0] = 0.01
+    x_std[x_std == 0] = 0.0001
+    y_std[y_std == 0] = 0.0001
 
     norm = {"x_mean": x_mean.tolist(),
             "y_mean": y_mean.tolist(),
