@@ -6,7 +6,6 @@ from simple_plotter import simple_matplotlib_plotter
 import numpy as np
 import pandas as pd
 
-# TODO Cleanup
 FRD = 1
 WINDOW = 15
 EPOCHS = 100
@@ -30,7 +29,6 @@ norm = {
 
 mann = load_mann(os.path.join(trained_base_path, "saved_model"))
 
-# TODO Rename dataset config file in file system to dataset_config.json instead of config.json
 dataset_config = "data/boxing_fr_" + str(FRD) + "_" + str(WINDOW) + "/config.json"
 
 with open(dataset_config) as f:
@@ -59,14 +57,10 @@ poses = []
 for f in range(1000):
     print(f)
     in_data, out_data = bc.pre_render(target, label, space="global")
-    # in_data, out_data = bc.pre_render(target, space="local")
     in_data_collection.append(np.hstack(in_data))
     out_data_collection.append(np.hstack(out_data))
     poses.append(np.array(bc.char.joint_positions))
     root_tr, root_vels_tr, right_wr_tr, left_wr_tr, right_wr_vels_tr, left_wrist_vels_tr = bc.get_trajectroy_for_vis()
-    # print(f)
-    # print(bc.getArmTrajectroy()[0][5])
-    # print(bc.getGlobalRoot())
     bc.post_render()
 
 X_df = pd.DataFrame(data=in_data_collection, columns=config_store['col_names'][0])

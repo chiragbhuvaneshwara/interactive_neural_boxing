@@ -1,6 +1,4 @@
 """author: Chirag Bhuvaneshwara """
-import math
-
 import numpy as np
 from src.nn.mann_keras_v2.mann import MANN
 from ..abstract_controller import Controller
@@ -28,9 +26,6 @@ class BoxingController(Controller):
         self.n_joints = data_config["num_joints"] + self.endJoints
         self.use_rotations = data_config["use_rotations"]
         self.n_gaits = data_config["n_gaits"]
-        # TODO use_foot_contacts not needed as with new organization column indices can be handled automatically
-        #  no matter what the x_input_frame or y_output_frame contains thanks to col_demarcation_ids
-        self.use_foot_contacts = data_config["use_foot_contacts"]
         self.traj_window = data_config["window"]
         self.num_traj_samples = data_config["num_traj_samples"]
         self.traj_step = data_config["traj_step"]
@@ -49,7 +44,7 @@ class BoxingController(Controller):
         self.n_dims = 3
         self.num_targets = 2  # one for each hand
 
-        self.punch_targets = np.array([0.0] * self.n_dims * self.num_targets)
+        # self.punch_targets = np.array([0.0] * self.n_dims * self.num_targets)
 
         self.target_vel = np.array((0.0, 0.0, 0.0))
         self.target_dir = np.array((0.0, 0.0, 0.0))
@@ -61,7 +56,7 @@ class BoxingController(Controller):
         self.norm = norm
         self.__initialize()
 
-    # TODO: Exp with punch target as curr wrist pos when not punching instead of 0 vector used in present implementation
+    # TODO: Exp with punch target as curr wrist pos when not punching
     # TODO: Exp with only punch target and punch action and without any trajectory of the hands
     def pre_render(self, punch_targets, punch_labels, dir, space='local'):
         """
@@ -73,12 +68,7 @@ class BoxingController(Controller):
         Returns:
 
         """
-        # print('##############')
-        # print(dir)
-        # print('##############')
-
         # TODO: Supply direction in right hand coordinate system used in Python to pre_render instead of *-1
-        # direction = np.array(dir) * -1
         direction = np.array(dir) * 1
         direction = utils.xz_to_x0yz(direction)
         target_vel_speed = 0.05 * np.linalg.norm(direction)
@@ -106,11 +96,6 @@ class BoxingController(Controller):
                                                                         type_in='pos_hand')
                 left_p_target = left_p_target_local.ravel()
 
-            # print('#######################################################')
-            # print('rtarget', right_p_target)
-            # print('ltarget', left_p_target)
-            # print('#######################################################')
-
             self.input.set_punch_target(right_p_target, left_p_target)
         else:
             raise ValueError("space variable accepts only local or global")
@@ -121,7 +106,7 @@ class BoxingController(Controller):
         self.input.set_curr_punch_labels(curr_right_p_label, curr_left_p_label)
 
         right_shoulder_lp, left_shoulder_lp = self.output.get_shoulder_local_pos()
-        # TODO: (Dont remember why) Update traj_labels only in post_render in update_from_predict i.e these 2 vecs are autoregressive ==> Similar to NSM
+        # TODO: Update traj_labels only in post_render in update_from_predict i.e these 2 vecs are autoregressive ==> Similar to NSM
         self.traj.compute_future_wrist_trajectory(right_p_target, left_p_target, curr_right_p_label, curr_left_p_label,
                                                   right_shoulder_lp, left_shoulder_lp)
 
@@ -182,10 +167,6 @@ class BoxingController(Controller):
         # 1. update and smooth trajectory
         # TODO: Update traj_labels only here i.e these 2 vecs are autoregressive ==> Similar to NSM
         self.traj.update_from_predict(self.output.get_next_traj(), self.input.get_curr_punch_labels())
-
-        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        # print(self.traj.traj_right_punch_labels)
-        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
     def reset(self, start_location=np.array([0.0, 0.0, 0.0]), start_orientation=0,
               start_direction=np.array([0.0, 0.0, 0.0])):
@@ -262,22 +243,17 @@ class BoxingController(Controller):
         # r_in, l_in = tmp_output.get_wrist_pos_traj()
         # self.output.set_wrist_pos_tr(r_in, l_in)
 
-        # TODO Verify functioning and provide better variable names
-        right, left = self.input.get_wrist_pos_traj()
-        right, left = right.reshape(10, 3), left.reshape(10, 3)
-        right, left = np.repeat(right, repeats=3, axis=0), np.repeat(left, repeats=3, axis=0)
-        right = self.traj.convert_local_to_global(right, 'pos', arm='right')
-        left = self.traj.convert_local_to_global(left, 'pos', arm='left')
+        right_pos, left_pos = self.input.get_wrist_pos_traj()
+        right_pos, left_pos = right_pos.reshape(10, 3), left_pos.reshape(10, 3)
+        right_pos, left_pos = np.repeat(right_pos, repeats=3, axis=0), np.repeat(left_pos, repeats=3, axis=0)
+        right_pos = self.traj.convert_local_to_global(right_pos, 'pos', arm='right')
+        left_pos = self.traj.convert_local_to_global(left_pos, 'pos', arm='left')
         # TODO Set wrist positions to mean positions ==> Maybe take the positions from the mean position you have in
         #  norm
-        self.traj.traj_right_wrist_pos, self.traj.traj_left_wrist_pos = right, left
+        self.traj.traj_right_wrist_pos, self.traj.traj_left_wrist_pos = right_pos, left_pos
 
-        if self.use_rotations:
-            # TODO Add joint rotations in input and output vectors
-            raise ValueError("Joint rotations in input and output are not yet supported")
-            # joint_rotations = self.output.getRotations()  # twist rotations
-        else:
-            joint_rotations = []
+        # TODO Add joint rotations in input and output vectors
+        joint_rotations = []
 
         joint_positions = self.output.get_local_pos()
         joint_velocities = self.output.get_local_vel()
@@ -359,7 +335,6 @@ class MANNInput(object):
     def get_curr_punch_labels(self):
         ph_r = self.__get_data__('x_right_punch_labels')
         ph_l = self.__get_data__('x_left_punch_labels')
-        # TODO Why use a dict. Make it simpler
         return {'right': ph_r, 'left': ph_l}
 
 
@@ -414,7 +389,6 @@ class MANNOutput(object):
     def get_curr_punch_labels(self):
         ph_r = self.__get_data__('y_right_punch_labels')
         ph_l = self.__get_data__('y_left_punch_labels')
-        # TODO Why use a dict. Make it simpler
         return {'right': ph_r, 'left': ph_l}
 
     def get_foot_contacts(self):
@@ -460,6 +434,17 @@ class MANNOutput(object):
 
         return r_wr_lv, l_wr_lv
 
+    def get_wrist_local_pos(self):
+        lp = self.__get_data__('y_local_pos')
+
+        r_wr_start = self.bone_map["RightWrist"] * 3
+        r_wr_lp = lp[r_wr_start: r_wr_start + 3]
+
+        l_wr_start = self.bone_map["LeftWrist"] * 3
+        l_wr_lp = lp[l_wr_start: l_wr_start + 3]
+
+        return r_wr_lp, l_wr_lp
+
     def get_shoulder_local_pos(self):
         lp = self.__get_data__('y_local_pos')
 
@@ -480,7 +465,7 @@ class MANNOutput(object):
         # pred_dir = self.get_root_new_forward()
 
         return rp_tr, rv_tr, rwp_tr, lwp_tr, rwv_tr, lwv_tr, \
-               # rpunch_tr, lpunch_tr
+            # rpunch_tr, lpunch_tr
         # , pred_dir
 
     def set_wrist_pos_tr(self, right_wrist_pos_traj, left_wrist_pos_traj):

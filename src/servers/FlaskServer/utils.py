@@ -79,8 +79,7 @@ def np_to_tvector3(x, vis=False):
         return TVector3(x[0], x[1], x[2])
 
 
-
-def build_zero_posture(base_controller, position_str="position"):
+def build_zero_posture(base_controller, position_str="position", num_traj_pts = 10):
     """
 
     :param base_controller:
@@ -107,7 +106,13 @@ def build_zero_posture(base_controller, position_str="position"):
         tb = TBone(bone["name"], position, rotation, children, bone["parent"])
         bonelist.append(tb)
 
-    traj = {'rt': [0] * 10, 'rt_v': [0] * 10, 'rwt': [0] * 10, 'lwt': [0] * 10, 'rwt_v': [0] * 10, 'lwt_v': [0] * 10}
+    ntp = num_traj_pts
+    traj = {'rt': [0] * ntp,
+            'rt_v': [0] * ntp,
+            'rwt': [0] * ntp,
+            'lwt': [0] * ntp,
+            'rwt_v': [0] * ntp,
+            'lwt_v': [0] * ntp}
 
     return TPosture(bonelist, mapping, [0, 0, 0], 0.0, traj)
 

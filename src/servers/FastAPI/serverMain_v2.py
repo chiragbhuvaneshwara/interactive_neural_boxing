@@ -1,7 +1,8 @@
 import copy
 import uvicorn
 from fastapi import FastAPI
-
+# TODO: Update functions based on latest flask functions
+# TODO: Setup FAST API
 
 from flask import Flask, request
 from src.controlers.boxing.controller_tf2_v2 import BoxingController
@@ -10,7 +11,6 @@ import json, os
 from flask import jsonify
 from src.servers.FlaskServer.utils import *
 
-# TODO setup better names for variables used in Flask server
 print(os.getcwd())
 # app = Flask(__name__)
 app = FastAPI()
@@ -77,7 +77,6 @@ def controller_to_posture():
 
 @app.route('/fetch_frame', methods=['GET', 'POST'])
 def fetch_frame():
-    # TODO First time of fetching wrist pos tr is incorrect ==>
 
     if request.method == 'POST':
         punch_in = request.get_json()
@@ -89,7 +88,6 @@ def fetch_frame():
         print(punch_left_target)
         print(punch_right_target)
 
-        # TODO POST punch_labels from the backend
         if sum(punch_right_target) == 0 and sum(punch_left_target) == 0:
             label = [0, 0]
         elif sum(punch_right_target) != 0 and sum(punch_left_target) == 0:
@@ -117,7 +115,6 @@ def get_zero_posture():
         return json.dumps(posture, default=serialize)
     elif request.method == 'POST' and request.get_json()["name"] == "fetch_zp_reset":
         posture = controller_to_posture()
-        # TODO Check reset
         bc.reset()
         return json.dumps(posture, default=serialize)
     else:

@@ -6,7 +6,6 @@ from src.nn.mann_keras_v2.mann import load_mann, load_binary
 import json, os
 from src.servers.FlaskServer.utils import *
 
-# TODO setup better names for variables used in Flask server
 print(os.getcwd())
 app = Flask(__name__)
 
@@ -15,7 +14,7 @@ window = 15
 epochs = 100
 server_to_main_dir = ''
 DATASET_OUTPUT_BASE_PATH = server_to_main_dir + 'data/'
-frd_win = 'boxing_fr_' + str(frd) + '_' + str(window)
+frd_win = 'boxing_fr_' + str(frd) + '_' + str(window) + '_binary_only'
 dataset_path = os.path.join(DATASET_OUTPUT_BASE_PATH, frd_win, 'train.npz')
 controller_in_out_dir = 'src/controlers/boxing/controller_in_out'
 frd_win_epochs = 'boxing_fr_' + str(frd) + '_' + str(window) + '_' + str(epochs)
@@ -37,7 +36,7 @@ norm = {
 
 mann = load_mann(os.path.join(trained_base_path, "saved_model"))
 
-dataset_config = "data/boxing_fr_" + str(frd) + "_" + str(window) + "/config.json"
+dataset_config = os.path.join("data", frd_win, "config.json")
 dataset_config = os.path.join(server_to_main_dir, dataset_config)
 
 with open(dataset_config) as f:
@@ -72,7 +71,6 @@ def controller_to_posture():
 
 @app.route('/fetch_frame', methods=['GET', 'POST'])
 def fetch_frame():
-    # TODO (Dont remember why) First time of fetching wrist pos tr is incorrect ==>
 
     if request.method == 'POST':
         punch_in = request.get_json()
@@ -84,7 +82,6 @@ def fetch_frame():
         punch_right_target = tvector3_to_np(punch_in["target_right"])
         punch_left_target = tvector3_to_np(punch_in["target_left"])
 
-        # TODO POST punch_labels from the backend
         if sum(punch_right_target) == 0 and sum(punch_left_target) == 0:
             label = [0, 0]
         elif sum(punch_right_target) != 0 and sum(punch_left_target) == 0:

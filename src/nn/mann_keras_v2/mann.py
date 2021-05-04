@@ -73,7 +73,6 @@ class MANN(tf.keras.Model):
     @tf.function
     def gating_network(self, inputs, training=None):
         if training:
-            # print("training not none")
             H0 = tf.nn.dropout(inputs, self.dropout_prob)
         else:
             H0 = inputs
@@ -196,8 +195,6 @@ def prepare_mann_data(dataset, dataset_config):
             "x_std": x_std.tolist(),
             "y_std": y_std.tolist()}
 
-    # TODO Setup comparator to warn if input and inverse of output are the same or not
-
     x_train_norm = (x_train - x_mean) / x_std
     y_train_norm = (y_train - y_mean) / y_std
 
@@ -238,15 +235,16 @@ def get_variation_gating(network, input_data, batch_size):
     for i in range(r_lim):
         bi = input_data[i * batch_size:(i + 1) * batch_size, :]
         out = network(bi)
-        # TODO Setup var for extracting gating outputs
-        gws.append(out[:, -6:])
+        # TODO Test var for extracting gating outputs
+        # gws.append(out[:, -6:])
+        gws.append(out[:, -network.expert_nodes:])
 
-    print("\nChecking the gating variability: ")
-    print("  mean: ", np.mean(np.concatenate(gws, axis=0), axis=0))
-    print("  std: ", np.std(np.concatenate(gws, axis=0), axis=0))
-    print("  max: ", np.max(np.concatenate(gws, axis=0), axis=0))
-    print("  min: ", np.min(np.concatenate(gws, axis=0), axis=0))
-    print("")
+    # print("\nChecking the gating variability: ")
+    # print("  mean: ", np.mean(np.concatenate(gws, axis=0), axis=0))
+    # print("  std: ", np.std(np.concatenate(gws, axis=0), axis=0))
+    # print("  max: ", np.max(np.concatenate(gws, axis=0), axis=0))
+    # print("  min: ", np.min(np.concatenate(gws, axis=0), axis=0))
+    # print("")
 
 
 class EpochWriter(tf.keras.callbacks.Callback):
@@ -274,7 +272,16 @@ class GatingChecker(tf.keras.callbacks.Callback):
 
 
 def loss_func(y, yt):
-    # TODO: What is happening here? Can probably redefine this function yourself
     yt = yt[:, :-6]
     rec_loss = tf.reduce_mean((y - yt) ** 2)
     return rec_loss
+
+
+def loss_func_2(num_expert_nodes):
+    def loss_func(y, yt):
+        # TODO: Test functionality https://datascience.stackexchange.com/questions/25029/custom-loss-function-with-additional-parameter-in-keras
+        yt = yt[:, :-num_expert_nodes]
+        rec_loss = tf.reduce_mean((y - yt) ** 2)
+        return rec_loss
+
+    return loss_func

@@ -6,7 +6,7 @@ import tensorflow as tf
 import os
 from datetime import datetime
 import shutil
-from src.nn.mann_keras_v2.mann import MANN, loss_func, prepare_mann_data, get_variation_gating, save_network, \
+from src.nn.mann_keras_v2.mann import MANN, loss_func, loss_func_2, prepare_mann_data, get_variation_gating, save_network, \
     EpochWriter, \
     GatingChecker, load_mann
 import argparse
@@ -103,8 +103,11 @@ def train_boxing_data(data_npz_path, data_config_path, output_dir, frd_win_epoch
     learning_rate = tf.keras.experimental.CosineDecayRestarts(0.0001, 10 * (len(X) // batchsize))
     optimizer = tf.keras.optimizers.Adam(learning_rate)
 
-    network = MANN(input_dim, output_dim, 512, 64, 6, gating_indices, batch_size=batchsize)
-    network.compile(optimizer=optimizer, loss=loss_func)
+    num_expert_nodes = 6
+    network = MANN(input_dim, output_dim, 512, 64, num_expert_nodes, gating_indices, batch_size=batchsize)
+    # network.compile(optimizer=optimizer, loss=loss_func)
+    #TODO Check functioning of loss_func_2
+    network.compile(optimizer=optimizer, loss=loss_func_2(num_expert_nodes))
 
     tensorboard = tf.keras.callbacks.TensorBoard(log_dir=os.path.join(logdir), write_graph=True, write_images=False,
                                                  histogram_freq=0, update_freq="batch")
@@ -141,7 +144,6 @@ if __name__ == '__main__':
     current_timestamp = datetime.now().strftime("%Y%m%d_%H-%M-%S")
 
     if not DEVELOP:
-        # TODO Rename dataset config file in file system to dataset_config.json instead of config.json
         dataset_config_path = os.path.join("data", frd_win, "config.json")
         dataset_npz_path = os.path.join('data', frd_win, 'train.npz')
         batch_size = 32
