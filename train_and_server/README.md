@@ -4,7 +4,7 @@
     * MANN_implementation: Training setup for boxing using MANN. Also contains code for matplotlib visualization
 
 # Training
- 1. Install requirements.txt  ``conda install -c requirements.txt``
+ 1. Install requirements.txt  ``pip install -r requirements.txt``
  
  2. train_model_main.py script trains a new MANN model.
  

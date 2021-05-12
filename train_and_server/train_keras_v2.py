@@ -160,9 +160,11 @@ if __name__ == '__main__':
     frd_win_epochs = frd_win + '_' + str(EPOCHS)
     if LOCAL:
         print('Local machine dev')
-        OUT_BASE_PATH = os.path.join("local_dev_saved_models")
-        shutil.rmtree(OUT_BASE_PATH, ignore_errors=False, onerror=None)
-        os.mkdir(OUT_BASE_PATH)
+        OUT_BASE_PATH = os.path.join(OUT_BASE_PATH, "local_dev_saved_models")
+        # OUT_BASE_PATH = os.path.join("local_dev_saved_models")
+        if os.path.exists(OUT_BASE_PATH):
+            shutil.rmtree(OUT_BASE_PATH, ignore_errors=False, onerror=None)
+            os.mkdir(OUT_BASE_PATH)
         dataset_config_path = os.path.join("train_and_server", "data", "dev", frd_win, "config.json")
         dataset_npz_path = os.path.join("train_and_server", 'data', 'dev', frd_win, 'train.npz')
         batch_size = 2

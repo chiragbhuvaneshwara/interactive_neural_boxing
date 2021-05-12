@@ -1,3 +1,4 @@
+local_dev_saved_models
 train_and_server/data/*
 !train_and_server/data/README.txt
 !train_and_server/data/dev/.gitkeep
@@ -12,7 +13,7 @@ __pycache__/
 train_and_server/src/controlers/boxing/controller_in_out/*
 
 train_and_server/saved_models/mann_tf2/*
-!train_and_server//saved_models/mann_tf2/.gitkeep
+!train_and_server/saved_models/mann_tf2/.gitkeep
 
 train_and_server/saved_models/mann_tf2_v2/*
 !train_and_server/saved_models/mann_tf2_v2/.gitkeep
