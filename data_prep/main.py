@@ -39,17 +39,17 @@ LOCAL = args.local
 if LOCAL:
     print('Local machine dev')
     INPUT_BASE_PATH = '../VCS-boxing-predictor'
-    OUTPUT_BASE_PATH = '../VCS-MOSI-DEV-VINN/mosi_dev_vinn/data/'
+    OUTPUT_BASE_PATH = '../VCS-MOSI-DEV-VINN/mosi_dev_vinn/train_and_server/data/'
 elif not LOCAL:
     INPUT_BASE_PATH = '../boxing-blender-data-gen'
-    OUTPUT_BASE_PATH = '../boxing-mosi-dev-vinn/data/'
+    OUTPUT_BASE_PATH = '../boxing-mosi-dev-vinn/train_and_server/data/'
 
 if DEVELOP:
     print('Dev mode')
     OUTPUT_BASE_PATH += '/dev'
 
-PUNCH_PHASE_PATH = INPUT_BASE_PATH + '/Blender_Code_Snippets/data_annotation_res/new_data/tertiary/'
-BVH_PATH = INPUT_BASE_PATH + "/Data/boxing_chirag/hq/processed/"
+PUNCH_PHASE_PATH = INPUT_BASE_PATH + '/BlenderCode/Blender_Code_Snippets/data_annotation_res/new_data/tertiary/'
+BVH_PATH = INPUT_BASE_PATH + "/BlenderCode/RawData/boxing_chirag/hq/processed/"
 FRAME_RATE_DIV = 1
 FORWARD_DIR = np.array([0.0, 0.0, 1.0])
 TR_WINDOW = math.ceil(15 / FRAME_RATE_DIV)
