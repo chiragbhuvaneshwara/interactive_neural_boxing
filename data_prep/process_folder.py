@@ -71,8 +71,8 @@ def prepare_input_data(i, handler, col_demarcation_done=True):
         x_left_wrist_pos_tr,  # local wrt r in mid frame (TODO then wrt wrist in mid frame)
         x_right_wrist_vels_tr,
         x_left_wrist_vels_tr,
-        # x_right_punch_labels_tr,
-        # x_left_punch_labels_tr,
+        x_right_punch_labels_tr,
+        x_left_punch_labels_tr,
         x_right_punch_labels,                                   #TODO:Janis said remove
         x_left_punch_labels,                                   #TODO:Janis said remove
         x_right_punch_target,  # local wrt r in mid frame                                   #TODO:Janis said remove
@@ -153,8 +153,8 @@ def prepare_output_data(i, handler, col_demarcation_done=True):
         y_left_wrist_pos_tr,
         y_right_wrist_vels_tr,
         y_left_wrist_vels_tr,
-        # y_right_punch_labels_tr,                                   #TODO:Janis said remove
-        # y_left_punch_labels_tr,                                   #TODO:Janis said remove
+        y_right_punch_labels_tr,                                   #TODO:Janis said remove
+        y_left_punch_labels_tr,                                   #TODO:Janis said remove
         y_local_pos,
         y_local_vel
     ]
@@ -219,9 +219,9 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div, de
     dataset_config = {
         "end_joints": 0,
         "num_joints": len(handler.joint_id_map.keys()),
-        "use_rotations": False,
+        # "use_rotations": False,
         "n_gaits": 1,
-        "use_foot_contacts": True,
+        # "use_foot_contacts": True,
         "frd": frame_rate_div,
         "window": handler.window,
         "num_traj_samples": handler.num_traj_sampling_pts,
