@@ -247,14 +247,14 @@ public partial class Player : MonoBehaviour
         {
             //dir = new List<float> { -1, 0 };
             numActiveHorizDirKeys += 1;
-            dir[0] += -1;
+            dir[0] += 1;
             //server.ManagedUpdate("none", dir);
         }
         if (Input.GetKey(KeyCode.D))
         {
             //dir = new List<float> { 1, 0 };
             numActiveHorizDirKeys += 1;
-            dir[0] += 1;
+            dir[0] += -1;
             //server.ManagedUpdate("none", dir);
         }
         if (Input.GetKey(KeyCode.W))

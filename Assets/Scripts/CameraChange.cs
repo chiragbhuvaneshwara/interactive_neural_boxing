@@ -24,9 +24,12 @@ public class CameraChange : MonoBehaviour
         // Check for input and swap accordingly
         if (Input.GetKeyDown(KeyCode.H))
         {
+            //Debug.Log("cam1");
+            SwapCamera(cam1);
         };
         if (Input.GetKeyDown(KeyCode.J))
-        { 
+        {
+            //Debug.Log("cam2");
             SwapCamera(cam2);
          };
     }
@@ -38,6 +41,7 @@ public class CameraChange : MonoBehaviour
         {
             c.enabled = false;
         }
+        //Debug.Log(cam.name);
         cam.enabled = true;
     }
 }
