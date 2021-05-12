@@ -37,3 +37,20 @@ data_prep/mosi_utils_anim_t/data*
 data_prep/mosi_utils_anim_t/texdoc*
 data_prep/mosi_utils_anim_t/checkpoint
 __pycache__
+.idea
+
+BlenderCode/RawData/*
+!BlenderCode/RawData/*.md
+
+BlenderCode/Blender_Save_Vars/*
+!BlenderCode/Blender_Save_Vars/*.md
+
+BlenderCode/Blender_Code_Snippets/saved_vis_data/*
+!BlenderCode/Blender_Code_Snippets/saved_vis_data/*.md
+.idea
+
+BlenderCode/Notebooks/.ipynb_checkpoints/LoadVars-checkpoint.ipynb
+
+BlenderCode/Blender_Code_Snippets/data annotation res/new_data/binary/*
+BlenderCode/Blender_Code_Snippets/data annotation res/new_data/tertiary/*
+BlenderCode/Blender_Code_Snippets/data annotation res/new_data/detailed/*
