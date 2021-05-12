@@ -83,7 +83,7 @@ def get_init_pos(o, foot_l = "LeftFoot", foot_r = "RightFoot"):
 print("Start.")
 
 if len(bpy.context.scene.objects) == 0:
-    o, b = load_bvh("/home/chirag/Documents/Uni/Thesis/Data/MocapBoxing/processed/Scene3_Motion.bvh")
+    o, b = load_bvh("/home/chirag/Documents/Uni/Thesis/RawData/MocapBoxing/processed/Scene3_Motion.bvh")
 
 else:
     o = bpy.context.scene.objects[0] # currently selected object

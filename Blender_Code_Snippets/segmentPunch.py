@@ -52,8 +52,8 @@ def printListElementOneByOne(L):
 print("Start.")
 
 if len(bpy.context.scene.objects) == 0:
-    #o, b = load_bvh("/home/chirag/Documents/Uni/Thesis/Data/MocapBoxing/processed/Scene1_NeutralPos.bvh")
-    o, b = load_bvh("/home/chirag/Documents/Uni/Thesis/Data/MocapBoxing/processed/Scene5_Punches.bvh")
+    #o, b = load_bvh("/home/chirag/Documents/Uni/Thesis/RawData/MocapBoxing/processed/Scene1_NeutralPos.bvh")
+    o, b = load_bvh("/home/chirag/Documents/Uni/Thesis/RawData/MocapBoxing/processed/Scene5_Punches.bvh")
 
 else:
     o = bpy.context.scene.objects[0] # currently selected object

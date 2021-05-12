@@ -240,17 +240,17 @@ def load_bvh(path):
 
 
 print("Start.")
-#o, b = load_bvh("/home/chirag/Documents/Uni/Thesis/Data/MocapBoxing/axis_neuron_processed/4_Stepping_AxisNeuronProcessed_Char00.bvh")
-#o, b = load_bvh(r'C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Data\boxing_chirag\processed\boxing_11.bvh')
+#o, b = load_bvh("/home/chirag/Documents/Uni/Thesis/RawData/MocapBoxing/axis_neuron_processed/4_Stepping_AxisNeuronProcessed_Char00.bvh")
+#o, b = load_bvh(r'C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\RawData\boxing_chirag\processed\boxing_11.bvh')
 
-base_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Data/boxing_chirag/processed'
-#base_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Data/boxing_chirag/'
+base_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/RawData/boxing_chirag/processed'
+#base_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/RawData/boxing_chirag/'
 df_path = 'C:/Users/chira/OneDrive/Documents/Uni/Thesis/VCS-boxing-predictor/Blender Code Snippets/data annotation res/new_data'
 type = 'tertiary'
 #type = 'binary'
 #type = 'detailed'
 
-#base_path = r'C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\Data\boxing_chirag\processed'
+#base_path = r'C:\Users\chira\OneDrive\Documents\Uni\Thesis\VCS-boxing-predictor\RawData\boxing_chirag\processed'
 dir_files = os.listdir(base_path)
 for file in dir_files[3:4]:
 #    file = 'boxing_2_temp.bvh'

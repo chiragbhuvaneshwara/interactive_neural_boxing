@@ -1,18 +1,18 @@
 .vscode
 .idea
 
-Data/*
-!Data/*.md
+RawData/*
+!RawData/*.md
 
 Blender_Save_Vars/*
 !Blender_Save_Vars/*.md
 
-Blender Code Snippets/saved_vis_data/*
-!Blender Code Snippets/saved_vis_data/*.md
+Blender_Code_Snippets/saved_vis_data/*
+!Blender_Code_Snippets/saved_vis_data/*.md
 .idea
 
 Notebooks/.ipynb_checkpoints/LoadVars-checkpoint.ipynb
 
-Blender Code Snippets/data annotation res/new_data/binary/*
-Blender Code Snippets/data annotation res/new_data/tertiary/*
-Blender Code Snippets/data annotation res/new_data/detailed/*
+Blender_Code_Snippets/data annotation res/new_data/binary/*
+Blender_Code_Snippets/data annotation res/new_data/tertiary/*
+Blender_Code_Snippets/data annotation res/new_data/detailed/*
