@@ -1,10 +1,10 @@
 import copy
 import math
 from flask import Flask, request
-from src.controlers.boxing.controller_tf2_v2 import BoxingController
-from src.nn.mann_keras_v2.mann import load_mann, load_binary
+from train_and_server.src.controlers.boxing.controller_tf2_v2 import BoxingController
+from train_and_server.src.nn.mann_keras_v2.mann import load_mann, load_binary
 import json, os
-from src.servers.FlaskServer.utils import *
+from train_and_server.src.servers.FlaskServer.utils import *
 
 print(os.getcwd())
 app = Flask(__name__)
@@ -13,13 +13,13 @@ frd = 1
 window = 15
 epochs = 100
 server_to_main_dir = ''
-DATASET_OUTPUT_BASE_PATH = server_to_main_dir + 'data/'
+DATASET_OUTPUT_BASE_PATH = server_to_main_dir + 'train_and_server/data/'
 frd_win = 'boxing_fr_' + str(frd) + '_' + str(window) + '_binary_only'
 dataset_path = os.path.join(DATASET_OUTPUT_BASE_PATH, frd_win, 'train.npz')
 controller_in_out_dir = 'src/controlers/boxing/controller_in_out'
 frd_win_epochs = 'boxing_fr_' + str(frd) + '_' + str(window) + '_' + str(epochs)
 # trained_base_path = 'saved_models/mann_tf2_v2/' + frd_win_epochs + '/20210329_14-09-09/epochs/epoch_99'
-trained_base_path = 'saved_models/mann_tf2_v2/' + frd_win_epochs + '/20210426_15-06-43/epochs/epoch_99'
+trained_base_path = 'train_and_server/saved_models/mann_tf2_v2/' + frd_win_epochs + '/20210426_15-06-43/epochs/epoch_99'
 target_file = os.path.join(trained_base_path, 'saved_model')
 
 x_mean, y_mean = load_binary(os.path.join(trained_base_path, "means", "Xmean.bin")), \
@@ -36,7 +36,7 @@ norm = {
 
 mann = load_mann(os.path.join(trained_base_path, "saved_model"))
 
-dataset_config = os.path.join("data", frd_win, "config.json")
+dataset_config = os.path.join("train_and_server", "data", frd_win, "config.json")
 dataset_config = os.path.join(server_to_main_dir, dataset_config)
 
 with open(dataset_config) as f:

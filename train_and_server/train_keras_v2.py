@@ -6,7 +6,8 @@ import tensorflow as tf
 import os
 from datetime import datetime
 import shutil
-from src.nn.mann_keras_v2.mann import MANN, loss_func, loss_func_2, prepare_mann_data, get_variation_gating, save_network, \
+from train_and_server.src.nn.mann_keras_v2.mann import MANN, loss_func, loss_func_2, prepare_mann_data, \
+    get_variation_gating, save_network, \
     EpochWriter, \
     GatingChecker, load_mann
 import argparse
@@ -106,14 +107,14 @@ def train_boxing_data(data_npz_path, data_config_path, output_dir, frd_win_epoch
     num_expert_nodes = 6
     network = MANN(input_dim, output_dim, 512, 64, num_expert_nodes, gating_indices, batch_size=batchsize)
     # network.compile(optimizer=optimizer, loss=loss_func)
-    #TODO Check functioning of loss_func_2
+    # TODO Check functioning of loss_func_2
     network.compile(optimizer=optimizer, loss=loss_func_2(num_expert_nodes))
 
     tensorboard = tf.keras.callbacks.TensorBoard(log_dir=os.path.join(logdir), write_graph=True, write_images=False,
                                                  histogram_freq=0, update_freq="batch")
     cp_callback = EpochWriter(epoch_dir, x_mean, y_mean, x_std, y_std)
-    X = X[:(len(X) // batchsize) * batchsize, :]
-    # X = X[:(100 // batchsize) * batchsize, :]
+    # X = X[:(len(X) // batchsize) * batchsize, :]
+    X = X[:(100 // batchsize) * batchsize, :]
     Y = Y[:len(X), :]
     gating_checker = GatingChecker(X, batchsize)
     epochs_executed = 0
@@ -138,21 +139,21 @@ if __name__ == '__main__':
     EPOCHS = 100
     FRD = 1
     WINDOW = 15
-    OUT_BASE_PATH = os.path.join("saved_models", "mann_tf2_v2")
+    OUT_BASE_PATH = os.path.join("train_and_server", "saved_models", "mann_tf2_v2")
     ############################################
     frd_win = 'boxing_fr_' + str(FRD) + '_' + str(WINDOW)
     current_timestamp = datetime.now().strftime("%Y%m%d_%H-%M-%S")
 
     if not DEVELOP:
-        dataset_config_path = os.path.join("data", frd_win, "config.json")
-        dataset_npz_path = os.path.join('data', frd_win, 'train.npz')
+        dataset_config_path = os.path.join("train_and_server", "data", frd_win, "config.json")
+        dataset_npz_path = os.path.join("train_and_server", 'data', frd_win, 'train.npz')
         batch_size = 32
 
     elif DEVELOP:
         print('Dev Mode')
         OUT_BASE_PATH = os.path.join(OUT_BASE_PATH, "dev")
-        dataset_config_path = os.path.join("data", "dev", frd_win, "config.json")
-        dataset_npz_path = os.path.join('data', 'dev', frd_win, 'train.npz')
+        dataset_config_path = os.path.join("train_and_server", "data", "dev", frd_win, "config.json")
+        dataset_npz_path = os.path.join("train_and_server", 'data', 'dev', frd_win, 'train.npz')
         batch_size = 2
         EPOCHS = 2
 
@@ -162,12 +163,11 @@ if __name__ == '__main__':
         OUT_BASE_PATH = os.path.join("local_dev_saved_models")
         shutil.rmtree(OUT_BASE_PATH, ignore_errors=False, onerror=None)
         os.mkdir(OUT_BASE_PATH)
-        dataset_config_path = os.path.join("data", "dev", frd_win, "config.json")
-        dataset_npz_path = os.path.join('data', 'dev', frd_win, 'train.npz')
+        dataset_config_path = os.path.join("train_and_server", "data", "dev", frd_win, "config.json")
+        dataset_npz_path = os.path.join("train_and_server", 'data', 'dev', frd_win, 'train.npz')
         batch_size = 2
         EPOCHS = 2
         out_dir = os.path.join(OUT_BASE_PATH)
-
 
     elif not LOCAL:
         out_dir = os.path.join(OUT_BASE_PATH, frd_win_epochs, current_timestamp)
