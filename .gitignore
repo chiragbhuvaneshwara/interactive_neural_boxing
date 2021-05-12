@@ -1,18 +1,17 @@
-.vscode
 .idea
 
-RawData/*
-!RawData/*.md
+BlenderCode/RawData/*
+!BlenderCode/RawData/*.md
 
-Blender_Save_Vars/*
-!Blender_Save_Vars/*.md
+BlenderCode/Blender_Save_Vars/*
+!BlenderCode/Blender_Save_Vars/*.md
 
-Blender_Code_Snippets/saved_vis_data/*
-!Blender_Code_Snippets/saved_vis_data/*.md
+BlenderCode/Blender_Code_Snippets/saved_vis_data/*
+!BlenderCode/Blender_Code_Snippets/saved_vis_data/*.md
 .idea
 
-Notebooks/.ipynb_checkpoints/LoadVars-checkpoint.ipynb
+BlenderCode/Notebooks/.ipynb_checkpoints/LoadVars-checkpoint.ipynb
 
-Blender_Code_Snippets/data annotation res/new_data/binary/*
-Blender_Code_Snippets/data annotation res/new_data/tertiary/*
-Blender_Code_Snippets/data annotation res/new_data/detailed/*
+BlenderCode/Blender_Code_Snippets/data annotation res/new_data/binary/*
+BlenderCode/Blender_Code_Snippets/data annotation res/new_data/tertiary/*
+BlenderCode/Blender_Code_Snippets/data annotation res/new_data/detailed/*
