@@ -113,8 +113,8 @@ def train_boxing_data(data_npz_path, data_config_path, output_dir, frd_win_epoch
     tensorboard = tf.keras.callbacks.TensorBoard(log_dir=os.path.join(logdir), write_graph=True, write_images=False,
                                                  histogram_freq=0, update_freq="batch")
     cp_callback = EpochWriter(epoch_dir, x_mean, y_mean, x_std, y_std)
-    # X = X[:(len(X) // batchsize) * batchsize, :]
-    X = X[:(100 // batchsize) * batchsize, :]
+    X = X[:(len(X) // batchsize) * batchsize, :]
+    # X = X[:(100 // batchsize) * batchsize, :]
     Y = Y[:len(X), :]
     gating_checker = GatingChecker(X, batchsize)
     epochs_executed = 0
