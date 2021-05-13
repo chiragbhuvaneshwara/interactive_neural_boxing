@@ -1,1 +1,0 @@
-The 'unrotated' files are the ones where I did not manually rotate the character in blender. 
