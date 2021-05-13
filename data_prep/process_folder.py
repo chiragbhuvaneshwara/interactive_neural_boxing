@@ -1,5 +1,5 @@
 import os
-from nn_features import FeatureExtractor, retrieve_name
+from data_prep.nn_features import FeatureExtractor, retrieve_name
 import numpy as np
 
 

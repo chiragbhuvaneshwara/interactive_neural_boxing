@@ -1,7 +1,7 @@
 import glob
 import os
 import math
-from process_folder import process_folder
+from data_prep.process_folder import process_folder
 import numpy as np
 import pandas as pd
 import json

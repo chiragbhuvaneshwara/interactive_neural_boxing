@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
 import scipy.ndimage.filters as filters
-from mosi_utils_anim_t.animation_data.utils import convert_euler_frames_to_cartesian_frames, quaternion_from_matrix, \
+from data_prep.mosi_utils_anim_t.animation_data.utils import convert_euler_frames_to_cartesian_frames, quaternion_from_matrix, \
     quaternion_matrix
-from mosi_utils_anim_t.animation_data import BVHReader, SkeletonBuilder
-from mosi_utils_anim_t.animation_data.quaternion import Quaternion
+from data_prep.mosi_utils_anim_t.animation_data import BVHReader, SkeletonBuilder
+from data_prep.mosi_utils_anim_t.animation_data.quaternion import Quaternion
 import inspect
 
 
