@@ -73,7 +73,7 @@ def train_boxing_data(data_npz_path, data_config_path, output_dir, frd_win_epoch
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     with open(os.path.join(output_dir, frd_win_epochs_data + '.json'), 'w') as outfile:
-        json.dump(frd_win_epochs_data, outfile)
+        json.dump(frd_win_epochs_data, outfile, indent=4)
 
     if not os.path.exists(logdir):
         os.makedirs(logdir)

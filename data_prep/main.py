@@ -66,7 +66,7 @@ out_dir = os.path.join(OUTPUT_BASE_PATH, frd_win)
 
 np.savez_compressed(os.path.join(out_dir, "train"), x=x_train, y=y_train)
 with open(os.path.join(out_dir, "config.json"), "w") as f:
-    json.dump(dataset_config, f)
+    json.dump(dataset_config, f, indent=4)
 
 if DEVELOP:
     print('X shape is {0} and X mean is {1}'.format(x_train.shape, x_train.mean()))
