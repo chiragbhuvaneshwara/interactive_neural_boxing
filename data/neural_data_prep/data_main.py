@@ -8,7 +8,7 @@ import json
 import argparse
 
 
-# TODO: try to pip install mosi_utils_anim instead of having it in the repo
+# TODO: try to pip install mosi_utils_anim_t instead of having it in the repo
 
 def setup_output_dir(output_base_path, output_directory):
     """
