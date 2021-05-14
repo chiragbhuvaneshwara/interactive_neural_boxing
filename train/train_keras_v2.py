@@ -136,7 +136,7 @@ if __name__ == '__main__':
     DEVELOP = args.develop
     LOCAL = args.local
 
-    EPOCHS = 100
+    EPOCHS = 20
     FRD = 1
     WINDOW = 15
     OUT_BASE_PATH = os.path.join("train", "models", "mann_tf2_v2")
