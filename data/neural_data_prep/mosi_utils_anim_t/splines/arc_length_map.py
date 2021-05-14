@@ -146,7 +146,7 @@ class RelativeArcLengthMap(object):
         """
 
         delta = int(right - left)
-        if delta > 1:  #test_interactive if there are more than two elements to explore
+        if delta > 1:  #test if there are more than two elements to explore
             i_mid = int(left + ((right - left) / 2))
             test_value = getter(arr, i_mid)
             if test_value > value:

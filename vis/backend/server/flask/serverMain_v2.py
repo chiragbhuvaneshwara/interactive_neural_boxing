@@ -4,7 +4,7 @@ from flask import Flask, request
 from vis.backend.controller.boxing.controller_tf2_v2 import BoxingController
 from train.nn.mann_keras_v2.mann import load_mann, load_binary
 import json, os
-from ztrain_and_server.src.servers.FlaskServer.utils import *
+from vis.backend.server.flask.utils import *
 
 print(os.getcwd())
 app = Flask(__name__)
@@ -21,7 +21,8 @@ frd_win_epochs = 'boxing_fr_' + str(frd) + '_' + str(window) + '_' + str(epochs)
 # trained_base_path = 'saved_models/mann_tf2_v2/' + frd_win_epochs + '/20210329_14-09-09/epochs/epoch_99'
 # trained_base_path = 'ztrain_and_server/saved_models/mann_tf2_v2/' + frd_win_epochs + '/20210426_15-06-43/epochs/epoch_99'
 all_models_path = os.path.join("train", "models", "mann_tf2_v2")
-trained_base_path = os.path.join(all_models_path, frd_win_epochs, "20210426_15-06-43", "epochs", "epoch_99")
+# trained_base_path = os.path.join(all_models_path, frd_win_epochs, "20210426_15-06-43", "epochs", "epoch_99") # Tested and working
+trained_base_path = os.path.join(all_models_path, frd_win_epochs, "20210514_08-27-49", "epochs", "epoch_99")
 target_file = os.path.join(trained_base_path, 'saved_model')
 
 x_mean, y_mean = load_binary(os.path.join(trained_base_path, "means", "Xmean.bin")), \
