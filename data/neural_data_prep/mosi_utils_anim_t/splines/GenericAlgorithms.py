@@ -231,7 +231,7 @@ def closestLowerValueBinarySearch(A,left,right,value,getter= lambda A,i : A[i]):
     #result =(-1,False)
     delta = int(right -left)
     #print delta
-    if (delta> 1) :#or (left ==0 and (delta> 0) ):# or (right == len(A)-1 and ()):#test_interactive if there are more than two elements to explore
+    if (delta> 1) :#or (left ==0 and (delta> 0) ):# or (right == len(A)-1 and ()):#test if there are more than two elements to explore
         iMid = int(left+((right-left)/2))
         testValue = getter(A,iMid)
         #print "getter",testValue
@@ -279,7 +279,7 @@ def bubblesort(A):
         i = 0
         while i < border-1:#compare A[i] with every ai part of A | i < border
             neighbor = i+1
-            #test_interactive if A[i] smaller than A[i+1]
+            #test if A[i] smaller than A[i+1]
             if  A[i] >A[neighbor]:
                 #swap with neighbor
                 temp = A[neighbor]
