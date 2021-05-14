@@ -3,6 +3,7 @@ __pycache__
 .idea
 
 data/raw_data/mocap/*
+!data/raw_data/mocap/README.md
 data/raw_data/punch_label_gen/punch_label
 
 data/neural_data_prep/mosi_utils_anim/.vscode/*
@@ -12,10 +13,9 @@ data/neural_data_prep/mosi_utils_anim/texdoc*
 data/neural_data_prep/mosi_utils_anim/checkpoint
 
 data/neural_data/*
-!data/neural_data/README.txt
+!data/neural_data/README.md
 !data/neural_data/.gitkeep
 
-ztrain_and_server/src/controlers/boxing/controller_in_out/*
 #TODO change controller in out dir to backend
 vis_backend/controller/controller_in_out/*
 
