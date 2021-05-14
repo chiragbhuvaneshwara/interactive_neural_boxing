@@ -1,14 +1,12 @@
 import glob
 import os
 import math
-from data.neural_data_prep.process_folder import process_folder
 import numpy as np
 import pandas as pd
 import json
 import argparse
+from data.neural_data_prep.process_folder import process_folder
 
-
-# TODO: try to pip install mosi_utils_anim_t instead of having it in the repo
 
 def setup_output_dir(output_base_path, output_directory):
     """

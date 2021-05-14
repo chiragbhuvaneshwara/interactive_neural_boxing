@@ -5,22 +5,11 @@ __pycache__
 data/raw_data/mocap/*
 data/raw_data/punch_label_gen/punch_label
 
-data/neural_data_prep/mosi_utils_anim_t/*.pyc
-data/neural_data_prep/mosi_utils_anim_t/*.pickle
-data/neural_data_prep/mosi_utils_anim_t/*.spyderproject
-data/neural_data_prep/mosi_utils_anim_t/*.spyderworkspace
-data/neural_data_prep/mosi_utils_anim_t/*.idea
-data/neural_data_prep/mosi_utils_anim_t/*.html
-data/neural_data_prep/mosi_utils_anim_t/*.index
-data/neural_data_prep/mosi_utils_anim_t/*.meta
-data/neural_data_prep/mosi_utils_anim_t/*.data-00000-of-00001
-data/neural_data_prep/mosi_utils_anim_t/*.gz
-data/neural_data_prep/mosi_utils_anim_t/*.bin
-data/neural_data_prep/mosi_utils_anim_t/.vscode/*
-data/neural_data_prep/mosi_utils_anim_t/tornado_test*
-data/neural_data_prep/mosi_utils_anim_t/data*
-data/neural_data_prep/mosi_utils_anim_t/texdoc*
-data/neural_data_prep/mosi_utils_anim_t/checkpoint
+data/neural_data_prep/mosi_utils_anim/.vscode/*
+data/neural_data_prep/mosi_utils_anim/tornado_test*
+data/neural_data_prep/mosi_utils_anim/data*
+data/neural_data_prep/mosi_utils_anim/texdoc*
+data/neural_data_prep/mosi_utils_anim/checkpoint
 
 data/neural_data/*
 !data/neural_data/README.txt
