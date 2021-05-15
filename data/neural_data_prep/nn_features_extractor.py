@@ -1,11 +1,12 @@
 import numpy as np
 import pandas as pd
 import scipy.ndimage.filters as filters
+import inspect
+
 from data.neural_data_prep.mosi_utils_anim.animation_data.utils import convert_euler_frames_to_cartesian_frames, \
     quaternion_from_matrix, quaternion_matrix
 from data.neural_data_prep.mosi_utils_anim.animation_data import BVHReader, SkeletonBuilder
 from data.neural_data_prep.mosi_utils_anim.animation_data.quaternion import Quaternion
-import inspect
 
 
 def retrieve_name(var):

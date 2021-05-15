@@ -1,5 +1,6 @@
 import os
 import numpy as np
+
 from data.neural_data_prep.nn_features_extractor import FeatureExtractor, retrieve_name
 
 
@@ -81,8 +82,8 @@ def prepare_input_data(frame_num, handler, col_demarcation_finished=True):
         x_left_wrist_vels_tr,
         # x_right_punch_labels_tr,
         # x_left_punch_labels_tr,
-        x_right_punch_labels,                                   #TODO:Janis said remove
-        x_left_punch_labels,                                   #TODO:Janis said remove
+        x_right_punch_labels,  # TODO:Janis said remove
+        x_left_punch_labels,  # TODO:Janis said remove
         x_right_punch_target,  # local wrt r in mid frame                                   #TODO:Janis said remove
         x_left_punch_target,  # local wrt r in mid frame                                   #TODO:Janis said remove
         x_local_pos,
@@ -159,8 +160,8 @@ def prepare_output_data(frame_num, handler, col_demarcation_finished=True):
     y_curr_frame = [
         y_root_velocity,
         y_root_new_forward,
-        y_right_punch_labels,                                   #TODO:Janis said remove
-        y_left_punch_labels,                                   #TODO:Janis said remove
+        y_right_punch_labels,  # TODO:Janis said remove
+        y_left_punch_labels,  # TODO:Janis said remove
         y_right_foot_contacts,
         y_left_foot_contacts,
         y_root_pos_tr,
@@ -216,7 +217,8 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div, de
         handler.get_foot_concats()
 
         x_col_demarcation_ids, x_col_names = prepare_input_data(handler.window, handler, col_demarcation_finished=False)
-        y_col_demarcation_ids, y_col_names = prepare_output_data(handler.window, handler, col_demarcation_finished=False)
+        y_col_demarcation_ids, y_col_names = prepare_output_data(handler.window, handler,
+                                                                 col_demarcation_finished=False)
 
         for i in range(handler.window, handler.n_frames - handler.window - 1, 1):
             if i % 50 == 0:
