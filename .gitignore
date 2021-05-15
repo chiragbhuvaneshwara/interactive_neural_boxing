@@ -18,6 +18,8 @@ data/neural_data/*
 
 #TODO change controller in out dir to backend
 vis_backend/controller/controller_in_out/*
+/vis/backend/controller_in_out/*
+!/vis/backend/controller_in_out/.gitkeep
 
 local_dev_saved_models/
 

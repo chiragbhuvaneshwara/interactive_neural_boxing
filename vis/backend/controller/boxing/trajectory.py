@@ -1,6 +1,7 @@
 """author: Chirag Bhuvaneshwara """
 import numpy as np
 import math
+
 from vis.backend.controller import utils
 
 
@@ -304,7 +305,7 @@ class Trajectory:
         #     [utils.z_angle(self.traj_directions[i]) for i in range(self.median_idx + 1, self.n_frames_tr_win)])
         # self.traj_root_rotations[self.median_idx + 1:] = pred_r_rot
 
-    # if curr_punch_labels['right'] != 0:
+        # if curr_punch_labels['right'] != 0:
         pred_rwp_tr = _smooth_predictions(pred_rwp_tr.reshape(half_pred_window, self.n_dims))
         self.traj_right_wrist_pos[self.median_idx + 1:] = self.convert_local_to_global(pred_rwp_tr, arg_type='pos',
                                                                                        arm="right")
@@ -313,7 +314,7 @@ class Trajectory:
         self.traj_right_wrist_vels[self.median_idx + 1:] = self.convert_local_to_global(pred_rwv_tr, arg_type='vels',
                                                                                         arm="right")
 
-    # if curr_punch_labels['left'] != 0:
+        # if curr_punch_labels['left'] != 0:
         pred_lwp_tr = _smooth_predictions(pred_lwp_tr.reshape(half_pred_window, self.n_dims))
         self.traj_left_wrist_pos[self.median_idx + 1:] = self.convert_local_to_global(pred_lwp_tr, arg_type='pos',
                                                                                       arm="left")

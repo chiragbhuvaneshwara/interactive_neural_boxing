@@ -1,7 +1,7 @@
 """author: Chirag Bhuvaneshwara """
 import numpy as np
+
 from train.nn.mann_keras.mann import MANN
-# from backend.controller.abstract_controller import Controller
 from vis.backend.controller.boxing.trajectory import Trajectory
 from vis.backend.controller.boxing.character import Character
 from vis.backend.controller import utils
@@ -24,7 +24,7 @@ class BoxingController:
         self.data_config = data_config
         self.endJoints = data_config["end_joints"]
         self.n_joints = data_config["num_joints"] + self.endJoints
-        self.use_rotations = data_config["use_rotations"]
+        # self.use_rotations = data_config["use_rotations"]
         self.n_gaits = data_config["n_gaits"]
         self.traj_window = data_config["window"]
         self.num_traj_samples = data_config["num_traj_samples"]

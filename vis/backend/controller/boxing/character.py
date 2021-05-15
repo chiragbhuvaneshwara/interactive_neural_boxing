@@ -1,7 +1,6 @@
 """author: Chirag Bhuvaneshwara """
-
 import numpy as np
-import math
+
 from vis.backend.controller import utils
 
 
@@ -13,9 +12,9 @@ class Character:
         [type_in] -- [description]
     """
 
-    def __init__(self, data_configuration):  # endJoints = 5, numJoints = 21):
+    def __init__(self, data_configuration):
         self.endJoints = data_configuration["end_joints"]
-        self.joints = data_configuration["num_joints"] + self.endJoints  # 59
+        self.joints = data_configuration["num_joints"] + self.endJoints
 
         # fields for joint positions and velocities in global space.
         self.joint_positions = np.array([[0.0, 0.0, 0.0]] * self.joints)
@@ -27,7 +26,6 @@ class Character:
 
         # angle of rotation around up axis -> utils.z_angle(new_forward_dir) + old_root_rotation --> [-2*pi, + 2* pi]
         self.root_rotation = 0.0
-        # self.root_rotation = math.pi
         # root position projected to ground (y-axis = 0)
         self.root_position = np.array([0.0, 0.0, 0.0])
 
