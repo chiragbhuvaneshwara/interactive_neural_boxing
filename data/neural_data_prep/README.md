@@ -2,7 +2,7 @@
 
 In this module, ``start.py`` begins the data preparation process. Use following command from project root directory:
 
-``python -m data.neural_data_prep.start``
+``python -m data.neural_data_prep.extract``
 
 This script needs as input:
 1. The raw motion capture data found in ``data/raw_data/mocap/hq/processed``.
@@ -12,3 +12,6 @@ This script produces output in ``data/neural_data``. The following is produced a
 1. A numpy file containing the input and output pairs for the neural network training.
 2. A json file containing information about the parameters used to generate the data and the demarcation for the different 
 variables in the input and output vectors.
+
+The 2 other folders in this dir are:
+1. [mosi_utils_anim](https://github.com/eherr/anim_utils): a repo developed by Erik Herman and others. More info found [here](mosi_utils_anim/README.md).

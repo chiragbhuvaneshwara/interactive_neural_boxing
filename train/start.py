@@ -3,7 +3,7 @@ import os
 import shutil
 from datetime import datetime
 
-from train.process_boxing_data import train_boxing_data
+from train.utils.process_boxing_data import train_boxing_data
 
 args_parser = argparse.ArgumentParser()
 args_parser.add_argument("-d", "--develop", help="Run on subset",

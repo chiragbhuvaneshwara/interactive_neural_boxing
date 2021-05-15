@@ -1,0 +1,1 @@
+This folder should contain different implementations of neural network models to process mocap data.

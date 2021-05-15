@@ -6,7 +6,7 @@ import pandas as pd
 import json
 import argparse
 
-from data.neural_data_prep.process_folder import process_folder
+from data.neural_data_prep.nn_features.process_folder import process_folder
 
 
 def setup_output_dir(output_base_path, output_directory):

@@ -1,0 +1,2 @@
+Contains code to visualize the motion data produced by the controller upon giving different inputs. This simple plot 
+continuously plots the positions of the character in each frame as a simple point cloud.
