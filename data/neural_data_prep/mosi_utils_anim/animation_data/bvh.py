@@ -126,7 +126,7 @@ class BVHReader(object):
         if lines[line_index].startswith("Frame Time:"):
             self.frame_time = float(lines[line_index].split(":")[-1].strip())
         else:
-            self.frame_time = 0.013889  # TODO use constant
+            self.frame_time = 0.013889  # TO DO use constant
 
     def _read_frames(self, lines, line_index, n_lines=-1):
         """Reads the frames part of a BVH file"""

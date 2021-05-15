@@ -144,7 +144,7 @@ def rotate_axes(cos, q):
         cos[key] = normalize(cos[key])
     return cos
 
-def create_local_cos_map_from_skeleton_axes(skeleton, flip=1.0, project=True):#TODO fix bug
+def create_local_cos_map_from_skeleton_axes(skeleton, flip=1.0, project=True):#TO DO fix bug
     body_x_axis = get_body_x_axis(skeleton)*flip
     print("body x axis", body_x_axis)
     body_y_axis = get_body_y_axis(skeleton)
@@ -306,7 +306,7 @@ def align_joint(new_skeleton, free_joint_name, local_target_axes, global_src_up_
         spine_joints += joint_map["spine_1"]
     if "spine_2" in joint_map:
         spine_joints += joint_map["spine_2"]
-    if free_joint_name in spine_joints and apply_spine_fix :#FIXME breaks the cma es trajectory following for some skeletons if set to True
+    if free_joint_name in spine_joints and apply_spine_fix :#FIX ME breaks the cma es trajectory following for some skeletons if set to True
         # handle special case of applying the x axis rotation of the Hip to the pelvis
         node = new_skeleton.nodes[free_joint_name]
         t_pose_global_m = node.get_global_matrix(new_skeleton.reference_frame)
@@ -334,7 +334,7 @@ def find_rotation_analytically(new_skeleton, free_joint_name, target, frame, joi
     global_src_x_vec = target["global_src_x_vec"]
 
     local_target_axes = joint_cos_map[free_joint_name]
-    #FIXME captury to custom for hybrit needs the align_root method
+    #FIX ME captury to custom for hybrit needs the align_root method
     #if free_joint_name == new_skeleton.root:
     #    q = align_root_joint(local_target_axes,  global_src_x_vec, max_iter_count)
     #else:
@@ -480,7 +480,7 @@ class Retargeting(object):
         return target_frame
 
     def run(self, src_frames, frame_range):
-        #TODO get up axes and cross vector from skeleton heuristically,
+        #TO DO get up axes and cross vector from skeleton heuristically,
         # bone_dir = up, left leg to right leg = cross for all bones
         n_frames = len(src_frames)
         target_frames = []

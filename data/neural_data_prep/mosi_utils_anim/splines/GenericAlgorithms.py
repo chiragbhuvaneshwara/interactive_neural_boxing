@@ -242,7 +242,7 @@ def closestLowerValueBinarySearch(A,left,right,value,getter= lambda A,i : A[i]):
             #print "left"
             return closestLowerValueBinarySearch(A, iMid, right, value,getter)
         else:
-            #print "done"
+            #print "doone"
             return (iMid,0)
     else:#always return the lowest closest value if no value was found, see flags for the cases
         leftValue = getter(A,left)
@@ -494,7 +494,7 @@ def filterClusters(data,costList):
             print("no elements in list for key ",key)
     return filteredData
 
-#todo change: filter minima by selecting min in a window
+#to do change: filter minima by selecting min in a window
         
             
 

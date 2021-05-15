@@ -276,7 +276,7 @@ class Skeleton(object):
                 node_channels = copy(node.channels)
                 if not euler:
                     if np.all([ch in node_channels for ch in ["Xrotation", "Yrotation", "Zrotation"]]):
-                        node_channels += ["Wrotation"]  # TODO fix order
+                        node_channels += ["Wrotation"]  # TO DO fix order
                 channels[node.node_name] = node_channels
         return channels
 

@@ -225,7 +225,7 @@ class CatmullRomSpline():
             t = floorP+alpha*(ceilP-floorP)
         else:
             t = floorP
-        #t = relativeArcLength#todo add correct mapping
+        #t = relativeArcLength#to do add correct mapping
 
         return self.queryPoint(t)
 

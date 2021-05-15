@@ -22,7 +22,7 @@ from ..splines import ParameterizedSpline
 def write_to_logfile(path, time_string, data):
     """ Appends json data to a text file.
         Creates the file if it does not exist.
-        TODO use logging library instead
+        TO DO use logging library instead
     """
     data_string = json.dumps(data, indent=4)
     line = time_string + ": \n" + data_string + "\n-------\n\n"

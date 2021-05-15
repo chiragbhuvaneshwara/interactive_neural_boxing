@@ -159,11 +159,11 @@ def find_rotation_analytically2_bak(new_skeleton, free_joint_name, target, frame
     #find global orientation
     global_src_up_vec = target["global_src_up_vec"]
     global_src_x_vec = target["global_src_x_vec"]
-    #local_target_up_vec = [0,1,0] #TODO get from target skeleton
+    #local_target_up_vec = [0,1,0] #TO DO get from target skeleton
     #if free_joint_name == "pelvis":
-    #    local_target_x_vec = [-1, 0, 0]  # TODO get from target skeleton
+    #    local_target_x_vec = [-1, 0, 0]  # TO DO get from target skeleton
     #else:
-    #    local_target_x_vec = [1,0,0]  # TODO get from target skeleton
+    #    local_target_x_vec = [1,0,0]  # TO DO get from target skeleton
 
     local_target_x_vec = joint_cos_map[free_joint_name]["x"]
     local_target_up_vec = joint_cos_map[free_joint_name]["y"]
@@ -194,7 +194,7 @@ def get_twisting_angle2(skeleton, node_name, frame,q, joint_cos_map, dest):
     local_aligned_target_axes = rotate_axes(axes, lq)
     # align aligned_axes of target with aligned local axes of src
     target = local_aligned_target_axes["x"]
-    src = dest["local_src_x_vec"] # todo
+    src = dest["local_src_x_vec"] # to do
     angle = math.acos(np.dot(target, src))
     #angle = math.atan2(target[0], target[2]) - math.atan2(src[2], src[0])
     e = [0,angle,0]
@@ -335,7 +335,7 @@ def get_new_frames_from_direction_constraints(target_skeleton,
             new_frame[offset:offset + 4] = q
             offset += 4
 
-        # apply_ik_constraints(target_skeleton, new_frame, constraints[frame_idx])#TODO
+        # apply_ik_constraints(target_skeleton, new_frame, constraints[frame_idx])#TO DO
         duration = time.clock()-start
         print("processed frame", frame_range[0] + frame_idx, use_optimization, "in", duration, "seconds")
         new_frames.append(new_frame)

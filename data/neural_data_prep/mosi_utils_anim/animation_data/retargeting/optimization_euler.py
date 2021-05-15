@@ -108,6 +108,6 @@ def get_new_euler_frames_from_direction_constraints(target_skeleton,
                                                                 guess=angles)
             new_frame[offset:offset + 3] = angles
             offset += 3
-        # apply_ik_constraints(target_skeleton, new_frame, constraints[frame_idx])#TODO
+        # apply_ik_constraints(target_skeleton, new_frame, constraints[frame_idx])#TO DO
         new_frames.append(new_frame)
     return new_frames

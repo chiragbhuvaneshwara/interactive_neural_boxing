@@ -61,7 +61,7 @@ def _align_point_clouds_2D(a, b, weights):
     weighted_sum_b_z = 0
     sum_of_weights = 0.0
     #    if not weights:
-    #        weight = 1.0/n_points # todo set weight base on joint level
+    #        weight = 1.0/n_points # to do set weight base on joint level
     for index in range(n_points):
         numerator_left += weights[index] * (a[index][0] * b[index][2] -
                                             b[index][0] * a[index][2])
@@ -246,7 +246,7 @@ def align_quaternion_frames(skeleton, node_name, new_frames, prev_frames=None,  
         first_frame_pos = new_frames[0][:3].tolist() + [1]
         t_pos = np.dot(m, first_frame_pos)[:3]
         delta = start_pose["position"]
-        # FIXME this assumes the y translation is the up axis and can be ignored
+        # FIX ME this assumes the y translation is the up axis and can be ignored
         delta[0] -= t_pos[0]
         delta[2] -= t_pos[2]
         m[:3, 3] = delta

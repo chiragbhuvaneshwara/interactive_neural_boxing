@@ -192,7 +192,7 @@ class PointCloudRetargeting(object):
         else:
             self.target_skeleton_root = target_skeleton.root
 
-        #FIXME: enable spine during retargeting
+        #FIX ME: enable spine during retargeting
         for j in ["spine_2", "spine_1", "spine"]:
             k = self.target_skeleton.skeleton_model["joints"][j]
             self.target_to_src_joint_map[k] = None

@@ -578,7 +578,7 @@ def tdot_mat(mat, out=None):
     else:
         assert(out.dtype == 'float64')
         assert(out.shape == (nn, nn))
-        # FIXME: should allow non-contiguous out, and copy output into it:
+        # FIX ME: should allow non-contiguous out, and copy output into it:
         assert(8 in out.strides)
         # zeroing needed because of dumb way I copy across triangular answer
         out[:] = 0.0

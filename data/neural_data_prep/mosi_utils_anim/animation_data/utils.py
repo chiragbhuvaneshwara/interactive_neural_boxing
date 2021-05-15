@@ -859,7 +859,7 @@ def align_point_clouds_2D(a, b, weights=None):
     numerator_left = 0.0
     denominator_left = 0.0
     #    if not weights:
-    #        weight = 1.0/n_points # todo set weight base on joint level
+    #        weight = 1.0/n_points # to do set weight base on joint level
     weighted_sum_a_x = 0.0
     weighted_sum_b_x = 0.0
     weighted_sum_a_z = 0.0

@@ -210,7 +210,7 @@ class ParameterizedSpline(object):
         """
         assert self.spline.dimensions == 3
         start, tangent_line = self.get_tangent_at_arc_length(arc_length)
-        # todo get angle with reference_frame[1]
+        # to do get angle with reference_frame[1]
         a = reference_vector
         b = np.array([tangent_line[0], tangent_line[2]])
         a /= np.linalg.norm(a)

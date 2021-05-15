@@ -1,8 +1,9 @@
+from . import utils
 from .bvh import BVHReader
 from .skeleton_builder import SkeletonBuilder
 from .motion_vector import MotionVector
 
-import .utils
+# import .utils
 
 import scipy.ndimage.filters as filters
 
@@ -56,7 +57,7 @@ class Animation():
 		deal with the rest
 
 		If the transform is corrected for Holden Data, [0, 8.742816925048828, 0.13204166293144226] is substracted.
-		TODO: Find fix for this hack.
+		TO DO: Find fix for this hack.
 
 		Args:
 			filename (str): Path to bvh file to be read.

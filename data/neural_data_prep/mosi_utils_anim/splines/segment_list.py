@@ -32,7 +32,7 @@ class SegmentList(object):
             u = 0
             while u <= 1.0:
                 arc_length = spline.get_absolute_arc_length(u)
-                # TODO make more efficient by looking up min_u
+                # TO DO make more efficient by looking up min_u
                 if arc_length >= min_arc_length and arc_length <= max_arc_length:
                     point = spline.query_point_by_parameter(u)
                     points.append(point)

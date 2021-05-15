@@ -35,7 +35,7 @@ def _align_point_clouds_2D(a, b, weights):
     weighted_sum_b_z = 0
     sum_of_weights = 0.0
     #    if not weights:
-    #        weight = 1.0/n_points # todo set weight base on joint level
+    #        weight = 1.0/n_points # to do set weight base on joint level
     for index in range(n_points):
         numerator_left += weights[index] * (a[index][0] * b[index][2] -
                                             b[index][0] * a[index][2])

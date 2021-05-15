@@ -238,7 +238,7 @@ class MotionVector(object):
                     unity_frame["rootTranslation"] = {"x": -t[0], "y": t[1], "z": t[2]}
 
                 if node_name in self.skeleton.animated_joints:  # use rotation from frame
-                    # TODO fix: the animated_joints is ordered differently than the nodes list for the latest model
+                    # TO DO fix: the animated_joints is ordered differently than the nodes list for the latest model
                     index = self.skeleton.animated_joints.index(node_name)
                     offset = index * 4 + 3
                     r = frame[offset:offset + 4]
