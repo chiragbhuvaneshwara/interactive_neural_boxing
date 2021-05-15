@@ -1,7 +1,7 @@
 import os
 import numpy as np
 
-from data.neural_data_prep.nn_features_extractor import FeatureExtractor, retrieve_name
+from data.neural_data_prep.nn_features.extractor import FeatureExtractor, retrieve_name
 
 
 def prepare_col_demarcation_ids(**args):
