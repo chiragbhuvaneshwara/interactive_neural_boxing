@@ -1,6 +1,6 @@
 """author: Chirag Bhuvaneshwara """
 import numpy as np
-from train.nn.mann_keras_v2.mann import MANN
+from train.nn.mann_keras.mann import MANN
 # from backend.controller.abstract_controller import Controller
 from vis.backend.controller.boxing.trajectory import Trajectory
 from vis.backend.controller.boxing.character import Character

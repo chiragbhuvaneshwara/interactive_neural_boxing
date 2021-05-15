@@ -2,7 +2,7 @@ import copy
 import math
 from flask import Flask, request
 from vis.backend.controller.boxing.controller_tf2_v2 import BoxingController
-from train.nn.mann_keras_v2.mann import load_mann, load_binary
+from train.nn.mann_keras.utils import load_mann, load_binary
 import json, os
 from vis.backend.server.flask.utils import *
 

@@ -1,25 +1,31 @@
 import json
-import os
-import glob
 import numpy as np
 import tensorflow as tf
 import os
 from datetime import datetime
 import shutil
-from train.nn.mann_keras_v2.mann import MANN, loss_func, loss_func_2, prepare_mann_data, \
-    get_variation_gating, save_network, \
-    EpochWriter, \
-    GatingChecker, load_mann
 import argparse
 
-tf.keras.backend.set_floatx("float32")
+from train.nn.mann_keras.mann import MANN
+from train.nn.mann_keras.callbacks import EpochWriter, GatingChecker
+from train.nn.mann_keras.utils import prepare_mann_data, mse_loss_wrapper
 
+tf.keras.backend.set_floatx("float32")
 gpus = tf.config.experimental.list_physical_devices('GPU')
 for gpu in gpus:
     tf.config.experimental.set_memory_growth(gpu, True)
 
 
 def get_gating_indices(x_ids, joint_ids):
+    """
+    The gating input is a subset of the motion network input.
+    This function returns the exact index positions of the subset to be extracted from the motion network input.
+
+    @param x_ids: column demarcation ids for every var present in motion network input i.e. local_pos: [start_idx, end_idx]
+    @param joint_ids: dict of joint name and idx in bvh skeleton hierarchy
+    @return: gating_ids: list of index positions from where gating input is to be extracted from motion network input
+    """
+
     def _generate_id_sequence(column_demarcation_ids, key):
         return [i for i in range(column_demarcation_ids[key][0], column_demarcation_ids[key][1])]
 
@@ -67,6 +73,18 @@ def get_gating_indices(x_ids, joint_ids):
 
 
 def train_boxing_data(data_npz_path, data_config_path, output_dir, frd_win_epochs_data, epochs=30, batchsize=32):
+    """
+    Trains a MANN keras model on supplied boxing data which is processed by neural_data_prep module and is now in
+    a format that can be fed into a neural network.
+
+    @param data_npz_path: str, path to boxing data in neural network supported format
+    @param data_config_path: str, path to dict containing parameters used to generate dataset and some info for
+    accessing different variables in input and output vectors.
+    @param output_dir: str, path to save training logs and models
+    @param frd_win_epochs_data: str, containing frame rate div, trajectory window and num epochs parameters
+    @param epochs: num epochs to train the model
+    @param batchsize: batch size of data to be used for one gradient update
+    """
     logdir = os.path.join(output_dir, "logs")
     epoch_dir = os.path.join(output_dir, "epochs")
 
@@ -80,8 +98,6 @@ def train_boxing_data(data_npz_path, data_config_path, output_dir, frd_win_epoch
     if not os.path.exists(epoch_dir):
         os.makedirs(epoch_dir)
     epoch_dir = os.path.join(epoch_dir, "epoch_%d")
-
-    # norm_path = os.path.join(output_dir, 'data_norm.json')
 
     with open(data_config_path) as f:
         dataset_config = json.load(f)
@@ -106,10 +122,7 @@ def train_boxing_data(data_npz_path, data_config_path, output_dir, frd_win_epoch
 
     num_expert_nodes = 6
     network = MANN(input_dim, output_dim, 512, 64, num_expert_nodes, gating_indices, batch_size=batchsize)
-    # network.compile(optimizer=optimizer, loss=loss_func)
-    # TODO Check functioning of loss_func_2
-    network.compile(optimizer=optimizer, loss=loss_func_2(num_expert_nodes))
-
+    network.compile(optimizer=optimizer, loss=mse_loss_wrapper(num_expert_nodes))
     tensorboard = tf.keras.callbacks.TensorBoard(log_dir=os.path.join(logdir), write_graph=True, write_images=False,
                                                  histogram_freq=0, update_freq="batch")
     cp_callback = EpochWriter(epoch_dir, x_mean, y_mean, x_std, y_std)
@@ -121,58 +134,56 @@ def train_boxing_data(data_npz_path, data_config_path, output_dir, frd_win_epoch
 
     print(X.shape, input_dim, output_dim)
     print("start training: ", X.shape, Y.shape)
-
     network.fit(X, Y, epochs=epochs, batch_size=batchsize, callbacks=[tensorboard, cp_callback, gating_checker],
                 initial_epoch=epochs_executed)
+    print("Training completed. Models stored in: \n", output_dir)
 
-
-if __name__ == '__main__':
-    args_parser = argparse.ArgumentParser()
-    args_parser.add_argument("-d", "--develop", help="Run on subset",
-                             action="store_true", default=False)
-    args_parser.add_argument("-l", "--local", help="Flag indicating remote machine or local machine",
-                             action="store_true", default=False)
-    args = args_parser.parse_args()
-    DEVELOP = args.develop
-    LOCAL = args.local
-
-    EPOCHS = 100
-    FRD = 1
-    WINDOW = 15
-    OUT_BASE_PATH = os.path.join("train", "models", "mann_tf2_v2")
-    ############################################
-    frd_win = 'boxing_fr_' + str(FRD) + '_' + str(WINDOW)
-    current_timestamp = datetime.now().strftime("%Y%m%d_%H-%M-%S")
-
-    if not DEVELOP:
-        dataset_config_path = os.path.join("data", "neural_data", frd_win, "config.json")
-        dataset_npz_path = os.path.join("data", "neural_data", frd_win, "train.npz")
-        batch_size = 32
-
-    elif DEVELOP:
-        print('Dev Mode')
-        OUT_BASE_PATH = os.path.join(OUT_BASE_PATH, "dev")
-        dataset_config_path = os.path.join("data", "neural_data", "dev", frd_win, "config.json")
-        dataset_npz_path = os.path.join("data", "neural_data", "dev", frd_win, "train.npz")
-        batch_size = 2
-        EPOCHS = 2
-
-    frd_win_epochs = frd_win + '_' + str(EPOCHS)
-    if LOCAL:
-        print('Local machine dev')
-        OUT_BASE_PATH = os.path.join(OUT_BASE_PATH, "local_dev_saved_models")
-        # OUT_BASE_PATH = os.path.join("local_dev_saved_models")
-        if os.path.exists(OUT_BASE_PATH):
-            shutil.rmtree(OUT_BASE_PATH, ignore_errors=False, onerror=None)
-            os.mkdir(OUT_BASE_PATH)
-        dataset_config_path = os.path.join("data", "neural_data", "dev", frd_win, "config.json")
-        dataset_npz_path = os.path.join("data", "neural_data", "dev", frd_win, "train.npz")
-        batch_size = 2
-        EPOCHS = 2
-        out_dir = os.path.join(OUT_BASE_PATH)
-
-    elif not LOCAL:
-        out_dir = os.path.join(OUT_BASE_PATH, frd_win_epochs, current_timestamp)
-
-    train_boxing_data(dataset_npz_path, dataset_config_path, out_dir, frd_win_epochs, epochs=EPOCHS,
-                      batchsize=batch_size)
+# if __name__ == '__main__':
+#     args_parser = argparse.ArgumentParser()
+#     args_parser.add_argument("-d", "--develop", help="Run on subset",
+#                              action="store_true", default=False)
+#     args_parser.add_argument("-l", "--local", help="Flag indicating remote machine or local machine",
+#                              action="store_true", default=False)
+#     args = args_parser.parse_args()
+#     DEVELOP = args.develop
+#     LOCAL = args.local
+#
+#     EPOCHS = 100
+#     FRD = 1
+#     WINDOW = 15
+#     OUT_BASE_PATH = os.path.join("train", "models", "mann_tf2_v2")
+#     ############################################
+#     frd_win = 'boxing_fr_' + str(FRD) + '_' + str(WINDOW)
+#     current_timestamp = datetime.now().strftime("%Y%m%d_%H-%M-%S")
+#
+#     if not DEVELOP:
+#         dataset_config_path = os.path.join("data", "neural_data", frd_win, "config.json")
+#         dataset_npz_path = os.path.join("data", "neural_data", frd_win, "train.npz")
+#         batch_size = 32
+#
+#     elif DEVELOP:
+#         print('Dev Mode')
+#         OUT_BASE_PATH = os.path.join(OUT_BASE_PATH, "dev")
+#         dataset_config_path = os.path.join("data", "neural_data", "dev", frd_win, "config.json")
+#         dataset_npz_path = os.path.join("data", "neural_data", "dev", frd_win, "train.npz")
+#         batch_size = 2
+#         EPOCHS = 2
+#
+#     frd_win_epochs = frd_win + '_' + str(EPOCHS)
+#     if LOCAL:
+#         print('Local machine dev')
+#         OUT_BASE_PATH = os.path.join(OUT_BASE_PATH, "local_dev_saved_models")
+#         if os.path.exists(OUT_BASE_PATH):
+#             shutil.rmtree(OUT_BASE_PATH, ignore_errors=False, onerror=None)
+#             os.mkdir(OUT_BASE_PATH)
+#         dataset_config_path = os.path.join("data", "neural_data", "dev", frd_win, "config.json")
+#         dataset_npz_path = os.path.join("data", "neural_data", "dev", frd_win, "train.npz")
+#         batch_size = 2
+#         EPOCHS = 2
+#         out_dir = os.path.join(OUT_BASE_PATH)
+#
+#     elif not LOCAL:
+#         out_dir = os.path.join(OUT_BASE_PATH, frd_win_epochs, current_timestamp)
+#
+#     train_boxing_data(dataset_npz_path, dataset_config_path, out_dir, frd_win_epochs, epochs=EPOCHS,
+#                       batchsize=batch_size)
