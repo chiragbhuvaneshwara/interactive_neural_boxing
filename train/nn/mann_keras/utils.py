@@ -66,24 +66,6 @@ def load_binary(path):
     return np.fromfile(path, dtype=np.float32)
 
 
-# def get_variation_gating(network, input_data, batch_size):
-#     gws = []
-#     r_lim = (input_data.shape[0] - 1) // batch_size
-#     for i in range(r_lim):
-#         bi = input_data[i * batch_size:(i + 1) * batch_size, :]
-#         out = network(bi)
-#         # TODO Test var for extracting gating outputs
-#         # gws.append(out[:, -6:])
-#         gws.append(out[:, -network.expert_nodes:])
-#
-#     # print("\nChecking the gating variability: ")
-#     # print("  mean: ", np.mean(np.concatenate(gws, axis=0), axis=0))
-#     # print("  std: ", np.std(np.concatenate(gws, axis=0), axis=0))
-#     # print("  max: ", np.max(np.concatenate(gws, axis=0), axis=0))
-#     # print("  min: ", np.min(np.concatenate(gws, axis=0), axis=0))
-#     # print("")
-
-
 def mse_loss(y, yt):
     yt = yt[:, :-6]
     rec_loss = tf.reduce_mean((y - yt) ** 2)

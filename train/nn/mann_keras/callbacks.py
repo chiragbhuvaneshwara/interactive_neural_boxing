@@ -1,4 +1,5 @@
 import tensorflow as tf
+
 from train.nn.mann_keras.utils import save_network
 
 
@@ -25,14 +26,13 @@ class GatingChecker(tf.keras.callbacks.Callback):
     def on_epoch_begin(self, epoch, logs=None):
         get_variation_gating(self.model, self.X, self.batch_size)
 
+
 def get_variation_gating(network, input_data, batch_size):
     gws = []
     r_lim = (input_data.shape[0] - 1) // batch_size
     for i in range(r_lim):
         bi = input_data[i * batch_size:(i + 1) * batch_size, :]
         out = network(bi)
-        # TODO Test var for extracting gating outputs
-        # gws.append(out[:, -6:])
         gws.append(out[:, -network.expert_nodes:])
 
     # print("\nChecking the gating variability: ")
