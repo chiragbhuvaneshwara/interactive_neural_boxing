@@ -590,34 +590,30 @@ class FeatureExtractor:
 
         root_pos = np.array(
             global_positions[start_from:frame + self.window:step, 0] - global_positions[frame:frame + 1, 0])
+        root_vels = np.array(root_vel[start_from:frame + self.window:step])
+        root_dirs = np.array(forward[start_from:frame + self.window:step])
+
+        # head_pos = np.array(
+        #     global_positions[start_from:frame + self.window:step, self.head]
+        #     - global_positions[frame:frame + 1, 0])
+        # headdirs = np.array(head_directions[start_from:frame + self.window:step])
 
         # Setting y to zero in root so that traj of wrist and head are at correct height
         global_positions[:, 0, 1] = 0
 
-        left_wrist_pos = np.array(
-            global_positions[start_from:frame + self.window:step, self.hand_left]
-            - global_positions[frame:frame + 1, 0])
-
         right_wrist_pos = np.array(
             global_positions[start_from:frame + self.window:step, self.hand_right]
             - global_positions[frame:frame + 1, 0])
-
-        head_pos = np.array(
-            global_positions[start_from:frame + self.window:step, self.head]
-            - global_positions[frame:frame + 1, 0])
-
-        root_dirs = np.array(forward[start_from:frame + self.window:step])
-        # headdirs = np.array(head_directions[start_from:frame + self.window:step])
-
-        root_vels = np.array(root_vel[start_from:frame + self.window:step])
-
-        left_wrist_vels = np.array(left_wrist_vel[start_from:frame + self.window:step])
         right_wrist_vels = np.array(right_wrist_vel[start_from:frame + self.window:step])
-
-        # left_punch_labels = np.array(self.punch_labels[self.hand_left][start_from:frame + self.window:step])
         # right_punch_labels = np.array(self.punch_labels[self.hand_right][start_from:frame + self.window:step])
-        left_punch_labels = np.array(self.punch_labels_binary[self.hand_left][start_from:frame + self.window:step])
         right_punch_labels = np.array(self.punch_labels_binary[self.hand_right][start_from:frame + self.window:step])
+
+        left_wrist_pos = np.array(
+            global_positions[start_from:frame + self.window:step, self.hand_left]
+            - global_positions[frame:frame + 1, 0])
+        left_wrist_vels = np.array(left_wrist_vel[start_from:frame + self.window:step])
+        # left_punch_labels = np.array(self.punch_labels[self.hand_left][start_from:frame + self.window:step])
+        left_punch_labels = np.array(self.punch_labels_binary[self.hand_left][start_from:frame + self.window:step])
 
         for j in range(len(root_pos)):
             # multiplying by root_rotation is rotating vectors to point to forward direction
@@ -625,18 +621,18 @@ class FeatureExtractor:
             # handles only inverse rotation)
             root_pos[j] = root_rotations[frame] * root_pos[j]
             root_dirs[j] = root_rotations[frame] * root_dirs[j]
-            left_wrist_pos[j] = root_rotations[frame] * left_wrist_pos[j]
             right_wrist_pos[j] = root_rotations[frame] * right_wrist_pos[j]
+            left_wrist_pos[j] = root_rotations[frame] * left_wrist_pos[j]
             # headdirs[j] = root_rotations[frame] * headdirs[j]
 
         # # TODO explain why you need mid frame removal or not (probably trivial and can be included)
-        # left_wrist_pos = left_wrist_pos - left_wrist_pos[len(left_wrist_pos) // 2]
         # right_wrist_pos = right_wrist_pos - right_wrist_pos[len(right_wrist_pos) // 2]
+        # left_wrist_pos = left_wrist_pos - left_wrist_pos[len(left_wrist_pos) // 2]
 
-        return_items = [root_pos, left_wrist_pos, right_wrist_pos, head_pos, root_dirs,
-                        # headdirs,
-                        root_vels, left_wrist_vels, right_wrist_vels,
-                        left_punch_labels, right_punch_labels
+        return_items = [root_pos, root_vels, root_dirs,
+                        # head_pos, headdirs,
+                        right_wrist_pos, right_wrist_vels, right_punch_labels,
+                        left_wrist_pos, left_wrist_vels, left_punch_labels
                         ]
 
         keys = list(map(retrieve_name, return_items))
