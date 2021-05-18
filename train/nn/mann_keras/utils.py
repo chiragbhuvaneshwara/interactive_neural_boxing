@@ -66,17 +66,16 @@ def load_binary(path):
     return np.fromfile(path, dtype=np.float32)
 
 
-def mse_loss(y, yt):
+def mse_loss_fixed_gating(y, yt):
     yt = yt[:, :-6]
     rec_loss = tf.reduce_mean((y - yt) ** 2)
     return rec_loss
 
 
 def mse_loss_wrapper(num_expert_nodes):
-    def loss_func(y, yt):
-        # TODO: Test functionality https://datascience.stackexchange.com/questions/25029/custom-loss-function-with-additional-parameter-in-keras
+    def mse_loss_variable_gating(y, yt):
         yt = yt[:, :-num_expert_nodes]
         rec_loss = tf.reduce_mean((y - yt) ** 2)
         return rec_loss
 
-    return loss_func
+    return mse_loss_variable_gating
