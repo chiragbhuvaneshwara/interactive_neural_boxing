@@ -16,8 +16,6 @@ data/neural_data/*
 !data/neural_data/README.md
 !data/neural_data/.gitkeep
 
-#TODO change controller in out dir to backend
-vis_backend/controller/controller_in_out/*
 /vis/backend/controller_in_out/*
 !/vis/backend/controller_in_out/.gitkeep
 
@@ -94,7 +92,7 @@ train/models/mann_tf2_v2/*
 # Packed Addressables
 /vis/frontend/unity/[Aa]ssets/[Aa]ddressable[Aa]ssets[Dd]ata/*/*.bin*
 
-# Temporary auto-generated Android Assets
+# Temp auto-generated Android Assets
 /vis/frontend/unity/[Aa]ssets/[Ss]treamingAssets/aa.meta
 /vis/frontend/unity/[Aa]ssets/[Ss]treamingAssets/aa/*
 
