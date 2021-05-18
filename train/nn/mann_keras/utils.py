@@ -5,7 +5,9 @@ import os
 from train.nn.mann_keras.mann import MANN
 
 
-def prepare_mann_data(dataset, dataset_config):
+# def prepare_mann_data(dataset, dataset_config):
+def prepare_mann_data(dataset_config):
+    dataset = dataset_config["dataset_npz_path"]
     data = np.load(dataset)
     x_train = data["x"]
     y_train = data["y"]
@@ -72,10 +74,10 @@ def mse_loss_fixed_gating(y, yt):
     return rec_loss
 
 
-def mse_loss_wrapper(num_expert_nodes):
-    def mse_loss_variable_gating(y, yt):
+def mse_loss_variable_gating(num_expert_nodes):
+    def mse_loss_var_gating(y, yt):
         yt = yt[:, :-num_expert_nodes]
         rec_loss = tf.reduce_mean((y - yt) ** 2)
         return rec_loss
 
-    return mse_loss_variable_gating
+    return mse_loss_var_gating

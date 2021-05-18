@@ -6,7 +6,7 @@ import pandas as pd
 import json
 import argparse
 
-from data.neural_data_prep.nn_features.process_folder import process_folder
+from data.neural_data_prep.nn_features.processer import process_folder
 
 
 def setup_output_dir(output_base_path, output_directory):
@@ -40,28 +40,32 @@ if LOCAL:
 elif not LOCAL:
     print('Remote machine dev')
 
+print('\n')
+
 INPUT_BASE_PATH = os.path.join("data", "raw_data")
 OUTPUT_BASE_PATH = os.path.join("data", "neural_data")
 
 if DEVELOP:
     print('Dev mode')
-    OUTPUT_BASE_PATH += '/dev'
+    OUTPUT_BASE_PATH = os.path.join(OUTPUT_BASE_PATH, "dev")
 
-PUNCH_PHASE_PATH = os.path.join(INPUT_BASE_PATH, "punch_label_gen", "punch_label", "tertiary")
+PUNCH_LABELS_PATH = os.path.join(INPUT_BASE_PATH, "punch_label_gen", "punch_label", "tertiary")
 BVH_PATH = os.path.join(INPUT_BASE_PATH, "mocap", "hq", "processed")
 FRAME_RATE_DIV = 1
 FORWARD_DIR = np.array([0.0, 0.0, 1.0])
 TR_WINDOW = math.ceil(15 / FRAME_RATE_DIV)
 ####################### CONTROL PARAMS ###################################
 
-x_train, y_train, dataset_config = process_folder(BVH_PATH, PUNCH_PHASE_PATH, FRAME_RATE_DIV, FORWARD_DIR, TR_WINDOW,
+x_train, y_train, dataset_config = process_folder(BVH_PATH, PUNCH_LABELS_PATH, FRAME_RATE_DIV, FORWARD_DIR, TR_WINDOW,
                                                   DEVELOP)
-frd_win = 'boxing_fr_' + str(FRAME_RATE_DIV) + '_' + str(TR_WINDOW)
+frd_win = 'fr_' + str(FRAME_RATE_DIV) + '_tr_' + str(TR_WINDOW)
 setup_output_dir(OUTPUT_BASE_PATH, frd_win)
 out_dir = os.path.join(OUTPUT_BASE_PATH, frd_win)
 
-np.savez_compressed(os.path.join(out_dir, "train"), x=x_train, y=y_train)
-with open(os.path.join(out_dir, "config.json"), "w") as f:
+dataset_npz_path = os.path.join(out_dir, "train")
+np.savez_compressed(dataset_npz_path, x=x_train, y=y_train)
+dataset_config["dataset_npz_path"] = dataset_npz_path + ".npz"
+with open(os.path.join(out_dir, "dataset_config.json"), "w") as f:
     json.dump(dataset_config, f, indent=4)
 
 if DEVELOP:

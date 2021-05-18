@@ -40,7 +40,7 @@ norm = {
 
 mann = load_mann(os.path.join(trained_base_path, "saved_model"))
 
-dataset_config = os.path.join(DATASET_OUTPUT_BASE_PATH, frd_win, "config.json")
+dataset_config = os.path.join(DATASET_OUTPUT_BASE_PATH, frd_win, "dataset_config.json")
 dataset_config = os.path.join(dataset_config)
 
 with open(dataset_config) as f:

@@ -21,10 +21,8 @@ class BoxingController:
         self.ydim = network.output_size
 
         self.data_config = data_config
-        self.endJoints = data_config["end_joints"]
-        self.n_joints = data_config["num_joints"] + self.endJoints
-        self.n_gaits = data_config["n_gaits"]
-        self.traj_window = data_config["window"]
+        self.n_joints = data_config["num_joints"]
+        self.traj_window = data_config["traj_window"]
         self.num_traj_samples = data_config["num_traj_samples"]
         self.traj_step = data_config["traj_step"]
         self.zero_posture = data_config["zero_posture"]

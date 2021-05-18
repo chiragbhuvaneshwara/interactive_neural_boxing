@@ -1,7 +1,27 @@
 import os
 import numpy as np
 
-from data.neural_data_prep.nn_features.extractor import FeatureExtractor, retrieve_name
+from common.utils import retrieve_name
+
+from data.neural_data_prep.nn_features.extractor import FeatureExtractor
+from data.raw_data.punch_label_gen.analyze.stats import gen_punch_stats
+
+
+def get_files_in_folder(folder):
+    """
+    :@param folder: str, path to a folder
+    :@return:
+    files: list, sorted list of files in folder
+    """
+
+    files = []
+    dir_files = os.listdir(folder)
+    dir_files.sort()
+    for path in dir_files:
+        full_path = os.path.join(folder, path)
+        files.append(full_path)
+
+    return files
 
 
 def prepare_col_demarcation_ids(**args):
@@ -25,6 +45,7 @@ def prepare_col_demarcation_ids(**args):
         col_names.extend(col_names_subset)
         start = end
 
+    print('\n')
     print('col names len: ', len(col_names))
 
     return col_demarcation_ids, col_names
@@ -95,7 +116,7 @@ def prepare_input_data(frame_num, handler, col_demarcation_finished=True):
         kwargs = {k: v for k, v in zip(keys, x_curr_frame)}
         x_demarcation_ids, x_col_names = prepare_col_demarcation_ids(**kwargs)
         print('curr frame len ', len(np.hstack(x_curr_frame)))
-        print(x_demarcation_ids)
+        # print(x_demarcation_ids)
         print('\n')
         return x_demarcation_ids, x_col_names
     else:
@@ -181,20 +202,22 @@ def prepare_output_data(frame_num, handler, col_demarcation_finished=True):
         kwargs = {k: v for k, v in zip(keys, y_curr_frame)}
         y_demarcation_ids, y_col_names = prepare_col_demarcation_ids(**kwargs)
         print('curr frame len ', len(np.hstack(y_curr_frame)))
-        print(y_demarcation_ids)
+        # print(y_demarcation_ids)
         print('\n')
         return y_demarcation_ids, y_col_names
     else:
         return y_curr_frame
 
 
-def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div, develop):
+def process_data(handler: FeatureExtractor, punch_labels_csv_path, frame_rate_div, forward_dir, tr_window, develop,
+                 gen_data_config=False, punch_stats=None):
     """
-    Generates and stacks the X and Y data for one provided bvh file and punch phase file.
+    Generates and stacks the X and Y data for one provided bvh file and punch labels file.
     :@param handler: FeatureExtractor,
     :@param punch_p_csv_path: str,
-    :@param frame_rate_div: str,
-    :@param develop: boolean
+    :@param frame_rate_div: int, # if 2, Reduces fps from 120fps to 60fps (60 fps reqd. for Axis Neuron bvh)
+    :@param develop: boolean, if True processes only 50 frames of mocap data
+    :@param gen_data_config: boolean, if True generates the dataset config, else dataset config returned is empty
     :@return:
      x: np.array(n_frames_file, n_x_cols)
      y: np.array(n_frames_file, n_y_cols)
@@ -204,11 +227,12 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div, de
     x, y = [], []
 
     for div in range(frame_rate_div):
+        print('\n')
         print('Processing Blender csv data %s' % frame_rate_div, div)
         handler.set_awinda_parameters()  # set the skeleton parameters by manually checking the bvh files
         # Loading Bvh file into memory
         handler.load_motion(frame_rate_divisor=frame_rate_div, frame_rate_offset=div)
-        handler.load_punch_action_labels(punch_p_csv_path, frame_rate_divisor=frame_rate_div,
+        handler.load_punch_action_labels(punch_labels_csv_path, frame_rate_divisor=frame_rate_div,
                                          frame_rate_offset=div)
 
         # TODO Only implemented for action label type tertiary currently. Must do binary labels and phase.
@@ -231,46 +255,41 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div, de
             y_curr_frame = prepare_output_data(i, handler)
             y.append(np.hstack(y_curr_frame))
 
-    dataset_config = {
-        "frame_rate_div": frame_rate_div,
-        "forward_dir": forward_dir,
-        "traj_window": traj_window,
+    if gen_data_config:
+        dataset_config = {
+            "frame_rate_div": frame_rate_div,
+            "forward_dir": list(forward_dir),
+            "traj_window": tr_window,
 
-        "num_joints": len(handler.joint_id_map.keys()),
-        "window": handler.window,
-        "num_traj_samples": handler.num_traj_sampling_pts,
-        "traj_step": handler.traj_step,
-        "zero_posture": handler.reference_skeleton,
-        "bone_map": handler.joint_id_map,
-        "col_demarcation_ids": [x_col_demarcation_ids, y_col_demarcation_ids],
-        "col_names": [x_col_names, y_col_names]
-    }
+            "num_traj_samples": handler.num_traj_sampling_pts,
+            "traj_step": handler.traj_step,
+            "num_joints": len(handler.joint_id_map.keys()),
+            "zero_posture": handler.reference_skeleton,
+            "bone_map": handler.joint_id_map,
+
+            "col_demarcation_ids": [x_col_demarcation_ids, y_col_demarcation_ids],
+            "col_names": [x_col_names, y_col_names],
+
+            "bvh_path": os.path.split(handler.bvh_file_path)[0],
+            "punch_label_path": os.path.split(punch_labels_csv_path)[0],
+            "punch_stats": punch_stats,
+            "vars_input": list(x_col_demarcation_ids.keys()),
+            "vars_output": list(y_col_demarcation_ids.keys()),
+            "in_data_length": len(x[0]),
+            "out_data_length": len(y[0]),
+        }
+    else:
+        dataset_config = {}
+
     return np.array(x), np.array(y), dataset_config
 
 
-def get_files_in_folder(folder):
+def process_folder(bvh_path, punch_labels_path, frame_rate_division, forward_direction, traj_window, develop):
     """
-    :@param folder: str, path to a folder
-    :@return:
-    files: list, sorted list of files in folder
-    """
-
-    files = []
-    dir_files = os.listdir(folder)
-    dir_files.sort()
-    for path in dir_files:
-        full_path = os.path.join(folder, path)
-        files.append(full_path)
-
-    return files
-
-
-def process_folder(bvh_path, punch_phase_path, frame_rate_div, forward_direction, window, develop):
-    """
-    Generates and stacks the X and Y data for provided files in the bvh and punch phase folders.
+    Generates and stacks the X and Y data for provided files in the bvh and punch label folders.
 
     :@param bvh_path: str
-    :@param punch_phase_path: str
+    :@param punch_labels_path: str
     :@param frame_rate_div: int, # if 2, Reduces fps from 120fps to 60fps (60 fps reqd. for Axis Neuron bvh)
     :@param forward_direction: np.array, example: np.array([0.0, 0.0, 1.0]) for Z axis
     :@param window: int, number of frames in trajectory window
@@ -282,14 +301,30 @@ def process_folder(bvh_path, punch_phase_path, frame_rate_div, forward_direction
      variables in input and output vectors.
     """
     bvh_files = get_files_in_folder(bvh_path)
-    punch_phase_files = get_files_in_folder(punch_phase_path)
+    punch_labels_files = get_files_in_folder(punch_labels_path)
+    punch_stats = gen_punch_stats(punch_labels_path)
 
     x_per_folder = []
     y_per_folder = []
-    for b_f, p_f in zip(bvh_files, punch_phase_files):
+
+    if develop:
+        bvh_files = [bvh_files[0]]
+        punch_labels_files = [punch_labels_files[0]]
+
+    for b_f, p_f in zip(bvh_files, punch_labels_files):
+        print('\n')
         print(b_f, '\n', p_f)
-        handler = FeatureExtractor(b_f, window, forward_dir=forward_direction)
-        x_cur_file, y_per_file, dataset_config = process_data(handler, p_f, frame_rate_div, develop=False)
+        handler = FeatureExtractor(b_f, traj_window, forward_dir=forward_direction)
+
+        if b_f == bvh_files[-1]:
+            x_cur_file, y_per_file, dataset_config = process_data(handler, p_f, frame_rate_division, forward_direction,
+                                                                  traj_window, develop=False, gen_data_config=True,
+                                                                  punch_stats=punch_stats)
+
+        else:
+            x_cur_file, y_per_file, dataset_config = process_data(handler, p_f, frame_rate_division, forward_direction,
+                                                                  traj_window, develop=False)
+
         x_per_folder.append(x_cur_file)
         y_per_folder.append(y_per_file)
         if develop:
@@ -297,5 +332,7 @@ def process_folder(bvh_path, punch_phase_path, frame_rate_div, forward_direction
 
     x_per_folder = np.vstack(x_per_folder)
     y_per_folder = np.vstack(y_per_folder)
+
+    dataset_config["num_data_pts"] = x_per_folder.shape[0]
 
     return x_per_folder, y_per_folder, dataset_config

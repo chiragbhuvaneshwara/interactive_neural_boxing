@@ -12,8 +12,8 @@ class EpochWriter(tf.keras.callbacks.Callback):
         self.Xstd = Xstd
         self.Ystd = Ystd
 
-    def on_epoch_end(self, epoch, logs=None):
-        save_network(self.path % epoch, self.model, self.Xmean, self.Ymean, self.Xstd, self.Ystd)
+    # def on_epoch_end(self, epoch, logs=None):
+    #     save_network(self.path % epoch, self.model, self.Xmean, self.Ymean, self.Xstd, self.Ystd)
         # print("\nModel saved to ", self.path % epoch)
 
 

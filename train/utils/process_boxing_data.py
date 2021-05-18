@@ -3,9 +3,11 @@ import numpy as np
 import tensorflow as tf
 import os
 
+from common.utils import retrieve_name
+
 from train.nn.mann_keras.mann import MANN
 from train.nn.mann_keras.callbacks import EpochWriter, GatingChecker
-from train.nn.mann_keras.utils import prepare_mann_data, mse_loss_wrapper
+from train.nn.mann_keras.utils import prepare_mann_data, mse_loss_variable_gating
 
 tf.keras.backend.set_floatx("float32")
 gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -59,17 +61,30 @@ def get_gating_indices(x_ids, joint_ids):
     #              + \
     #              current_punch_labels_ids + \
     #              foot_end_effector_velocities_ids
-    gating_ids = wrist_velocities_tr_ids + \
-                 punch_target_ids + \
-                 wrist_end_effector_velocities_ids \
-                 + \
-                 current_punch_labels_ids + \
-                 foot_end_effector_velocities_ids
+    gating_ids = [
+        wrist_velocities_tr_ids,
+        punch_target_ids,
+        wrist_end_effector_velocities_ids,
+        current_punch_labels_ids,
+        foot_end_effector_velocities_ids
+    ]
+    # gating_ids = wrist_velocities_tr_ids + \
+    #              punch_target_ids + \
+    #              wrist_end_effector_velocities_ids \
+    #              + \
+    #              current_punch_labels_ids + \
+    #              foot_end_effector_velocities_ids
     # desired_vel (part of OG MANN gating input)
-    return gating_ids
+
+    gating_variables = list(map(retrieve_name, gating_ids))
+
+    # Flattening gating ids list
+    gating_ids = [item for sublist in gating_ids for item in sublist]
+
+    return gating_ids, gating_variables
 
 
-def train_boxing_data(data_npz_path, data_config_path, output_dir, frd_win_epochs_data, epochs=30, batchsize=32):
+def train_boxing_data(data_config_path, output_dir, epochs=30, batchsize=32):
     """
     Trains a MANN keras model on supplied boxing data which is processed by neural_data_prep module and is now in
     a format that can be fed into a neural network.
@@ -87,8 +102,8 @@ def train_boxing_data(data_npz_path, data_config_path, output_dir, frd_win_epoch
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    with open(os.path.join(output_dir, frd_win_epochs_data + '.json'), 'w') as outfile:
-        json.dump(frd_win_epochs_data, outfile, indent=4)
+    # with open(os.path.join(output_dir, frd_win_epochs_data + '.json'), 'w') as outfile:
+    #     json.dump(frd_win_epochs_data, outfile, indent=4)
 
     if not os.path.exists(logdir):
         os.makedirs(logdir)
@@ -103,9 +118,10 @@ def train_boxing_data(data_npz_path, data_config_path, output_dir, frd_win_epoch
     col_demarcation_ids = dataset_config['col_demarcation_ids']
     x_col_demarcation = col_demarcation_ids[0]
 
-    gating_indices = get_gating_indices(x_col_demarcation, bone_map)
+    gating_indices, gating_variable_names = get_gating_indices(x_col_demarcation, bone_map)
 
-    X, Y, norm = prepare_mann_data(data_npz_path, dataset_config)
+    # X, Y, norm = prepare_mann_data(data_npz_path, dataset_config)
+    X, Y, norm = prepare_mann_data(dataset_config)
     x_mean = np.array(norm['x_mean'], dtype=np.float64)
     x_std = np.array(norm['x_std'], dtype=np.float64)
     y_mean = np.array(norm['y_mean'], dtype=np.float64)
@@ -117,9 +133,19 @@ def train_boxing_data(data_npz_path, data_config_path, output_dir, frd_win_epoch
     learning_rate = tf.keras.experimental.CosineDecayRestarts(0.0001, 10 * (len(X) // batchsize))
     optimizer = tf.keras.optimizers.Adam(learning_rate)
 
+    training_details = {
+        "gating_variables": gating_variable_names,
+        "num_data_pts": X.shape[0],
+        "learning_rate": type(learning_rate).__name__,
+        "optimizer": type(optimizer).__name__,
+        "loss": mse_loss_variable_gating.__name__,
+        "dataset_config": dataset_config,
+        "dataset_config_path": data_config_path,
+    }
+
     num_expert_nodes = 6
     network = MANN(input_dim, output_dim, 512, 64, num_expert_nodes, gating_indices, batch_size=batchsize)
-    network.compile(optimizer=optimizer, loss=mse_loss_wrapper(num_expert_nodes))
+    network.compile(optimizer=optimizer, loss=mse_loss_variable_gating(num_expert_nodes))
     tensorboard = tf.keras.callbacks.TensorBoard(log_dir=os.path.join(logdir), write_graph=True, write_images=False,
                                                  histogram_freq=0, update_freq="batch")
     cp_callback = EpochWriter(epoch_dir, x_mean, y_mean, x_std, y_std)
@@ -133,4 +159,9 @@ def train_boxing_data(data_npz_path, data_config_path, output_dir, frd_win_epoch
     print("start training: ", X.shape, Y.shape)
     network.fit(X, Y, epochs=epochs, batch_size=batchsize, callbacks=[tensorboard, cp_callback, gating_checker],
                 initial_epoch=epochs_executed)
+
+    training_details.update(network.get_summary())
+    with open(os.path.join(output_dir, "network_config.json"), "w") as f:
+        json.dump(training_details, f, indent=4)
+
     print("Training completed. Models stored in: \n", output_dir)

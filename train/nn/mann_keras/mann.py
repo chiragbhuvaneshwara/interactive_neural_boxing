@@ -129,6 +129,21 @@ class MANN(tf.keras.Model):
 
         return tf.concat([output, expert_weights], axis=-1)
 
+    def get_summary(self):
+        network_summary = {
+            "input_size_motion_network": self.input_size,
+            "output_size_motion_network": self.output_size,
+            "hidden_size_motion_network": self.hidden_size,
+            "input_size_gating_network": self.gating_input,
+            "hidden_size_gating_network": self.gating_hidden,
+            "gating_indices": self.gating_indices,
+            "expert_nodes": self.expert_nodes,
+            "batch_size": self.batch_size,
+            "dropout_prob": self.dropout_prob,
+        }
+
+        return network_summary
+
     @staticmethod
     def forward_pass(mann, x, norm, col_demarcation_ids):
 
