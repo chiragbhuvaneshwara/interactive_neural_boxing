@@ -180,7 +180,7 @@ public partial class Player : MonoBehaviour
         }
 
         // apply transforms
-        Vector3 pos = this.server.GetJointPosition(t.name);// * 1.7f;  //TODO: update for your code
+        Vector3 pos = this.server.GetJointPosition(t.name);// * 1.7f;
         t.position = pos;
 
         if (t.childCount > 0 && !t.GetChild(0).name.Contains("end"))
@@ -190,7 +190,7 @@ public partial class Player : MonoBehaviour
             {
                 childID = 1;
             }
-            Vector3 toChildPos = this.server.GetJointPosition(t.GetChild(childID).name) - t.position; //* 1.7f //TODO: update for your code
+            Vector3 toChildPos = this.server.GetJointPosition(t.GetChild(childID).name) - t.position; //* 1.7f
             t.rotation = Quaternion.FromToRotation(this.bonemap[t.name].direction, toChildPos) * this.bonemap[t.name].rotation;
 
 

@@ -17,14 +17,12 @@ frd_win = 'boxing_fr_' + str(frd) + '_' + str(window)
 dataset_path = os.path.join(DATASET_OUTPUT_BASE_PATH, frd_win, 'train.npz')
 controller_in_out_dir = os.path.join("backend", "controller", "controller_in_out")
 frd_win_epochs = 'boxing_fr_' + str(frd) + '_' + str(window) + '_' + str(epochs)
-# trained_base_path = 'saved_models/mann_tf2_v2/' + frd_win_epochs + '/20210329_14-09-09/epochs/epoch_99'
-# trained_base_path = 'ztrain_and_server/saved_models/mann_tf2_v2/' + frd_win_epochs + '/20210426_15-06-43/epochs/epoch_99'
 all_models_path = os.path.join("train", "models", "mann_tf2_v2")
 # trained_base_path = os.path.join(all_models_path, frd_win_epochs, "20210426_15-06-43", "epochs", "epoch_99") # Tested and working model generated from old project structure
 # trained_base_path = os.path.join(all_models_path, frd_win_epochs, "20210514_11-20-06", "epochs", "epoch_19") # Tested and working model generated from new project structure
 # trained_base_path = os.path.join(all_models_path, frd_win_epochs, "20210514_14-12-03", "epochs",
 #                                  "epoch_99")  # Tested and working model generated from new project structure
-trained_base_path = os.path.join(all_models_path, frd_win_epochs, "20210515_12-20-18", "epochs",
+trained_base_path = os.path.join(all_models_path, frd_win_epochs, "20210517_07-18-01", "epochs",
                                  "epoch_99")  # Tested and working model generated from new project structure
 target_file = os.path.join(trained_base_path, 'saved_model')
 
@@ -56,6 +54,13 @@ print(zp.bone_map)
 
 
 def controller_to_posture():
+    """
+    This function converts the various character and trajectory information stored in the character and trajectory
+    classes associated with the controller to an instance of the posture class which can be parsed and visualized on the
+    Unity frontend.
+
+    @return: Tposture instance for current frame's posture
+    """
     posture = copy.deepcopy(zp)
     pose = bc.get_pose()
     tr = bc.get_trajectroy_for_vis()
@@ -77,6 +82,11 @@ def controller_to_posture():
 
 @app.route('/fetch_frame', methods=['GET', 'POST'])
 def fetch_frame():
+    """
+    This function is associated with a Flask route to obtain the posture information at the current frame.
+
+    @return: str, json data of the posture is sent as string to Unity
+    """
     if request.method == 'POST':
         punch_in = request.get_json()
 
@@ -108,6 +118,12 @@ def fetch_frame():
 
 @app.route('/fetch_zp', methods=['GET', 'POST'])
 def get_zero_posture():
+    """
+    This function is associated with a flask route to send the initial posture to be animated on Unity. Executed at the
+    beginning of the visualization cycle.
+
+    @return: str, json data of the posture is sent as string to Unity
+    """
     if request.method == 'POST':
         print(request.get_json()["name"])
         if request.method == 'POST' and request.get_json()["name"] == "fetch_zp":

@@ -1,7 +1,11 @@
 import numpy as np
 
 
+# TODO: Proper documentation explaining each parameter
 class TPosture(object):
+    """
+    Class to send posture information to Unity frontend.
+    """
 
     def __init__(self, bones=None, bone_map=None, location=None, rotation=None, trajectory=None):
         """
@@ -19,7 +23,12 @@ class TPosture(object):
         self.traj = trajectory
 
 
+# TODO Better naming in sync with the visualization i.e TBone ==> Bone, TVector3 to Vector3 etc but TPosture must remain
+#  TPosture as it actually makes sense. But the TPosture class is later used as general purpose Posture. So can change it too.
 class TBone(object):
+    """
+    Class to encapsulate the information associated with each bone. To be utilized as part of posture class.
+    """
 
     def __init__(self, name=None, position=None, rotation=None, children=None, parent=None, ):
         """
@@ -38,6 +47,9 @@ class TBone(object):
 
 
 class TVector3(object):
+    """
+    Class to capture the x, y, z positions of a 3-D vector.
+    """
 
     def __init__(self, x=None, y=None, z=None, ):
         """
@@ -52,6 +64,9 @@ class TVector3(object):
 
 
 class TQuaternion(object):
+    """
+    Class to capture the rotation information in terms of the Quaternion system.
+    """
 
     def __init__(self, w=None, x=None, y=None, z=None, ):
         """
@@ -68,6 +83,13 @@ class TQuaternion(object):
 
 
 def tvector3_to_np(x):
+    """
+    Function converts a vector from Unity's left handed co-ordinate system to the Python backend's right handed
+    co-ordinate system.
+
+    @param x: tvector3 instance from Unity in left handed co-ordinate system
+    @return: vector in np array format in right handed co-ordinate system
+    """
     x = [x[0], x[1], -x[2]]
     return x
 
@@ -79,12 +101,14 @@ def np_to_tvector3(x, vis=False):
         return TVector3(x[0], x[1], x[2])
 
 
-def build_zero_posture(base_controller, position_str="position", num_traj_pts = 10):
+def build_zero_posture(base_controller, position_str="position", num_traj_pts=10):
     """
+    Sets up zero posture information that was collected during data extraction in neural_data_prep and saved in the
+    dataset configuration.
 
-    :param base_controller:
+    :param base_controller: BoxingController instance that is being used for visualization
     :param position_str:
-    :return:
+    :return: an instance of TPosture with all data corresponding to the zero posture.
     """
     zp = base_controller.zero_posture
     bonelist = []
@@ -94,6 +118,7 @@ def build_zero_posture(base_controller, position_str="position", num_traj_pts = 
     for bone in zp:
         children = [c for c in bone["children"]]
 
+        # TODO: Why pass "position" as position_str? Can be static. Change and test working.
         position = np.array([float(bone[position_str][0]), float(bone[position_str][1]), float(bone[position_str][2])])
         if "local" in position_str:
             position = position / 100
@@ -120,7 +145,5 @@ def build_zero_posture(base_controller, position_str="position", num_traj_pts = 
 def serialize(obj):
     """
     JSON serializer for objects not serializable by default json code
-    :param obj:
-    :return:
     """
     return obj.__dict__

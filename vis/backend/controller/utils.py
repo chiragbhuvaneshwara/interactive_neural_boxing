@@ -2,19 +2,6 @@ import math
 import numpy as np
 
 
-def softmax(x):
-    """Compute softmax values for each sets of scores in x."""
-    return np.exp(x) / np.sum(np.exp(x), axis=0)
-
-
-def cubic(y0, y1, y2, y3, mu):
-    return (
-            (-0.5 * y0 + 1.5 * y1 - 1.5 * y2 + 0.5 * y3) * mu * mu * mu +
-            (y0 - 2.5 * y1 + 2.0 * y2 - 0.5 * y3) * mu * mu +
-            (-0.5 * y0 + 0.5 * y2) * mu +
-            (y1))
-
-
 def euclidian_length(v):
     return np.linalg.norm(v)
 
@@ -59,31 +46,6 @@ def rot_around_z_3d(vector, angle, inverse=False):
     if inverse:
         mat = np.linalg.inv(mat)
     return np.matmul(mat, vector)
-
-
-def quat_to_mat(q):
-    qr = q[3]
-    qi = q[0]
-    qj = q[1]
-    qk = q[2]
-    s = 1
-    return np.array([
-        [1 - 2 * s * (qj * qj + qk * qk), 2 * s * (qi * qj - qk * qr), 2 * s * (qi * qk + qj * qr)],
-        [2 * s * (qi * qj + qk * qr), 1 - 2 * s * (qi * qi + qk * qk), 2 * s * (qj * qk - qi * qr)],
-        [2 * s * (qi * qk - qj * qr), 2 * s * (qj * qk + qi * qr), 1 - 2 * s * (qi * qi + qj * qj)]
-    ])
-
-
-def mat_to_quat(m):
-    qw = math.sqrt(1.0 + m[0][0] + m[1][1] + m[2][2]) / 2.0
-    qx = (m[2][1] - m[1][2]) / (4 * qw)
-    qy = (m[0][2] - m[2][0]) / (4 * qw)
-    qz = (m[1][0] - m[0][1]) / (4 * qw)
-    return np.array((qx, qy, qz, qw))
-
-
-def global_to_local_pos(pos, root_pos, root_rot):
-    return rot_around_z_3d(pos - root_pos, root_rot, inverse=True)  # self.char.joint_positions[i]#
 
 
 def xz_to_x0yz(arr, axis=None):

@@ -9,18 +9,14 @@ class Trajectory:
     """
     This class contains data and functionality for trajectory control.
     All trajectory data inside this class should be maintained in global space.
-
-    Returns:
-        [type_in] -- [description]
     """
 
     def __init__(self, data_configuration):
-
         self.bone_map = data_configuration["bone_map"]
         self.n_tr_samples = data_configuration['num_traj_samples']  # 10
         self.traj_step = data_configuration['traj_step']  # 5
 
-        # 12 * 10 = 120 fps trajectory window or 10 * 5 = 50fps trajectory window
+        # 10 * 5 = 50fps trajectory window
         self.n_frames_tr_win = self.n_tr_samples * self.traj_step
         self.median_idx = self.n_frames_tr_win // 2
 
@@ -33,37 +29,35 @@ class Trajectory:
         # self.traj_root_directions = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
         self.traj_root_directions = np.array([[0.0, 0.0, 1.0]] * self.n_frames_tr_win)
 
-        ### Trajectory info of the hand
+        ### Trajectory info of the right hand
         # Wrist positions contain all 3 components
         self.traj_right_wrist_pos = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
         self.traj_right_wrist_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
         # self.traj_right_punch_labels = np.array([0] * self.n_frames_tr_win)
 
+        ### Trajectory info of the left hand
         # Wrist positions contain all 3 components
         self.traj_left_wrist_pos = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
         self.traj_left_wrist_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
         # self.traj_left_punch_labels = np.array([0] * self.n_frames_tr_win)
 
-        n_foot_joints = 2
-        n_feet = 2  # left, right
-        self.foot_drifting = np.zeros(n_foot_joints * n_feet)
+        self.foot_drifting = np.zeros(2 * 2)  # (n_foot_joints * n_feet)
         # self.blend_bias = 2.0
-        self.blend_bias = 10.0
+        self.blend_bias = 10.0  # adjust bias 0.5 to fit to dataset and responsivity (larger value -> more responsive)
 
     def get_input(self, root_position, root_rotation):
         """
-        This function computes the network input vector based on the current trajectory state for the new root_position and root_rotations.
+        This method computes the network input vector based on the current trajectory state for the new root_position and root_rotations.
 
-        Arguments:
-            root_position {[type_in]} -- new root position
-            root_rotation {[arg_type]} -- new root rotation
-        Returns:
-            np.array[10 * 2] -- trajectory positions
-            np.array[10 * 2] -- trajectory velocities
-            np.array[10 * 3] -- trajectory left wrist pos
-            np.array[10 * 3] -- trajectory right wrist pos
-            np.array[10 * 3] -- trajectory left wrist velocities
-            np.array[10 * 3] -- trajectory right wrist velocities velocities
+        @param: root_position {[type_in]} -- new root position in global co-ordinate space
+        @param: root_rotation {[arg_type]} -- new root rotation
+        @return:
+        input_root_pos: np.array[10 * 2] -- trajectory positions in local co-ordinate space
+        input_root_vels: np.array[10 * 2] -- trajectory velocities
+        input_right_wrist_pos: np.array[10 * 3] -- trajectory right wrist pos in local co-ordinate space
+        input_left_wrist_pos: np.array[10 * 3] -- trajectory left wrist pos in local co-ordinate space
+        input_right_wrist_vels: np.array[10 * 3] -- trajectory right wrist velocities velocities
+        input_left_wrist_vels: np.array[10 * 3] -- trajectory left wrist velocities
         """
 
         tr_root_pos_local = self.convert_global_to_local(self.traj_root_pos, root_position, root_rotation)
@@ -286,7 +280,8 @@ class Trajectory:
 
         # The predictions after applying _smooth_predictions will be producing entries for all trajectories
         # maintained in trajectory class
-        # TODO Check whether to apply wrist preds or not to avoid network generated punching when user is not punching
+        # TODO Check whether to apply wrist preds or not to avoid network generated punching when user is not
+        #  punching ==> Did not work
         pred_rp_tr, pred_rv_tr, pred_rwp_tr, pred_lwp_tr, pred_rwv_tr, pred_lwv_tr = prediction
 
         half_pred_window = self.median_idx // self.traj_step
