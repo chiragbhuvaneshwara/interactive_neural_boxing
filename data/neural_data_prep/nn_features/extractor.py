@@ -1,27 +1,12 @@
 import numpy as np
 import pandas as pd
 import scipy.ndimage.filters as filters
-import inspect
 
+from common.utils import retrieve_name
 from data.neural_data_prep.mosi_utils_anim.animation_data.utils import convert_euler_frames_to_cartesian_frames, \
     quaternion_from_matrix, quaternion_matrix
 from data.neural_data_prep.mosi_utils_anim.animation_data import BVHReader, SkeletonBuilder
 from data.neural_data_prep.mosi_utils_anim.animation_data.quaternion import Quaternion
-
-
-def retrieve_name(var):
-    """
-    utility function to return the actual name of the variable used in the Python code.
-
-    @param var: a Python variable of any type
-    @return: str, name of input Python variable
-    """
-    callers_local_vars = inspect.currentframe().f_back.f_locals.items()
-    reqd_var_name = ''
-    for var_name, var_val in callers_local_vars:
-        if var_val is var:
-            reqd_var_name = var_name
-    return reqd_var_name
 
 
 def get_rotation_to_ref_direction(dir_vecs, ref_dir):
@@ -40,7 +25,7 @@ def get_rotation_to_ref_direction(dir_vecs, ref_dir):
 
 
 class FeatureExtractor:
-    def __init__(self, bvh_file_path, window,
+    def __init__(self, bvh_file_path,window,
                  to_meters=1, forward_dir=np.array([0.0, 0.0, 1.0]),
                  shoulder_joints={'r': 8, 'l': 12},  # [right, left]
                  hip_joints={'r': 15, 'l': 19},  # [right, left]
@@ -169,7 +154,7 @@ class FeatureExtractor:
         @param punch_labels_csv_path: string path to blender generated punch labels
         @param frame_rate_divisor: int, # if 2, Reduces fps from 120fps to 60fps (60 fps reqd. for Axis Neuron bvh)
         @param frame_rate_offset: int, offset for beginning of data to be chosen (must be synced with offset for
-        load_motion method. Refer process_data() in process_folder.py)
+        load_motion method. Refer process_data() in processer.py)
         """
         punch_phase_df = pd.read_csv(punch_labels_csv_path, index_col=0, header=0)
 
@@ -205,10 +190,10 @@ class FeatureExtractor:
         load_motionload_motion and load_punch_action_labels have to be called before any of the other functions are used.
 
         :param frame_rate_offset:int, offset for beginning of data to be chosen (must be synced with offset for
-        load_motion method. Refer process_data() in process_folder.py)
+        load_motion method. Refer process_data() in processer.py)
         :param frame_rate_divisor: frame-rate divisor (e.g. reducing framerate from 120 -> 60 fps)
         """
-        print('Processing Clip %s' % self.bvh_file_path, frame_rate_divisor, frame_rate_offset)
+        # print('Processing Clip %s' % self.bvh_file_path, frame_rate_divisor, frame_rate_offset)
         scale = 1 / self.to_meters
         bvhreader = BVHReader(self.bvh_file_path)
 
