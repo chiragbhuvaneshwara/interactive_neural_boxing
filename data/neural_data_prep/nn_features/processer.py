@@ -232,17 +232,14 @@ def process_data(handler: FeatureExtractor, punch_p_csv_path, frame_rate_div, de
             y.append(np.hstack(y_curr_frame))
 
     dataset_config = {
-        "end_joints": 0,
+        "frame_rate_div": frame_rate_div,
+        "forward_dir": forward_dir,
+        "traj_window": traj_window,
+
         "num_joints": len(handler.joint_id_map.keys()),
-        # "use_rotations": False,
-        "n_gaits": 1,
-        # "use_foot_contacts": True,
-        "frd": frame_rate_div,
         "window": handler.window,
         "num_traj_samples": handler.num_traj_sampling_pts,
         "traj_step": handler.traj_step,
-        # "foot_left": handler.foot_left,
-        # "foot_right": handler.foot_right,
         "zero_posture": handler.reference_skeleton,
         "bone_map": handler.joint_id_map,
         "col_demarcation_ids": [x_col_demarcation_ids, y_col_demarcation_ids],
