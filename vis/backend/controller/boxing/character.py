@@ -13,8 +13,7 @@ class Character:
     """
 
     def __init__(self, data_configuration):
-        self.endJoints = data_configuration["end_joints"]
-        self.joints = data_configuration["num_joints"] + self.endJoints
+        self.joints = data_configuration["num_joints"]
 
         # fields for joint positions and velocities in global space.
         self.joint_positions = np.array([[0.0, 0.0, 0.0]] * self.joints)

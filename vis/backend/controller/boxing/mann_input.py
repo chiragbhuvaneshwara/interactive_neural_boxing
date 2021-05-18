@@ -12,9 +12,9 @@ class MANNInput(object):
         [type_in] -- [description]
     """
 
-    def __init__(self, data, n_joints, end_joints, x_column_demarcation_ids):
+    def __init__(self, data, n_joints, x_column_demarcation_ids):
         self.data = data
-        self.joints = n_joints + end_joints
+        self.joints = n_joints
         # 3 dimensional space
         self.n_dims = 3
         self.col_demarcation_ids = x_column_demarcation_ids

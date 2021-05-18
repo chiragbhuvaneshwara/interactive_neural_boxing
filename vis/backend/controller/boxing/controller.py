@@ -14,7 +14,7 @@ class BoxingController:
     This is a controller for controlling boxing motions such as punching by inputting info such as punch target.
     """
 
-    def __init__(self, network: MANN, data_config, dataset_npz_path, norm):
+    def __init__(self, network: MANN, data_config, norm):
 
         self.network = network
         self.xdim = network.input_size
@@ -34,8 +34,8 @@ class BoxingController:
 
         input_data = np.array([0.0] * self.xdim)
         out_data = np.array([0.0] * self.ydim)
-        self.input = MANNInput(input_data, self.n_joints, self.endJoints, self.in_col_demarcation_ids)
-        self.output = MANNOutput(out_data, self.n_joints, self.endJoints, self.bone_map, self.out_col_demarcation_ids)
+        self.input = MANNInput(input_data, self.n_joints, self.in_col_demarcation_ids)
+        self.output = MANNOutput(out_data, self.n_joints, self.bone_map, self.out_col_demarcation_ids)
 
         self.n_dims = 3
         self.num_targets = 2  # one for each hand
@@ -46,7 +46,7 @@ class BoxingController:
         self.traj = Trajectory(data_config)
         self.char = Character(data_config)
         self.config_store = data_config
-        self.dataset_npz_path = dataset_npz_path
+        self.dataset_npz_path = data_config["dataset_npz_path"]
         self.norm = norm
         self.__initialize()
 
@@ -246,8 +246,8 @@ class BoxingController:
         data = np.load(self.dataset_npz_path)
         x_train = data["x"]
         y_train = data["y"]
-        dataset_input = MANNInput(x_train[100].ravel(), self.n_joints, self.endJoints, self.in_col_demarcation_ids)
-        dataset_output = MANNOutput(y_train[100].ravel(), self.n_joints, self.endJoints, self.bone_map,
+        dataset_input = MANNInput(x_train[100].ravel(), self.n_joints, self.in_col_demarcation_ids)
+        dataset_output = MANNOutput(y_train[100].ravel(), self.n_joints, self.bone_map,
                                     self.out_col_demarcation_ids)
         if init_type == "dataset":
             self.input.data = dataset_input.data

@@ -15,12 +15,11 @@ class MANNOutput(object):
         [type_in] -- [description]
     """
 
-    def __init__(self, data, n_joints, end_joints, bone_map, y_column_demarcation_ids):
+    def __init__(self, data, n_joints, bone_map, y_column_demarcation_ids):
         self.data = data
-        self.joints = n_joints + end_joints
+        self.joints = n_joints
         # 3 dimensional space
         self.num_coordinate_dims = 3
-        self.endJoints = end_joints
         self.bone_map = bone_map
         self.col_demarcation_ids = y_column_demarcation_ids
 

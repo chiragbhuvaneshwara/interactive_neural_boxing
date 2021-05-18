@@ -13,17 +13,11 @@ frd = 1
 window = 15
 epochs = 100
 DATASET_OUTPUT_BASE_PATH = os.path.join("data", "neural_data", )
-frd_win = 'boxing_fr_' + str(frd) + '_' + str(window)
-dataset_path = os.path.join(DATASET_OUTPUT_BASE_PATH, frd_win, 'train.npz')
+frd_win = 'fr_' + str(frd) + '_tr_' + str(window)
 controller_in_out_dir = os.path.join("backend", "controller", "controller_in_out")
-frd_win_epochs = 'boxing_fr_' + str(frd) + '_' + str(window) + '_' + str(epochs)
+frd_win_epochs = frd_win + '_ep_' + str(epochs)
 all_models_path = os.path.join("train", "models", "mann_tf2_v2")
-# trained_base_path = os.path.join(all_models_path, frd_win_epochs, "20210426_15-06-43", "epochs", "epoch_99") # Tested and working model generated from old project structure
-# trained_base_path = os.path.join(all_models_path, frd_win_epochs, "20210514_11-20-06", "epochs", "epoch_19") # Tested and working model generated from new project structure
-# trained_base_path = os.path.join(all_models_path, frd_win_epochs, "20210514_14-12-03", "epochs",
-#                                  "epoch_99")  # Tested and working model generated from new project structure
-trained_base_path = os.path.join(all_models_path, frd_win_epochs, "20210517_07-18-01", "epochs",
-                                 "epoch_99")  # Tested and working model generated from new project structure
+trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-05-18_19-35-24", "epochs", "epoch_99")
 target_file = os.path.join(trained_base_path, 'saved_model')
 
 x_mean, y_mean = load_binary(os.path.join(trained_base_path, "means", "Xmean.bin")), \
@@ -40,17 +34,17 @@ norm = {
 
 mann = load_mann(os.path.join(trained_base_path, "saved_model"))
 
-dataset_config = os.path.join(DATASET_OUTPUT_BASE_PATH, frd_win, "dataset_config.json")
-dataset_config = os.path.join(dataset_config)
+dataset_config_path = os.path.join(DATASET_OUTPUT_BASE_PATH, frd_win, "dataset_config.json")
+dataset_config_path = os.path.join(dataset_config_path)
 
-with open(dataset_config) as f:
-    config_store = json.load(f)
+with open(dataset_config_path) as f:
+    dataset_configuration = json.load(f)
 
-bc = BoxingController(mann, config_store, dataset_path, norm)
+bc = BoxingController(mann, dataset_configuration, norm)
 zp = build_zero_posture(bc)
 
-print(zp.bones)
-print(zp.bone_map)
+# print(zp.bones)
+# print(zp.bone_map)
 
 
 def controller_to_posture():
