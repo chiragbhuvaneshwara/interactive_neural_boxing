@@ -21,6 +21,7 @@ public partial class Player : MonoBehaviour
     public bool start = false;
     public bool fix_global_pos = false;
     public float velocity_scale = 1.0f;
+    public int num_tr_pts = 10;
     private Dictionary<string, List<GameObject>>Trajectory = new Dictionary<string, List<GameObject>>();
     private Dictionary<string, LineRenderer> TrajLineRenderer = new Dictionary<string, LineRenderer>();
     private List<string> TrajNames = new List<string> { "root", "right_wrist", "left_wrist"};
@@ -76,51 +77,14 @@ public partial class Player : MonoBehaviour
         createTrajVisObjs("root", Color.black);
         createTrajVisObjs("right_wrist", Color.red);
         createTrajVisObjs("left_wrist", Color.blue);
-
-        //////////////////////////TRAJ_OBJS///////////////////////////////////////
-        //Trajectory = new List<GameObject>(10);
-
-        
-        ////Material[] materials = Resources.FindObjectsOfTypeAll<Material>();
-        ////Material red = null, green = null;
-        ////foreach (Material t in materials)
-        ////{
-        ////    if (t.name == "red") red = t;
-        ////    if (t.name == "green") green = t;
-        ////}
-
-        //var GameObjectScale = 0.01f;
-        //for (int i = 0; i < 10; i++)
-        //{
-        //    var point = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-
-        //    point.GetComponent<MeshRenderer>().material = new Material(Shader.Find("Sprites/Default"));
-        //    point.GetComponent<MeshRenderer>().material.SetColor("Black",Color.black);
-        //    point.name = "tr_" + i.ToString();
-        //    point.transform.localScale = new Vector3(GameObjectScale, GameObjectScale, GameObjectScale);
-        //    Trajectory.Add(point);
-
-        //}
-
-        //Color c1 = Color.white;
-        //Color c2 = new Color(1, 1, 1, 0);
-
-        //TrajLineRenderer = gameObject.AddComponent<LineRenderer>();
-        //TrajLineRenderer.name = "tr_line";
-        //TrajLineRenderer.widthMultiplier = GameObjectScale;
-        //TrajLineRenderer.material = new Material(Shader.Find("Sprites/Default"));
-        //TrajLineRenderer.positionCount = 10;
-        //TrajLineRenderer.startColor = c1;
-        //TrajLineRenderer.endColor = c2;
-        //////////////////////////TRAJ_OBJS///////////////////////////////////////
     }
 
     private void createTrajVisObjs(string tr_name, Color col)
     {
         ////////////////////////TRAJ_OBJS///////////////////////////////////////
-        var traj_spheres = new List<GameObject>(10);
+        var traj_spheres = new List<GameObject>(num_tr_pts);
         var GameObjectScale = 0.01f;
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < num_tr_pts; i++)
         {
             var point = GameObject.CreatePrimitive(PrimitiveType.Sphere);
 
@@ -141,7 +105,7 @@ public partial class Player : MonoBehaviour
         traj_line.name = tr_name;
         traj_line.widthMultiplier = GameObjectScale;
         traj_line.material = new Material(Shader.Find("Sprites/Default"));
-        traj_line.positionCount = 10;
+        traj_line.positionCount = num_tr_pts;
         traj_line.startColor = c1;
         traj_line.endColor = c2;
 
@@ -153,7 +117,7 @@ public partial class Player : MonoBehaviour
     {
         ////////////////////////TRAJ_OBJS///////////////////////////////////////
         var tr = Trajectory[target];
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < num_tr_pts; i++)
         {
             //Trajectory[i].transform.position = this.server.GetTrPos(target, i);
             tr[i].transform.position = this.server.GetTrPos(target, i);
@@ -161,7 +125,7 @@ public partial class Player : MonoBehaviour
         Trajectory[target] = tr;
 
         var tr_line = TrajLineRenderer[target];
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < num_tr_pts; i++)
         {
             //TrajLineRenderer.SetPosition(i, Trajectory[i].transform.position);
             tr_line.SetPosition(i, Trajectory[target][i].transform.position);

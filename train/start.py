@@ -15,7 +15,7 @@ DEVELOP = args.develop
 LOCAL = args.local
 
 FRD = 1
-WINDOW = 15
+WINDOW = 14
 OUT_BASE_PATH = os.path.join("train", "models", "mann_tf2_v2")
 ############################################
 frd_win = 'fr_' + str(FRD) + '_tr_' + str(WINDOW)

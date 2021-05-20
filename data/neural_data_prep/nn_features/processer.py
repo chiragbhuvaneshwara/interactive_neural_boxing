@@ -314,7 +314,7 @@ def process_folder(bvh_path, punch_labels_path, frame_rate_division, forward_dir
     for b_f, p_f in zip(bvh_files, punch_labels_files):
         print('\n')
         print(b_f, '\n', p_f)
-        handler = FeatureExtractor(b_f, traj_window, forward_dir=forward_direction)
+        handler = FeatureExtractor(b_f, traj_window, forward_dir=forward_direction, num_traj_sampling_pts=14)
 
         if b_f == bvh_files[-1]:
             x_cur_file, y_per_file, dataset_config = process_data(handler, p_f, frame_rate_division, forward_direction,
