@@ -21,7 +21,7 @@ public partial class Player : MonoBehaviour
     public bool start = false;
     public bool fix_global_pos = false;
     public float velocity_scale = 1.0f;
-    public int num_tr_pts = 10;
+    public int num_traj_pts = 14;
     private Dictionary<string, List<GameObject>>Trajectory = new Dictionary<string, List<GameObject>>();
     private Dictionary<string, LineRenderer> TrajLineRenderer = new Dictionary<string, LineRenderer>();
     private List<string> TrajNames = new List<string> { "root", "right_wrist", "left_wrist"};
@@ -31,6 +31,25 @@ public partial class Player : MonoBehaviour
 
     //public MultiMotionServer server = null;
     public MultiMotionServer server = new MultiMotionServer();
+
+    public bool WristInTargetRange(string target, string wrist)
+    {
+
+        Vector3 punch_target = GameObject.Find(target).transform.position;
+        Vector3 wrist_pos = GameObject.Find(wrist).transform.position;
+
+
+        //Debug.Log((punch_target - wrist_pos).magnitude);
+
+        if ((punch_target - wrist_pos).magnitude < 0.13) {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+
+    }
 
     private void initializeBones(Transform t)
     {
@@ -74,12 +93,12 @@ public partial class Player : MonoBehaviour
         this.initializeBones(this.rootBone);
         server.Start();
 
-        createTrajVisObjs("root", Color.black);
-        createTrajVisObjs("right_wrist", Color.red);
-        createTrajVisObjs("left_wrist", Color.blue);
+        createTrajVisObjs("root", Color.black, num_traj_pts);
+        createTrajVisObjs("right_wrist", Color.red, num_traj_pts);
+        createTrajVisObjs("left_wrist", Color.blue, num_traj_pts);
     }
 
-    private void createTrajVisObjs(string tr_name, Color col)
+    private void createTrajVisObjs(string tr_name, Color col, int num_tr_pts)
     {
         ////////////////////////TRAJ_OBJS///////////////////////////////////////
         var traj_spheres = new List<GameObject>(num_tr_pts);
@@ -90,7 +109,7 @@ public partial class Player : MonoBehaviour
 
             point.GetComponent<MeshRenderer>().material = new Material(Shader.Find("Sprites/Default"));
             point.GetComponent<MeshRenderer>().material.SetColor("Black", Color.black);
-            point.name = "tr_" + tr_name + "_" + i.ToString();
+            point.name = "traj_" + tr_name + "_" + i.ToString();
             point.transform.localScale = new Vector3(GameObjectScale, GameObjectScale, GameObjectScale);
             traj_spheres.Add(point);
         }
@@ -117,7 +136,7 @@ public partial class Player : MonoBehaviour
     {
         ////////////////////////TRAJ_OBJS///////////////////////////////////////
         var tr = Trajectory[target];
-        for (int i = 0; i < num_tr_pts; i++)
+        for (int i = 0; i < num_traj_pts; i++)
         {
             //Trajectory[i].transform.position = this.server.GetTrPos(target, i);
             tr[i].transform.position = this.server.GetTrPos(target, i);
@@ -125,7 +144,7 @@ public partial class Player : MonoBehaviour
         Trajectory[target] = tr;
 
         var tr_line = TrajLineRenderer[target];
-        for (int i = 0; i < num_tr_pts; i++)
+        for (int i = 0; i < num_traj_pts; i++)
         {
             //TrajLineRenderer.SetPosition(i, Trajectory[i].transform.position);
             tr_line.SetPosition(i, Trajectory[target][i].transform.position);
@@ -209,31 +228,23 @@ public partial class Player : MonoBehaviour
         int numActiveVertDirKeys = 0;
         if (Input.GetKey(KeyCode.A))
         {
-            //dir = new List<float> { -1, 0 };
             numActiveHorizDirKeys += 1;
             dir[0] += 1;
-            //server.ManagedUpdate("none", dir);
         }
         if (Input.GetKey(KeyCode.D))
         {
-            //dir = new List<float> { 1, 0 };
             numActiveHorizDirKeys += 1;
             dir[0] += -1;
-            //server.ManagedUpdate("none", dir);
         }
         if (Input.GetKey(KeyCode.W))
         {
-            //dir = new List<float> { 0, 1 };
             numActiveVertDirKeys += 1;
             dir[1] += 1;
-            //server.ManagedUpdate("none", dir);
         }
         if (Input.GetKey(KeyCode.S))
         {
-            //dir = new List<float> { 0, -1 };
             numActiveVertDirKeys += 1;
             dir[1] += -1;
-            //server.ManagedUpdate("none", dir);
         }
 
         if (numActiveVertDirKeys==1 && numActiveVertDirKeys == 1)
@@ -242,25 +253,25 @@ public partial class Player : MonoBehaviour
             dir[1] = dir[1] / 2;
         }
         
-        if (Input.GetMouseButton(0))
-        //if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButton(0) || leftMousePressed)
         {
-            //leftMousePressed = true;
-            //if (leftMousePressed)
-            //{
+            leftMousePressed = true;
             server.ManagedUpdate("left", dir);
-            //    leftMousePressed = false;
-            //}
+            var isWristInTargetRange = WristInTargetRange("punch_target", "LeftWrist_end");
+
+            if (isWristInTargetRange)
+                leftMousePressed = false;
+            
         }
-        else if (Input.GetMouseButton(1))
-        //else if (Input.GetMouseButtonDown(1))
+        else if (Input.GetMouseButton(1) || rightMousePressed)
         {
-            //rightMousePressed = true;
-            //if (rightMousePressed)
-            //{
+            rightMousePressed = true;
             server.ManagedUpdate("right", dir);
-            //rightMousePressed = false;
-            //}
+            var isWristInTargetRange = WristInTargetRange("punch_target", "RightWrist_end");
+
+            if (isWristInTargetRange)
+                rightMousePressed = false;
+            
         }
         else if (Input.GetMouseButton(2))
         {
@@ -269,8 +280,8 @@ public partial class Player : MonoBehaviour
         }
         else
         {
-            //dir = new List<float> { 0, 0 };
             server.ManagedUpdate("none", dir);
         }
     }
+
 }

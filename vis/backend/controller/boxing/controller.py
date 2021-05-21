@@ -45,7 +45,6 @@ class BoxingController:
 
         self.traj = Trajectory(data_config)
         self.char = Character(data_config)
-        self.config_store = data_config
         self.dataset_npz_path = data_config["dataset_npz_path"]
         self.norm = norm
         self.__initialize()
@@ -265,8 +264,11 @@ class BoxingController:
 
         if init_tr_wrist:
             right_pos, left_pos = self.input.get_wrist_pos_traj()
-            right_pos, left_pos = right_pos.reshape(10, 3), left_pos.reshape(10, 3)
-            right_pos, left_pos = np.repeat(right_pos, repeats=3, axis=0), np.repeat(left_pos, repeats=3, axis=0)
+            right_pos, left_pos = right_pos.reshape(self.num_traj_samples, 3), left_pos.reshape(self.num_traj_samples,
+                                                                                                3)
+            right_pos, left_pos = np.repeat(right_pos, repeats=self.traj_step, axis=0), np.repeat(left_pos,
+                                                                                                  repeats=self.traj_step,
+                                                                                                  axis=0)
             right_pos = self.traj.convert_local_to_global(right_pos, 'pos', arm='right')
             left_pos = self.traj.convert_local_to_global(left_pos, 'pos', arm='left')
             # EXP Set wrist positions to mean positions ==> Maybe take the positions from the mean position you have in

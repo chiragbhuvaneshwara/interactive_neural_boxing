@@ -10,14 +10,15 @@ print(os.getcwd())
 app = Flask(__name__)
 
 frd = 1
-window = 15
+window = 14
 epochs = 100
 DATASET_OUTPUT_BASE_PATH = os.path.join("data", "neural_data", )
 frd_win = 'fr_' + str(frd) + '_tr_' + str(window)
 controller_in_out_dir = os.path.join("backend", "controller", "controller_in_out")
 frd_win_epochs = frd_win + '_ep_' + str(epochs)
 all_models_path = os.path.join("train", "models", "mann_tf2_v2")
-trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-05-18_19-35-24", "epochs", "epoch_99")
+# trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-05-18_19-35-24", "epochs", "epoch_99")
+trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-05-20_14-08-41", "epochs", "epoch_99")
 target_file = os.path.join(trained_base_path, 'saved_model')
 
 x_mean, y_mean = load_binary(os.path.join(trained_base_path, "means", "Xmean.bin")), \
@@ -41,7 +42,7 @@ with open(dataset_config_path) as f:
     dataset_configuration = json.load(f)
 
 bc = BoxingController(mann, dataset_configuration, norm)
-zp = build_zero_posture(bc)
+zp = build_zero_posture(bc, num_traj_pts=dataset_configuration["num_traj_samples"])
 
 # print(zp.bones)
 # print(zp.bone_map)
