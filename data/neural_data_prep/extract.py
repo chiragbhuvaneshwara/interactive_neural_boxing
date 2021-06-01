@@ -53,7 +53,8 @@ PUNCH_LABELS_PATH = os.path.join(INPUT_BASE_PATH, "punch_label_gen", "punch_labe
 BVH_PATH = os.path.join(INPUT_BASE_PATH, "mocap", "hq", "processed")
 FRAME_RATE_DIV = 1
 FORWARD_DIR = np.array([0.0, 0.0, 1.0])
-TR_WINDOW = math.ceil(14 / FRAME_RATE_DIV)
+# TR_WINDOW = math.ceil(14 / FRAME_RATE_DIV)
+TR_WINDOW = math.ceil(5 / FRAME_RATE_DIV)
 ####################### CONTROL PARAMS ###################################
 
 x_train, y_train, dataset_config = process_folder(BVH_PATH, PUNCH_LABELS_PATH, FRAME_RATE_DIV, FORWARD_DIR, TR_WINDOW,

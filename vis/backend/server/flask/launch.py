@@ -10,7 +10,8 @@ print(os.getcwd())
 app = Flask(__name__)
 
 frd = 1
-window = 14
+# window = 14
+window = 5
 epochs = 100
 DATASET_OUTPUT_BASE_PATH = os.path.join("data", "neural_data", )
 frd_win = 'fr_' + str(frd) + '_tr_' + str(window)

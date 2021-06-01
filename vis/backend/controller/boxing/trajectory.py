@@ -287,7 +287,7 @@ class Trajectory:
         half_pred_window = self.median_idx // self.traj_step
         pred_rp_tr = _smooth_predictions(pred_rp_tr.reshape(half_pred_window, self.n_dims - 1))
         self.traj_root_pos[self.median_idx + 1:] = self.convert_local_to_global(
-            utils.xz_to_x0yz(pred_rp_tr, axis=1))
+            utils.xz_to_x0yz(pred_rp_tr, axis=1))  # TODO maybe apply some correction to prevent drifting ==> suppress movement smaller than a certain amount
         pred_rv_tr = _smooth_predictions(pred_rv_tr.reshape(half_pred_window, self.n_dims - 1))
         self.traj_root_vels[self.median_idx + 1:] = self.convert_local_to_global(
             utils.xz_to_x0yz(pred_rv_tr, axis=1),
