@@ -55,10 +55,11 @@ FRAME_RATE_DIV = 1
 FORWARD_DIR = np.array([0.0, 0.0, 1.0])
 # TR_WINDOW = math.ceil(14 / FRAME_RATE_DIV)
 TR_WINDOW = math.ceil(5 / FRAME_RATE_DIV)
+TR_SAMPLES = 10
 ####################### CONTROL PARAMS ###################################
 
 x_train, y_train, dataset_config = process_folder(BVH_PATH, PUNCH_LABELS_PATH, FRAME_RATE_DIV, FORWARD_DIR, TR_WINDOW,
-                                                  DEVELOP)
+                                                  TR_SAMPLES, DEVELOP)
 frd_win = 'fr_' + str(FRAME_RATE_DIV) + '_tr_' + str(TR_WINDOW)
 setup_output_dir(OUTPUT_BASE_PATH, frd_win)
 out_dir = os.path.join(OUTPUT_BASE_PATH, frd_win)

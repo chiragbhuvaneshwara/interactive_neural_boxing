@@ -95,7 +95,7 @@ class FeatureExtractor:
 
         self.joint_id_map = {}
         self.num_traj_sampling_pts = num_traj_sampling_pts
-        self.traj_step = (self.window * 2 // self.num_traj_sampling_pts)
+        self.traj_step = ((self.window * 2) // self.num_traj_sampling_pts)
 
     def reset_computations(self):
         """
