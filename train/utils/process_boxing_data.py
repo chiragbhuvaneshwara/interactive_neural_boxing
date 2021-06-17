@@ -63,7 +63,7 @@ def get_gating_indices(x_ids, joint_ids):
     #              foot_end_effector_velocities_ids
     gating_ids = [
         wrist_velocities_tr_ids,
-        punch_target_ids,
+        # punch_target_ids,
         wrist_end_effector_velocities_ids,
         current_punch_labels_ids,
         foot_end_effector_velocities_ids
