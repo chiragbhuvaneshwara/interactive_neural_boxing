@@ -25,7 +25,7 @@ def get_rotation_to_ref_direction(dir_vecs, ref_dir):
 
 
 class FeatureExtractor:
-    def __init__(self, bvh_file_path,window,
+    def __init__(self, bvh_file_path, window,
                  to_meters=1, forward_dir=np.array([0.0, 0.0, 1.0]),
                  shoulder_joints={'r': 8, 'l': 12},  # [right, left]
                  hip_joints={'r': 15, 'l': 19},  # [right, left]
@@ -96,6 +96,9 @@ class FeatureExtractor:
         self.joint_id_map = {}
         self.num_traj_sampling_pts = num_traj_sampling_pts
         self.traj_step = ((self.window * 2) // self.num_traj_sampling_pts)
+
+        self.left_wrist_pos_avg_diff = None
+        self.right_wrist_pos_avg_diff = None
 
     def reset_computations(self):
         """
@@ -613,6 +616,24 @@ class FeatureExtractor:
         # # TODO explain why you need mid frame removal or not (probably trivial and can be included)
         # right_wrist_pos = right_wrist_pos - right_wrist_pos[len(right_wrist_pos) // 2]
         # left_wrist_pos = left_wrist_pos - left_wrist_pos[len(left_wrist_pos) // 2]
+
+        if self.left_wrist_pos_avg_diff is None:
+            if self.punch_labels_binary[self.hand_left][frame] == [1]:
+                self.left_wrist_pos_avg_diff = np.expand_dims(np.mean(np.diff(left_wrist_pos, axis=0), axis=0), axis=0)
+
+        elif self.right_wrist_pos_avg_diff is None:
+            if self.punch_labels_binary[self.hand_right][frame] == [1]:
+                self.right_wrist_pos_avg_diff = np.expand_dims(np.mean(np.diff(right_wrist_pos, axis=0), axis=0),
+                                                               axis=0)
+        else:
+            if self.punch_labels_binary[self.hand_left][frame] == [1]:
+                self.left_wrist_pos_avg_diff = np.expand_dims(
+                    np.mean(np.append(self.left_wrist_pos_avg_diff, np.diff(right_wrist_pos, axis=0), axis=0), axis=0),
+                    axis=0)
+            if self.punch_labels_binary[self.hand_right][frame] == [1]:
+                self.right_wrist_pos_avg_diff = np.expand_dims(
+                    np.mean(np.append(self.right_wrist_pos_avg_diff, np.diff(right_wrist_pos, axis=0), axis=0), axis=0),
+                    axis=0)
 
         return_items = [root_pos, root_vels, root_dirs,
                         # head_pos, headdirs,
