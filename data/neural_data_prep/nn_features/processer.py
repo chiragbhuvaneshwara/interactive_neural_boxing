@@ -86,7 +86,7 @@ def prepare_input_data(frame_num, handler, col_demarcation_finished=True):
     x_left_punch_labels_tr = traj_info['left_punch_labels'].ravel()
 
     x_right_punch_labels = punch_labels[handler.hand_right][frame_num].ravel()
-    x_left_punch_labels = punch_labels[handler.hand_right][frame_num].ravel()
+    x_left_punch_labels = punch_labels[handler.hand_left][frame_num].ravel()
 
     x_right_punch_target = punch_target[handler.hand_right][frame_num].ravel()
     x_left_punch_target = punch_target[handler.hand_left][frame_num].ravel()
@@ -257,6 +257,9 @@ def process_data(handler: FeatureExtractor, punch_labels_csv_path, frame_rate_di
 
     if gen_data_config:
         dataset_config = {
+            "left_wrist_pos_avg_diff": handler.left_wrist_pos_avg_diff.tolist(),
+            "right_wrist_pos_avg_diff": handler.right_wrist_pos_avg_diff.tolist(),
+
             "frame_rate_div": frame_rate_div,
             "forward_dir": list(forward_dir),
             "traj_window": tr_window,
