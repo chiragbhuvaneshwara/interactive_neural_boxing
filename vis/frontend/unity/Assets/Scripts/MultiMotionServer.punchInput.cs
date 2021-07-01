@@ -9,6 +9,7 @@ namespace MultiMosiServer
         public class punchInput
         {
             [SerializeField] public string hand;
+            [SerializeField] public int target_reached;
             [SerializeField] public double[] target_left;
             [SerializeField] public double[] target_right;
             [SerializeField] public List<float> movement_dir;

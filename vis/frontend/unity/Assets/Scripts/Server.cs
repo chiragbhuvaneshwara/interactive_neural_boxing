@@ -83,7 +83,7 @@ namespace MultiMosiServer
         }
 
 
-        public TPosture UpdatePunchTargetFetchPosture(string TargetHand, List<float> MovementDir)
+        public TPosture UpdatePunchTargetFetchPosture(string TargetHand, List<float> MovementDir, int TrajectoryPtsReached)
         {
             punchInput punch_in = new punchInput();
 
@@ -95,6 +95,7 @@ namespace MultiMosiServer
 
 
                 punch_in.hand = "right";
+                punch_in.target_reached = TrajectoryPtsReached;
                 punch_in.target_left = new double[] { 0, 0, 0};
                 punch_in.target_right = new double[] { target.x, target.y, target.z };
             }
@@ -106,6 +107,7 @@ namespace MultiMosiServer
 
 
                 punch_in.hand = "left";
+                punch_in.target_reached = TrajectoryPtsReached;
                 punch_in.target_left = new double[] { target.x, target.y, target.z};
                 punch_in.target_right = new double[] { 0, 0, 0};
             }
@@ -221,12 +223,12 @@ namespace MultiMosiServer
         //    this.client.Dispose();
         //}
 
-
-        public void ManagedUpdate(string TargetHand, List<float> MovementDir) // void Update()
+        public void ManagedUpdate(string TargetHand, List<float> MovementDir, int TrajPtsReached) // void Update()
         {
             if (this.active)
             {
-                this.posture = this.UpdatePunchTargetFetchPosture(TargetHand, MovementDir);
+
+                this.posture = this.UpdatePunchTargetFetchPosture(TargetHand, MovementDir, TrajPtsReached);
             }
         }
     }

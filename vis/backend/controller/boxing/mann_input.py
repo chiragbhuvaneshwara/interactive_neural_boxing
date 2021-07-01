@@ -72,3 +72,8 @@ class MANNInput(object):
         ph_r = self.__get_data__('x_right_punch_labels')
         ph_l = self.__get_data__('x_left_punch_labels')
         return {'right': ph_r, 'left': ph_l}
+
+    def get_punch_target(self,):
+        rpt = self.__get_data__("x_right_punch_target")
+        lpt = self.__get_data__("x_left_punch_target")
+        return rpt, lpt

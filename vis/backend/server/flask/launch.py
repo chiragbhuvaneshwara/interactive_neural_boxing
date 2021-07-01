@@ -19,7 +19,7 @@ controller_in_out_dir = os.path.join("backend", "controller", "controller_in_out
 frd_win_epochs = frd_win + '_ep_' + str(epochs)
 all_models_path = os.path.join("train", "models", "mann_tf2_v2")
 # trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-05-18_19-35-24", "epochs", "epoch_99")
-trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-05-20_14-08-41", "epochs", "epoch_99")
+trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-06-17_19-39-35", "epochs", "epoch_99")
 target_file = os.path.join(trained_base_path, 'saved_model')
 
 x_mean, y_mean = load_binary(os.path.join(trained_base_path, "means", "Xmean.bin")), \
@@ -44,6 +44,7 @@ with open(dataset_config_path) as f:
 
 bc = BoxingController(mann, dataset_configuration, norm)
 zp = build_zero_posture(bc, num_traj_pts=dataset_configuration["num_traj_samples"])
+
 
 # print(zp.bones)
 # print(zp.bone_map)
@@ -89,7 +90,8 @@ def fetch_frame():
         dir = punch_in["movement_dir"]
 
         punch_hand = punch_in["hand"]
-
+        traj_reached = punch_in["target_reached"]
+        # print(traj_reached)
         punch_right_target = tvector3_to_np(punch_in["target_right"])
         punch_left_target = tvector3_to_np(punch_in["target_left"])
 
@@ -101,7 +103,7 @@ def fetch_frame():
             label = [0, 1]
 
         punch_target = punch_right_target + punch_left_target
-        bc.pre_render(punch_target, label, dir, space='global')
+        bc.pre_render(punch_target, label, dir, traj_reached, space='global')
         posture = controller_to_posture()
         bc.post_render()
         json_str = json.dumps(posture, default=serialize)

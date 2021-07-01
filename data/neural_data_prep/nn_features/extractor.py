@@ -97,8 +97,10 @@ class FeatureExtractor:
         self.num_traj_sampling_pts = num_traj_sampling_pts
         self.traj_step = ((self.window * 2) // self.num_traj_sampling_pts)
 
-        self.left_wrist_pos_avg_diff = None
-        self.right_wrist_pos_avg_diff = None
+        self.left_wrist_pos_avg_diff_punch = None
+        self.right_wrist_pos_avg_diff_punch = None
+        self.left_wrist_pos_no_punch = None
+        self.right_wrist_pos_no_punch = None
 
     def reset_computations(self):
         """
@@ -570,8 +572,10 @@ class FeatureExtractor:
         ####### Already rotated ########
 
         root_rotations = self.get_root_rotations()
+        calc_pos_diff = False
 
         if start_from < 0:
+            calc_pos_diff = True
             start_from = frame - self.window
 
         step = self.traj_step
@@ -617,23 +621,57 @@ class FeatureExtractor:
         # right_wrist_pos = right_wrist_pos - right_wrist_pos[len(right_wrist_pos) // 2]
         # left_wrist_pos = left_wrist_pos - left_wrist_pos[len(left_wrist_pos) // 2]
 
-        if self.left_wrist_pos_avg_diff is None:
-            if self.punch_labels_binary[self.hand_left][frame] == [1]:
-                self.left_wrist_pos_avg_diff = np.expand_dims(np.mean(np.diff(left_wrist_pos, axis=0), axis=0), axis=0)
+        if calc_pos_diff:
+            start_from = frame
+            match_cond = [np.array([1])] * (self.window)
+            if self.left_wrist_pos_avg_diff_punch is None:
+                if np.all(self.punch_labels_binary[self.hand_left][start_from:frame + self.window] == match_cond):
+                    self.left_wrist_pos_avg_diff_punch = np.expand_dims(
+                        np.mean(np.diff(left_wrist_pos, axis=0), axis=0),
+                        axis=0)
 
-        elif self.right_wrist_pos_avg_diff is None:
-            if self.punch_labels_binary[self.hand_right][frame] == [1]:
-                self.right_wrist_pos_avg_diff = np.expand_dims(np.mean(np.diff(right_wrist_pos, axis=0), axis=0),
-                                                               axis=0)
-        else:
-            if self.punch_labels_binary[self.hand_left][frame] == [1]:
-                self.left_wrist_pos_avg_diff = np.expand_dims(
-                    np.mean(np.append(self.left_wrist_pos_avg_diff, np.diff(right_wrist_pos, axis=0), axis=0), axis=0),
-                    axis=0)
-            if self.punch_labels_binary[self.hand_right][frame] == [1]:
-                self.right_wrist_pos_avg_diff = np.expand_dims(
-                    np.mean(np.append(self.right_wrist_pos_avg_diff, np.diff(right_wrist_pos, axis=0), axis=0), axis=0),
-                    axis=0)
+            if self.right_wrist_pos_avg_diff_punch is None:
+                if np.all(self.punch_labels_binary[self.hand_right][start_from:frame + self.window] == match_cond):
+                    self.right_wrist_pos_avg_diff_punch = np.expand_dims(
+                        np.mean(np.diff(right_wrist_pos, axis=0), axis=0),
+                        axis=0)
+            if self.left_wrist_pos_avg_diff_punch is not None and self.right_wrist_pos_avg_diff_punch is not None:
+                if np.all(self.punch_labels_binary[self.hand_left][start_from:frame + self.window] == match_cond):
+                    self.left_wrist_pos_avg_diff_punch = np.expand_dims(
+                        np.mean(np.append(self.left_wrist_pos_avg_diff_punch, np.diff(right_wrist_pos, axis=0), axis=0),
+                                axis=0),
+                        axis=0)
+                if np.all(self.punch_labels_binary[self.hand_right][start_from:frame + self.window] == match_cond):
+                    self.right_wrist_pos_avg_diff_punch = np.expand_dims(
+                        np.mean(
+                            np.append(self.right_wrist_pos_avg_diff_punch, np.diff(right_wrist_pos, axis=0), axis=0),
+                            axis=0),
+                        axis=0)
+
+            start_from = frame - self.window
+            match_cond = [np.array([0])] * (self.window * 2)
+            if self.left_wrist_pos_no_punch is None:
+                if np.all(self.punch_labels_binary[self.hand_left][start_from:frame + self.window] == match_cond):
+                    start = left_wrist_pos[0]
+                    end = left_wrist_pos[-1]
+                    self.left_wrist_pos_no_punch = {'start': start, 'end': end}
+
+            if self.right_wrist_pos_no_punch is None:
+                if np.all(self.punch_labels_binary[self.hand_right][start_from:frame + self.window] == match_cond):
+                    start = right_wrist_pos[0]
+                    end = right_wrist_pos[-1]
+                    self.right_wrist_pos_no_punch = {'start': start, 'end': end}
+
+            if self.left_wrist_pos_no_punch is not None and self.right_wrist_pos_no_punch is not None:
+                if np.all(self.punch_labels_binary[self.hand_left][start_from:frame + self.window] == match_cond):
+                    start = (left_wrist_pos[0] + self.left_wrist_pos_no_punch['start']) / 2
+                    end = (left_wrist_pos[-1] + self.left_wrist_pos_no_punch['end']) / 2
+                    self.left_wrist_pos_no_punch = {'start': start, 'end': end}
+
+                if np.all(self.punch_labels_binary[self.hand_right][start_from:frame + self.window] == match_cond):
+                    start = (right_wrist_pos[0] + self.right_wrist_pos_no_punch['start']) / 2
+                    end = (right_wrist_pos[-1] + self.right_wrist_pos_no_punch['end']) / 2
+                    self.right_wrist_pos_no_punch = {'start': start, 'end': end}
 
         return_items = [root_pos, root_vels, root_dirs,
                         # head_pos, headdirs,
