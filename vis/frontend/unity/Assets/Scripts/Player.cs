@@ -81,7 +81,7 @@ public partial class Player : MonoBehaviour
 
         var diff_mag = 0.25;
         if (reverse){
-            diff_mag = 0.5;
+            diff_mag = 0.45;
         }
 
         //if ((punch_target - wrist_pos).magnitude < 0.13) {
@@ -270,34 +270,27 @@ public partial class Player : MonoBehaviour
     void Update()
     {
         List<float> dir = new List<float> { 0, 0 };
-        int numActiveHorizDirKeys = 0;
-        int numActiveVertDirKeys = 0;
         if (Input.GetKey(KeyCode.A))
         {
-            numActiveHorizDirKeys += 1;
-            dir[0] += 1;
+            dir[0] = 1;
         }
         if (Input.GetKey(KeyCode.D))
         {
-            numActiveHorizDirKeys += 1;
-            dir[0] += -1;
+            dir[0] = -1;
         }
         if (Input.GetKey(KeyCode.W))
         {
-            numActiveVertDirKeys += 1;
-            dir[1] += 1;
+            dir[1] = 1;
         }
         if (Input.GetKey(KeyCode.S))
         {
-            numActiveVertDirKeys += 1;
-            dir[1] += -1;
+            dir[1] = -1;
         }
 
-        if (numActiveVertDirKeys==1 && numActiveVertDirKeys == 1)
-        {
-            dir[0] = dir[0] / 2;
-            dir[1] = dir[1] / 2;
-        }
+        var temp = new Vector2(dir[0], dir[1]).normalized;
+
+        dir[0] = temp.x;
+        dir[1] = temp.y;
         
         if (Input.GetMouseButton(0) || leftMousePressed)
         {
