@@ -92,7 +92,7 @@ def fetch_frame():
 
         punch_hand = punch_in["hand"]
         traj_reached = punch_in["target_reached"]
-        print("---", traj_reached)
+        # print("---", traj_reached)
         punch_right_target = tvector3_to_np(punch_in["target_right"])
         punch_left_target = tvector3_to_np(punch_in["target_left"])
 

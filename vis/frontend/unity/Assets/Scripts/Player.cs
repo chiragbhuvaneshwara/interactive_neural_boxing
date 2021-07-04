@@ -328,9 +328,9 @@ public partial class Player : MonoBehaviour
         }
         else
         {
-            server.ManagedUpdate("none", dir, 0);
+            //server.ManagedUpdate("none", dir, 0);
             //server.ManagedUpdate("left", dir);
-            //server.ManagedUpdate("left", dir, 0);
+            server.ManagedUpdate("left", dir, 0);
         }
     }
 
