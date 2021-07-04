@@ -77,12 +77,15 @@ public partial class Player : MonoBehaviour
         Vector3 wrist_pos = GameObject.Find(wrist).transform.position;
 
 
-        Debug.Log((punch_target - wrist_pos).magnitude);
+        //Debug.Log((punch_target - wrist_pos).magnitude);
 
         var diff_mag = 0.25;
         if (reverse){
-            diff_mag = 0.45;
+            diff_mag = 0.11;
+            punch_target += new Vector3(0, 0, (float)-0.2);
         }
+
+        Debug.Log((punch_target - wrist_pos).magnitude);
 
         //if ((punch_target - wrist_pos).magnitude < 0.13) {
         if ((punch_target - wrist_pos).magnitude < diff_mag) {
@@ -301,7 +304,7 @@ public partial class Player : MonoBehaviour
             //var isWristInTargetRange = WristInTargetRange("punch_target", "LeftWrist_end");
 
             // check if wrist is in reverse target range
-            var isWristInTargetRange = WristInTargetRange("LeftShoulder", "LeftWrist_end", reverse: true);
+            var isWristInTargetRange = WristInTargetRange("LeftShoulder", "LeftWrist", reverse: true);
             //var isWristInTargetRange = WristInTargetRange("LeftShoulder", "LeftWrist_end");
 
 
@@ -316,7 +319,7 @@ public partial class Player : MonoBehaviour
         {
             rightMousePressed = true;
             server.ManagedUpdate("right", dir, rightTrajReached);
-            var isWristInTargetRange = WristInTargetRange("punch_target", "RightWrist_end");
+            var isWristInTargetRange = WristInTargetRange("RightShoulder", "RightWrist", reverse: true);
 
             if (isWristInTargetRange)
                 rightMousePressed = false;           
@@ -328,9 +331,9 @@ public partial class Player : MonoBehaviour
         }
         else
         {
-            //server.ManagedUpdate("none", dir, 0);
+            server.ManagedUpdate("none", dir, 0);
             //server.ManagedUpdate("left", dir);
-            server.ManagedUpdate("left", dir, 0);
+            //server.ManagedUpdate("left", dir, 0);
         }
     }
 
