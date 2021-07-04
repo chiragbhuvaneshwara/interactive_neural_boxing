@@ -3,6 +3,7 @@ import numpy as np
 import math
 
 from vis.backend.controller import utils
+from scipy.spatial.transform import Rotation
 
 
 class Trajectory:
@@ -17,6 +18,8 @@ class Trajectory:
         self.traj_step = data_configuration['traj_step']  # 5
         self.left_wrist_pos_avg_diff = np.array(data_configuration['left_wrist_pos_avg_diff']).ravel()
         self.right_wrist_pos_avg_diff = np.array(data_configuration['right_wrist_pos_avg_diff']).ravel()
+        self.left_wrist_pos_avg_diff_gp = np.array(data_configuration['left_wrist_pos_avg_diff']).ravel()
+        self.right_wrist_pos_avg_diff_gp = np.array(data_configuration['right_wrist_pos_avg_diff']).ravel()
         self.left_wrist_pos_no_punch_dist = data_configuration['left_wrist_no_punch']
         self.right_wrist_pos_no_punch_dist = data_configuration['right_wrist_no_punch']
 
@@ -138,7 +141,8 @@ class Trajectory:
 
     def compute_future_wrist_trajectory(self, desired_right_punch_target, desired_left_punch_target,
                                         desired_right_punch_label, desired_left_punch_label, right_shoulder_pos,
-                                        left_shoulder_pos, root_position, root_rotation, traj_reached):
+                                        left_shoulder_pos, right_wr_lp, left_wr_lp, root_position, root_rotation,
+                                        traj_reached):
         """
         Performs blending of the future trajectory for predicted trajectory info passed in.
         :param desired_right_punch_target: np.array(3), local space
@@ -157,6 +161,12 @@ class Trajectory:
             pos = np.array(lp)
             pos = pos.reshape(1, len(pos))
             pos_g = self.convert_local_to_global(pos, arg_type='pos')
+            return pos_g.ravel()
+
+        def _glob_to_loc(gp, rp, rr):
+            pos = np.array(gp)
+            pos = pos.reshape(1, len(pos))
+            pos_g = self.convert_global_to_local(pos, rp, rr, arg_type='pos')
             return pos_g.ravel()
 
         def scale_down_pos(pos):
@@ -200,8 +210,8 @@ class Trajectory:
                 print(i)
                 if not no_punch_mode:
                     traj_pos[i] = traj_pos[i - 1] + (
-                            # np.linalg.norm(wrist_pos_avg_diff_global) *
-                            desired_punch_target_dir)
+                        # np.linalg.norm(wrist_pos_avg_diff_global) *
+                        desired_punch_target_dir)
 
                 # elif no_punch_mode:
                 #     traj_pos[i] = traj_pos[tr_mid_idx]
@@ -235,6 +245,8 @@ class Trajectory:
                 traj_pos_blend = np.array(self.traj_left_wrist_pos, dtype=np.float64)
                 traj_pos_local = self.convert_global_to_local(self.traj_left_wrist_pos, root_position, root_rotation,
                                                               arg_type='pos', arm='left')
+                wrist_lp = left_wr_lp
+                wrist_gp = _loc_to_glob(left_wr_lp)
                 traj_vels_blend = np.array(self.traj_left_wrist_vels, dtype=np.float64)
                 desired_punch_target = desired_left_punch_target
                 desired_punch_target_dir = utils.normalize(desired_punch_target)
@@ -246,6 +258,8 @@ class Trajectory:
                 traj_pos_blend = np.array(self.traj_right_wrist_pos, dtype=np.float64)
                 traj_pos_local = self.convert_global_to_local(self.traj_right_wrist_pos, root_position, root_rotation,
                                                               arg_type='pos', arm='right')
+                wrist_lp = right_wr_lp
+                wrist_gp = _loc_to_glob(right_wr_lp)
                 traj_vels_blend = np.array(self.traj_right_wrist_vels, dtype=np.float64)
                 desired_punch_target = desired_right_punch_target
                 desired_punch_target_dir = utils.normalize(desired_punch_target)
@@ -254,6 +268,9 @@ class Trajectory:
                 no_punch_target = np.array([0, 0, 0])
                 wrist_pos_avg_diff = self.right_wrist_pos_avg_diff
 
+            desired_punch_target_local = _glob_to_loc(desired_punch_target, root_position, root_rotation)
+            wrist_pos_avg_diff = _loc_to_glob(wrist_pos_avg_diff)
+            # print(wrist_pos_avg_diff)
             tr_mid_idx = self.median_idx
             if np.sum(desired_punch_target) == 0:
                 desired_punch_target = np.array(no_punch_target)
@@ -289,19 +306,33 @@ class Trajectory:
             #
             # self._update_wrist_traj(traj_pos_blend, traj_vels_blend, hand)
 
+            # # R = utils.rotation_matrix_from_vectors(wrist_pos_avg_diff, desired_punch_target)
+            # R, rmsd = Rotation.align_vectors(desired_punch_target.reshape(1,3), wrist_pos_avg_diff.reshape(1,3))
+            # # R, rmsd = Rotation.align_vectors(wrist_pos_avg_diff.reshape(1,3), desired_punch_target.reshape(1,3))
+            # pos_step = np.matmul(R.as_matrix(), wrist_pos_avg_diff.ravel())
+
+            # pos_step = utils.normalize(desired_punch_target - wrist_gp) / 10
+            # pos_step = (desired_punch_target - wrist_gp) /15
+            pos_step = utils.normalize(desired_punch_target - wrist_gp) * np.linalg.norm(wrist_pos_avg_diff)
+            # pos_step = (pos_step / np.linalg.norm(pos_step)) * np.linalg.norm(wrist_pos_avg_diff)
+            # pos_step = pos_step / (np.linalg.norm(pos_step) * 10)
+            # pos_step = wrist_lp - desired_punch_target_local
+            # pos_step = pos_step / (np.linalg.norm(pos_step) * np.linalg.norm(wrist_pos_avg_diff))
+            # pos_step = pos_step * 0.1
+            # pos_step = _loc_to_glob(pos_step)
+            print(pos_step)
+            # pos_step[2] *= -1
+
             for i in range(tr_mid_idx + 1, len(traj_pos_blend) - traj_reached):
                 # adjust bias 0.5 to fit to dataset and responsivity (larger value -> more responsive)
                 scale_pos = 1.0 - pow(1.0 - (i - tr_mid_idx) / (1.0 * tr_mid_idx), self.blend_bias)
                 # scale_pos_2 = 1.0 - pow(1.0 - (i - tr_mid_idx) / (1.0 * tr_mid_idx), 1)
                 # iterates over predictions
                 if not no_punch_mode:
-                    traj_pos_blend[i] = utils.glm_mix(traj_pos_blend[i],
-                                                      desired_punch_target, scale_pos)
-                    # traj_pos_blend[i] = utils.mix_directions(traj_pos_blend[i],
-                    #                                          desired_punch_target, scale_pos, pr=True,
-                    #                                          wr=True) + wrist_pos_avg_diff
-                    # traj_pos_blend[i] = utils.glm_mix_2(traj_pos_blend[i],
-                    #                                   desired_punch_target, scale_pos) + wrist_pos_avg_diff
+                    # print("______", np.linalg.norm(pos_step))
+                    traj_pos_blend[i] = traj_pos_blend[i-1] + pos_step
+                    # traj_pos_blend[i] = utils.glm_mix(traj_pos_blend[i],
+                    #                                   desired_punch_target, scale_pos)
 
                     traj_vels_blend[i] = utils.glm_mix(traj_vels_blend[i],
                                                        traj_pos_blend[i] - traj_pos_blend[i - 1], scale_pos)
@@ -321,32 +352,40 @@ class Trajectory:
             elif hand == 'right':
                 desired_punch_target = _loc_to_glob(right_shoulder_pos)
 
-            for i in range(tr_mid_idx + 1 + traj_reached, len(traj_pos_blend)):
-                # adjust bias 0.5 to fit to dataset and responsivity (larger value -> more responsive)
-                scale_pos = 1.0 - pow(1.0 - (i - tr_mid_idx) / (1.0 * tr_mid_idx), self.blend_bias)
-                # scale_pos_2 = 1.0 - pow(1.0 - (i - tr_mid_idx) / (1.0 * tr_mid_idx), 1)
-                # iterates over predictions
-                if not no_punch_mode:
-                    traj_pos_blend[i] = utils.glm_mix(traj_pos_blend[i],
-                                                      desired_punch_target, 0.2)
-                    # traj_pos_blend[i] = utils.mix_directions(traj_pos_blend[i],
-                    #                                          desired_punch_target, scale_pos, pr=True,
-                    #                                          wr=True) + wrist_pos_avg_diff
-                    # traj_pos_blend[i] = utils.glm_mix_2(traj_pos_blend[i],
-                    #                                   desired_punch_target, scale_pos) + wrist_pos_avg_diff
+            desired_punch_target_dir = utils.normalize(desired_punch_target)
+            # # R = utils.rotation_matrix_from_vectors(wrist_pos_avg_diff, desired_punch_target)
+            # R, rmsd = Rotation.align_vectors(desired_punch_target.reshape(1,3), wrist_pos_avg_diff.reshape(1,3))
+            # # R, rmsd = Rotation.align_vectors(wrist_pos_avg_diff.reshape(1,3), desired_punch_target.reshape(1,3))
+            # pos_step = np.matmul(R.as_matrix(), wrist_pos_avg_diff.ravel())
 
-                    traj_vels_blend[i] = utils.glm_mix(traj_vels_blend[i],
-                                                       traj_pos_blend[i] - traj_pos_blend[i - 1], scale_pos)
-                elif no_punch_mode:
-                    traj_pos_blend[i] = traj_pos_blend[tr_mid_idx]
+            pos_step = desired_punch_target - traj_pos_blend[tr_mid_idx]
+            # pos_step = pos_step / (np.linalg.norm(pos_step) * np.linalg.norm(wrist_pos_avg_diff))
+            pos_step = pos_step / (np.linalg.norm(pos_step) * 10)
+            pos_step[2] *= -1
 
-                if hand == 'left':
-                    self.traj_left_wrist_pos[i] = traj_pos_blend[i]
-                    self.traj_left_wrist_vels[i] = traj_vels_blend[i]
-
-                elif hand == 'right':
-                    self.traj_right_wrist_pos[i] = traj_pos_blend[i]
-                    self.traj_right_wrist_vels[i] = traj_vels_blend[i]
+            # for i in range(tr_mid_idx + 1 + traj_reached, len(traj_pos_blend)):
+            #     # adjust bias 0.5 to fit to dataset and responsivity (larger value -> more responsive)
+            #     scale_pos = 1.0 - pow(1.0 - (i - tr_mid_idx) / (1.0 * tr_mid_idx), self.blend_bias)
+            #     # scale_pos_2 = 1.0 - pow(1.0 - (i - tr_mid_idx) / (1.0 * tr_mid_idx), 1)
+            #     # iterates over predictions
+            #     if not no_punch_mode:
+            #         traj_pos_blend[i] = traj_pos_blend[i-1] + pos_step
+            #
+            #         # traj_pos_blend[i] = utils.glm_mix(traj_pos_blend[i],
+            #         #                                   desired_punch_target, 0.2)
+            #
+            #         traj_vels_blend[i] = utils.glm_mix(traj_vels_blend[i],
+            #                                            traj_pos_blend[i] - traj_pos_blend[i - 1], scale_pos)
+            #     elif no_punch_mode:
+            #         traj_pos_blend[i] = traj_pos_blend[tr_mid_idx]
+            #
+            #     if hand == 'left':
+            #         self.traj_left_wrist_pos[i] = traj_pos_blend[i]
+            #         self.traj_left_wrist_vels[i] = traj_vels_blend[i]
+            #
+            #     elif hand == 'right':
+            #         self.traj_right_wrist_pos[i] = traj_pos_blend[i]
+            #         self.traj_right_wrist_vels[i] = traj_vels_blend[i]
 
     def step_forward(self, pred_root_vel, pred_fwd_dir, pred_local_wrist_vels, pred_local_wrist_pos, curr_punch_labels):
         """

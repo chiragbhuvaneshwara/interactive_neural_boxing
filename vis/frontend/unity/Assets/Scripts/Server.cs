@@ -131,11 +131,11 @@ namespace MultiMosiServer
 
         public TPosture getZeroPosture()
         {
-            ZeroPostureCommand zp_command = new ZeroPostureCommand();
+            //ZeroPostureCommand zp_command = new ZeroPostureCommand();
             //zp_command.name = "fetch_zp";
-            zp_command.name = "fetch_zp_reset";
+            //zp_command.name = "fetch_zp_reset";
 
-            string zp_com_json = JsonConvert.SerializeObject(zp_command);
+            //string zp_com_json = JsonConvert.SerializeObject(zp_command);
             //string zp_json_obj = JsonPostWithResp("fetch_zp", zp_com_json);
             string zp_json_obj = GetZpJson("fetch_zp");
 
@@ -227,7 +227,6 @@ namespace MultiMosiServer
         {
             if (this.active)
             {
-
                 this.posture = this.UpdatePunchTargetFetchPosture(TargetHand, MovementDir, TrajPtsReached);
             }
         }

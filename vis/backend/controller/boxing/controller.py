@@ -71,7 +71,7 @@ class BoxingController:
         # right_p_target = utils.normalize(right_p_target)
         # dir = right_p_target[::2]
 
-        direction = np.array(dir) * 1
+        direction = np.array(dir)
         direction = utils.xz_to_x0yz(direction)
         target_vel_speed = 0.05 * np.linalg.norm(direction)
         self.target_vel = utils.glm_mix(self.target_vel, target_vel_speed * direction, 0.9)
@@ -118,10 +118,11 @@ class BoxingController:
         self.input.set_curr_punch_labels(curr_right_p_label, curr_left_p_label)
 
         right_shoulder_lp, left_shoulder_lp = self.output.get_shoulder_local_pos()
+        right_wrist_lp, left_wrist_lp = self.output.get_wrist_local_pos()
         # TODO: Update traj_labels only in post_render in update_from_predict i.e these 2 vecs are autoregressive ==> Similar to NSM
         self.traj.compute_future_wrist_trajectory(right_p_target, left_p_target, curr_right_p_label, curr_left_p_label,
-                                                  right_shoulder_lp, left_shoulder_lp, self.char.root_position,
-                                                  self.char.root_rotation, traj_reached)
+                                                  right_shoulder_lp, left_shoulder_lp, right_wrist_lp, left_wrist_lp,
+                                                  self.char.root_position, self.char.root_rotation, traj_reached)
 
         self.traj.compute_future_root_trajectory(self.target_dir, self.target_vel)
 

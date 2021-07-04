@@ -95,6 +95,15 @@ def tvector3_to_np(x):
 
 
 def np_to_tvector3(x, vis=False):
+    """
+    right handed coordinate system input, left handed co-ordinate system output
+    @param x:
+    @type x:
+    @param vis:
+    @type vis:
+    @return:
+    @rtype:
+    """
     if not vis:
         return TVector3(x[0], x[1], -x[2])
     else:
@@ -124,7 +133,7 @@ def build_zero_posture(base_controller, position_str="position", num_traj_pts=10
             position = position / 100
         else:
             position = position
-        position = np_to_tvector3(position)
+        position = np_to_tvector3(position, vis=True)
 
         rotation = TQuaternion(float(bone["local_rotation"][0]), float(bone["local_rotation"][1]),
                                float(bone["local_rotation"][2]), float(bone["local_rotation"][3]))

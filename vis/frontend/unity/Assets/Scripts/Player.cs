@@ -280,11 +280,11 @@ public partial class Player : MonoBehaviour
         }
         if (Input.GetKey(KeyCode.W))
         {
-            dir[1] = 1;
+            dir[1] = -1;
         }
         if (Input.GetKey(KeyCode.S))
         {
-            dir[1] = -1;
+            dir[1] = 1;
         }
 
         var temp = new Vector2(dir[0], dir[1]).normalized;
@@ -330,7 +330,7 @@ public partial class Player : MonoBehaviour
         {
             server.ManagedUpdate("none", dir, 0);
             //server.ManagedUpdate("left", dir);
-            //server.ManagedUpdate("right", dir, 0);
+            //server.ManagedUpdate("left", dir, 0);
         }
     }
 
