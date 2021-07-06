@@ -175,7 +175,7 @@ class BoxingController:
 
         self.traj.step_forward(self.output.get_root_vel(), self.output.get_root_new_forward(),
                                self.output.get_wrist_local_vel(), self.output.get_wrist_local_pos(),
-                               self.input.get_curr_punch_labels())
+                               self.output.get_root_local_pos(), self.input.get_curr_punch_labels())
 
         right_shoulder_lp, left_shoulder_lp = self.output.get_shoulder_local_pos()
 

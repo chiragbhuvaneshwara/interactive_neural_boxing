@@ -120,7 +120,12 @@ def get_punch_completed(target_hand):
     # if target_hand == 'left':
     #     print(target_hand)
     if request.method == 'GET':
-        p_comp = bc.traj.wrist_reached_left_wrist
+        if target_hand == "left":
+            p_comp = bc.traj.wrist_reached_left_wrist
+        elif target_hand == "right":
+            p_comp = bc.traj.wrist_reached_right_wrist
+        else:
+            p_comp = False
         return json.dumps(p_comp, default=serialize)
 
     else:

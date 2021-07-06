@@ -110,6 +110,14 @@ class MANNOutput(object):
 
         return r_wr_lp, l_wr_lp
 
+    def get_root_local_pos(self):
+        lp = self.__get_data__('y_local_pos')
+
+        r_start = self.bone_map["Hips"] * 3
+        r_lp = lp[r_start: r_start + 3]
+
+        return r_lp
+
     def get_shoulder_local_pos(self):
         lp = self.__get_data__('y_local_pos')
 

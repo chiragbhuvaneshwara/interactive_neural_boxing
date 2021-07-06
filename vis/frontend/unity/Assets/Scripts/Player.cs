@@ -294,36 +294,31 @@ public partial class Player : MonoBehaviour
 
         dir[0] = temp.x;
         dir[1] = temp.y;
-        
+
         if (Input.GetMouseButton(0) || leftMousePressed)
         {
+            if (Input.GetMouseButton(0))
+                Debug.Break();
+
             leftMousePressed = true;
-            //server.ManagedUpdate("left", dir);
-            leftTrajReached = TrajInTargetRange(leftTrajReached, "punch_target", "left_wrist");
             var isWristInTargetRange = server.ManagedUpdate("left", dir, leftTrajReached);
-            //var isWristInTargetRange = WristInTargetRange("punch_target", "LeftWrist_end");
-
-            // check if wrist is in reverse target range
-            //var isWristInTargetRange = WristInTargetRange("LeftShoulder", "LeftWrist", reverse: true);
-            //var isWristInTargetRange = WristInTargetRange("LeftShoulder", "LeftWrist_end");
-            
-
-            // if yes, left mouse pressed false and num_pts ==> reset to 0
             if (isWristInTargetRange) {
-                Debug.Log("End"); 
+                Debug.Log("LEnd");
                 leftMousePressed = false;
-                leftTrajReached = 0;
             }
-
         }
         else if (Input.GetMouseButton(1) || rightMousePressed)
         {
-            rightMousePressed = true;
-            server.ManagedUpdate("right", dir, rightTrajReached);
-            var isWristInTargetRange = WristInTargetRange("RightShoulder", "RightWrist", reverse: true);
+            if (Input.GetMouseButton(1))
+                Debug.Break();
 
-            if (isWristInTargetRange)
-                rightMousePressed = false;           
+            rightMousePressed = true;
+            var isWristInTargetRange = server.ManagedUpdate("right", dir, rightTrajReached);
+
+            if (isWristInTargetRange) { 
+                Debug.Log("REnd");
+                rightMousePressed = false;
+            }
         }
         else if (Input.GetMouseButton(2))
         {
