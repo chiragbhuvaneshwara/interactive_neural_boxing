@@ -300,16 +300,17 @@ public partial class Player : MonoBehaviour
             leftMousePressed = true;
             //server.ManagedUpdate("left", dir);
             leftTrajReached = TrajInTargetRange(leftTrajReached, "punch_target", "left_wrist");
-            server.ManagedUpdate("left", dir, leftTrajReached);
+            var isWristInTargetRange = server.ManagedUpdate("left", dir, leftTrajReached);
             //var isWristInTargetRange = WristInTargetRange("punch_target", "LeftWrist_end");
 
             // check if wrist is in reverse target range
-            var isWristInTargetRange = WristInTargetRange("LeftShoulder", "LeftWrist", reverse: true);
+            //var isWristInTargetRange = WristInTargetRange("LeftShoulder", "LeftWrist", reverse: true);
             //var isWristInTargetRange = WristInTargetRange("LeftShoulder", "LeftWrist_end");
-
+            
 
             // if yes, left mouse pressed false and num_pts ==> reset to 0
             if (isWristInTargetRange) {
+                Debug.Log("End"); 
                 leftMousePressed = false;
                 leftTrajReached = 0;
             }
@@ -331,7 +332,7 @@ public partial class Player : MonoBehaviour
         }
         else
         {
-            server.ManagedUpdate("none", dir, 0);
+            bool status = server.ManagedUpdate("none", dir, 0);
             //server.ManagedUpdate("left", dir);
             //server.ManagedUpdate("left", dir, 0);
         }

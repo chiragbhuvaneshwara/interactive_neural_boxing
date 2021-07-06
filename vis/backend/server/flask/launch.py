@@ -115,6 +115,18 @@ def fetch_frame():
         print("Problem")
 
 
+@app.route('/fetch_punch_completed/<target_hand>', methods=['GET'])
+def get_punch_completed(target_hand):
+    # if target_hand == 'left':
+    #     print(target_hand)
+    if request.method == 'GET':
+        p_comp = bc.traj.wrist_reached_left_wrist
+        return json.dumps(p_comp, default=serialize)
+
+    else:
+        print("Problem")
+
+
 @app.route('/fetch_zp', methods=['GET', 'POST'])
 def get_zero_posture():
     """

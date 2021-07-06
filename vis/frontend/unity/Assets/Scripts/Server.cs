@@ -223,12 +223,18 @@ namespace MultiMosiServer
         //    this.client.Dispose();
         //}
 
-        public void ManagedUpdate(string TargetHand, List<float> MovementDir, int TrajPtsReached) // void Update()
+        //public void ManagedUpdate(string TargetHand, List<float> MovementDir, int TrajPtsReached) // void Update()
+        public bool ManagedUpdate(string TargetHand, List<float> MovementDir, int TrajPtsReached) 
         {
             if (this.active)
             {
                 this.posture = this.UpdatePunchTargetFetchPosture(TargetHand, MovementDir, TrajPtsReached);
+                string punch_completed_str = this.GetZpJson("fetch_punch_completed/"+TargetHand);
+                bool punch_completed = JsonConvert.DeserializeObject<bool>(punch_completed_str);
+                return punch_completed;
             }
+            else
+                return false;
         }
     }
 
