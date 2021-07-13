@@ -256,7 +256,7 @@ class Trajectory:
                 traj_vels_blend = np.array(self.traj_left_wrist_vels, dtype=np.float64)
                 desired_punch_target = desired_left_punch_target
                 # TODO get average local desired_punch_target_reverse from dataset
-                desired_punch_target_reverse = _loc_to_glob(left_shoulder_pos) + np.array([0, 0, 0.2])
+                desired_punch_target_reverse = _loc_to_glob(left_shoulder_pos + np.array([0, 0, 0.2]))
                 # TODO get global magnitude of
                 wrist_pos_avg_diff = self.left_wrist_pos_avg_diff
                 traj_reached = self.traj_reached_left_wrist
@@ -266,13 +266,14 @@ class Trajectory:
                 wrist_lp = right_wr_lp
                 traj_vels_blend = np.array(self.traj_right_wrist_vels, dtype=np.float64)
                 desired_punch_target = desired_right_punch_target
-                desired_punch_target_reverse = _loc_to_glob(right_shoulder_pos) + np.array([0, 0, 0.2])
+                desired_punch_target_reverse = _loc_to_glob(right_shoulder_pos + np.array([0, 0, 0.2]))
                 wrist_pos_avg_diff = self.right_wrist_pos_avg_diff
                 traj_reached = self.traj_reached_right_wrist
                 wrist_reached = self.wrist_reached_right_wrist
 
             tr_mid_idx = self.median_idx
             wrist_pos_avg_diff_g = _loc_to_glob(wrist_pos_avg_diff, True)
+            wrist_pos_avg_diff_g = 0.02
             # wrist_pos_avg_diff_g = 0.016594728784002494
             # wrist_pos_avg_diff_g = wrist_pos_avg_diff
             # wrist_gp = _loc_to_glob(wrist_lp)
@@ -309,7 +310,8 @@ class Trajectory:
                 self.punch_frames += 1
 
             if fwd:
-                pos_step_g = utils.normalize(desired_punch_target - wrist_gp) * np.linalg.norm(wrist_pos_avg_diff_g)
+                # pos_step_g = utils.normalize(desired_punch_target - wrist_gp) * np.linalg.norm(wrist_pos_avg_diff_g)
+                pos_step_g = utils.normalize(desired_punch_target - wrist_gp) * wrist_pos_avg_diff_g
                 # pos_step_g = (desired_punch_target - wrist_gp) / post_step_div_factor
                 traj_pos_blend, traj_reached, wrist_reached = _tr_update_pos_g(traj_pos_blend, tr_mid_idx,
                                                                                desired_punch_target,
@@ -324,8 +326,9 @@ class Trajectory:
                 rev = True
 
             if rev:
-                pos_step_rev_g = utils.normalize(desired_punch_target_reverse - wrist_gp) * np.linalg.norm(
-                    wrist_pos_avg_diff_g)
+                # pos_step_rev_g = utils.normalize(desired_punch_target_reverse - wrist_gp) * np.linalg.norm(
+                #     wrist_pos_avg_diff_g)
+                pos_step_rev_g = utils.normalize(desired_punch_target_reverse - wrist_gp) * wrist_pos_avg_diff_g
                 # pos_step_rev_g = (desired_punch_target_reverse - wrist_gp) / post_step_div_factor
                 traj_pos_blend, traj_reached, wrist_reached = _tr_update_pos_g(traj_pos_blend, tr_mid_idx,
                                                                                desired_punch_target_reverse,
