@@ -1,5 +1,5 @@
 import tensorflow as tf
-
+import numpy as np
 from train.nn.mann_keras.utils import save_network
 
 
@@ -35,9 +35,9 @@ def get_variation_gating(network, input_data, batch_size):
         out = network(bi)
         gws.append(out[:, -network.expert_nodes:])
 
-    # print("\nChecking the gating variability: ")
-    # print("  mean: ", np.mean(np.concatenate(gws, axis=0), axis=0))
-    # print("  std: ", np.std(np.concatenate(gws, axis=0), axis=0))
-    # print("  max: ", np.max(np.concatenate(gws, axis=0), axis=0))
-    # print("  min: ", np.min(np.concatenate(gws, axis=0), axis=0))
-    # print("")
+    print("\nChecking the gating variability: ")
+    print("  mean: ", np.mean(np.concatenate(gws, axis=0), axis=0))
+    print("  std: ", np.std(np.concatenate(gws, axis=0), axis=0))
+    print("  max: ", np.max(np.concatenate(gws, axis=0), axis=0))
+    print("  min: ", np.min(np.concatenate(gws, axis=0), axis=0))
+    print("")
