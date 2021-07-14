@@ -33,6 +33,8 @@ def get_gating_indices(x_ids, joint_ids):
 
     root_velocities_tr_ids = _generate_id_sequence(x_ids, 'x_root_vels_tr')
 
+    root_pos_tr_ids = _generate_id_sequence(x_ids, 'x_root_pos_tr')
+
     # punch_labels_tr_ids = _generate_id_sequence(x_ids, 'x_right_punch_labels_tr') + \
     #                       _generate_id_sequence(x_ids, 'x_left_punch_labels_tr')
 
@@ -46,6 +48,8 @@ def get_gating_indices(x_ids, joint_ids):
     f_l_id = joint_ids["LeftAnkle"] * 3
     foot_end_effector_velocities_ids = _generate_id_sequence(x_ids, 'x_local_vel')[f_r_id: f_r_id + 3] + \
                                        _generate_id_sequence(x_ids, 'x_local_vel')[f_l_id: f_l_id + 3]
+    foot_end_effector_pos_ids = _generate_id_sequence(x_ids, 'x_local_pos')[f_r_id: f_r_id + 3] + \
+                                _generate_id_sequence(x_ids, 'x_local_pos')[f_l_id: f_l_id + 3]
     w_r_id = joint_ids["RightWrist"] * 3
     w_l_id = joint_ids["LeftWrist"] * 3
     wrist_end_effector_velocities_ids = _generate_id_sequence(x_ids, 'x_local_vel')[w_r_id: w_r_id + 3] + \
@@ -62,7 +66,9 @@ def get_gating_indices(x_ids, joint_ids):
         wrist_end_effector_velocities_ids,
         current_punch_labels_ids,
         root_velocities_tr_ids,
-        foot_end_effector_velocities_ids
+        root_pos_tr_ids,
+        foot_end_effector_velocities_ids,
+        foot_end_effector_pos_ids
     ]
     # desired_vel (part of OG MANN gating input)
 
