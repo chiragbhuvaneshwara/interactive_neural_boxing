@@ -199,16 +199,16 @@ class Trajectory:
             tr_reached = tr_reached.copy()
             if fwd_motion:
                 start = tr_mid_idx + 1
-                end = len(traj_pos) - tr_reached['f']
+                end = len(traj_pos)
                 step = 1
                 threshold = 0.1
-                print(hand, "fwd:", [i for i in range(start, end)])
+                # print(hand, "fwd:", [i for i in range(start, end)])
             if rev_motion:
                 start = len(traj_pos) - tr_reached['f']
-                end = len(traj_pos) - tr_reached['r']
+                end = len(traj_pos)
                 step = 1
-                threshold = 0.17
-                print(hand, "rev:", [i for i in range(start, end, step)])
+                threshold = 0.1
+                # print(hand, "rev:", [i for i in range(start, end, step)])
             trajs_reached = []
             for i in range(start, end, step):
                 scale_pos = 1.0 - pow(1.0 - (i - tr_mid_idx) / (1.0 * tr_mid_idx), self.blend_bias)
@@ -227,8 +227,8 @@ class Trajectory:
                 elif no_punch_mode:
                     traj_pos[i] = traj_pos[tr_mid_idx]
 
-            if not no_punch_mode:
-                print(hand, tr_reached, trajs_reached)
+            # if not no_punch_mode:
+            #     print(hand, tr_reached, trajs_reached)
 
             return traj_pos, tr_reached, wrist_reached
 
@@ -287,7 +287,7 @@ class Trajectory:
 
             tr_mid_idx = self.median_idx
             # wrist_pos_avg_diff_g = np.linalg.norm(_loc_to_glob(wrist_pos_avg_diff, True))
-            wrist_pos_avg_diff_g = 0.02
+            wrist_pos_avg_diff_g = 0.04
             wrist_gp = traj_pos_blend[tr_mid_idx]
 
             if traj_reached['f'] >= tr_mid_idx - 1 and wrist_reached is True and punch_frames > 0:
@@ -308,7 +308,7 @@ class Trajectory:
                 no_punch_mode = True
             else:
                 desired_punch_target = _loc_to_glob(
-                    _glob_to_loc(desired_punch_target, root_position, root_rotation) + np.array([0, 0, 0.05]))
+                    _glob_to_loc(desired_punch_target, root_position, root_rotation) + np.array([0, 0, 0.1]))
 
 
             if 0 < traj_reached['f'] < tr_mid_idx - 1:
