@@ -55,9 +55,11 @@ class Trajectory:
         self.wrist_reached_right_wrist = False
 
         self.foot_drifting = np.zeros(2 * 2)  # (n_foot_joints * n_feet)
-        # self.blend_bias = 2.0
-        self.blend_bias = 10.0  # adjust bias 0.5 to fit to dataset and responsivity (larger value -> more responsive)
+        self.blend_bias = 2.0
+        # self.blend_bias = 10.0  # adjust bias 0.5 to fit to dataset and responsivity (larger value -> more responsive)
         self.punch_frames = 0
+        self.punch_frames_left = 0
+        self.punch_frames_right = 0
 
         self.pos_step_g = np.array([0, 0, 0])
         self.pos_step_rev_g = np.array([0, 0, 0])
@@ -140,18 +142,20 @@ class Trajectory:
         for i in range(0, self.n_frames_tr_win):
             self.traj_root_rotations[i] = utils.z_angle(self.traj_root_directions[i])
 
-    def _update_wrist_traj(self, traj_pos_blend, traj_vels_blend, traj_reached, wrist_reached, hand):
+    def _update_wrist_traj(self, traj_pos_blend, traj_vels_blend, punch_frames, traj_reached, wrist_reached, hand):
         if hand == 'left':
             self.traj_left_wrist_pos = traj_pos_blend[:]
             self.traj_left_wrist_vels = traj_vels_blend[:]
             self.wrist_reached_left_wrist = wrist_reached
             self.traj_reached_left_wrist = traj_reached
+            self.punch_frames_left = punch_frames
 
         elif hand == 'right':
             self.traj_right_wrist_pos = traj_pos_blend[:]
             self.traj_right_wrist_vels = traj_vels_blend[:]
             self.wrist_reached_right_wrist = wrist_reached
             self.traj_reached_right_wrist = traj_reached
+            self.punch_frames_right = punch_frames
 
     def compute_future_wrist_trajectory(self, desired_right_punch_target, desired_left_punch_target,
                                         desired_right_punch_label, desired_left_punch_label, right_shoulder_pos,
@@ -197,28 +201,26 @@ class Trajectory:
                 start = tr_mid_idx + 1
                 end = len(traj_pos) - tr_reached['f']
                 step = 1
-                threshold = 0.15
+                threshold = 0.1
                 print(hand, "fwd:", [i for i in range(start, end)])
             if rev_motion:
-                # start = len(traj_pos) - 1 - tr_reached['r']
                 start = len(traj_pos) - tr_reached['f']
-                # end = len(traj_pos) - 1 - tr_reached['f']
                 end = len(traj_pos) - tr_reached['r']
-                # step = -1
                 step = 1
-                threshold = 0.2
+                threshold = 0.17
                 print(hand, "rev:", [i for i in range(start, end, step)])
             trajs_reached = []
             for i in range(start, end, step):
+                scale_pos = 1.0 - pow(1.0 - (i - tr_mid_idx) / (1.0 * tr_mid_idx), self.blend_bias)
                 if not no_punch_mode:
-                    traj_pos[i] = traj_pos[i - 1] + pos_step_global
+                    # traj_pos[i] = traj_pos[i - 1] + pos_step_global
+                    traj_pos[i] = utils.glm_mix(traj_pos[i], traj_pos[i - 1] + pos_step_global, scale_pos)
                     if np.linalg.norm(desired_punch_target - traj_pos[i]) < threshold:
                         trajs_reached.append(i)
                         if fwd_motion:
                             tr_reached['f'] += 1
                         elif rev_motion:
                             tr_reached['r'] += 1
-                            # if np.linalg.norm(desired_punch_target - traj_pos[tr_mid_idx]) < 0.06:
                             if tr_reached['r'] == tr_mid_idx - 1:
                                 wrist_reached = True
 
@@ -264,11 +266,12 @@ class Trajectory:
                 traj_vels_blend = np.array(self.traj_left_wrist_vels, dtype=np.float64)
                 desired_punch_target = desired_left_punch_target
                 # TODO get average local desired_punch_target_reverse from dataset
-                desired_punch_target_reverse = _loc_to_glob(left_shoulder_pos + np.array([0, 0, 0.2]))
+                desired_punch_target_reverse = _loc_to_glob(left_shoulder_pos + np.array([0, 0, 0.18]))
                 # TODO get global magnitude of
                 wrist_pos_avg_diff = self.left_wrist_pos_avg_diff
                 traj_reached = self.traj_reached_left_wrist
                 wrist_reached = self.wrist_reached_left_wrist
+                punch_frames = self.punch_frames_left
             elif hand == 'right':
                 traj_pos_blend = np.array(self.traj_right_wrist_pos, dtype=np.float64)
                 wrist_lp = right_wr_lp
@@ -278,6 +281,26 @@ class Trajectory:
                 wrist_pos_avg_diff = self.right_wrist_pos_avg_diff
                 traj_reached = self.traj_reached_right_wrist
                 wrist_reached = self.wrist_reached_right_wrist
+                punch_frames = self.punch_frames_right
+
+
+
+            tr_mid_idx = self.median_idx
+            # wrist_pos_avg_diff_g = np.linalg.norm(_loc_to_glob(wrist_pos_avg_diff, True))
+            wrist_pos_avg_diff_g = 0.02
+            wrist_gp = traj_pos_blend[tr_mid_idx]
+
+            if traj_reached['f'] >= tr_mid_idx - 1 and wrist_reached is True and punch_frames > 0:
+                traj_reached['f'] = 0
+                traj_reached['r'] = 0
+                print("----------------", punch_frames)
+                punch_frames = 0
+                wrist_reached = False
+
+            if punch_frames > 60:
+                no_punch_mode = True
+                traj_reached['f'] = 4
+                wrist_reached = True
 
             no_punch_target = np.array([0, 0, 0])
             if np.sum(desired_punch_target) == 0:
@@ -285,29 +308,13 @@ class Trajectory:
                 no_punch_mode = True
             else:
                 desired_punch_target = _loc_to_glob(
-                    _glob_to_loc(desired_punch_target, root_position, root_rotation) + np.array([0, 0, 0.1]))
-            tr_mid_idx = self.median_idx
-            wrist_pos_avg_diff_g = _loc_to_glob(wrist_pos_avg_diff, True)
-            wrist_pos_avg_diff_g = 0.02
-            # wrist_pos_avg_diff_g = 0.016594728784002494
-            # wrist_pos_avg_diff_g = wrist_pos_avg_diff
-            # wrist_gp = _loc_to_glob(wrist_lp)
-            wrist_gp = traj_pos_blend[tr_mid_idx]
+                    _glob_to_loc(desired_punch_target, root_position, root_rotation) + np.array([0, 0, 0.05]))
 
-            # if traj_reached['f'] >= tr_mid_idx - 1 and traj_reached['r'] >= tr_mid_idx - 1 \
-            #         and self.punch_frames > 0:
-            if traj_reached['f'] >= tr_mid_idx - 1 and wrist_reached is True and self.punch_frames > 0:
-                traj_reached['f'] = 0
-                traj_reached['r'] = 0
-                # self.wrist_reached_left_wrist = False
-                print("----------------", self.punch_frames)
-                self.punch_frames = 0
-                desired_punch_target == np.array([0, 0, 0])
-                wrist_reached = False
 
             if 0 < traj_reached['f'] < tr_mid_idx - 1:
                 fwd = True
-                rev = True
+                # rev = True
+                rev = False
             elif traj_reached['f'] == 0:
                 fwd = True
                 rev = False
@@ -317,7 +324,7 @@ class Trajectory:
                 rev = True
 
             if not no_punch_mode:
-                self.punch_frames += 1
+                punch_frames += 1
 
             if fwd:
                 pos_step_g = utils.normalize(desired_punch_target - wrist_gp) * wrist_pos_avg_diff_g
@@ -345,7 +352,8 @@ class Trajectory:
 
                 traj_reached_updated['r'] = traj_reached_updated_rev['r']
 
-            self._update_wrist_traj(traj_pos_blend, traj_vels_blend, traj_reached_updated, wrist_reached, hand)
+            self._update_wrist_traj(traj_pos_blend, traj_vels_blend, punch_frames, traj_reached_updated, wrist_reached,
+                                    hand)
 
     def step_forward(self, pred_root_vel, pred_fwd_dir, pred_local_wrist_vels, pred_local_wrist_pos, pred_root_pos,
                      curr_punch_labels):

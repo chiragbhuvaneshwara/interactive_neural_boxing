@@ -297,8 +297,8 @@ public partial class Player : MonoBehaviour
 
         if (Input.GetMouseButton(0) || leftMousePressed)
         {
-            if (Input.GetMouseButton(0))
-                Debug.Break();
+            //if (Input.GetMouseButton(0))
+            //    Debug.Break();
 
             leftMousePressed = true;
             var isWristInTargetRange = server.ManagedUpdate("left", dir, leftTrajReached);
@@ -309,8 +309,8 @@ public partial class Player : MonoBehaviour
         }
         else if (Input.GetMouseButton(1) || rightMousePressed)
         {
-            if (Input.GetMouseButton(1))
-                Debug.Break();
+            //if (Input.GetMouseButton(1))
+            //    Debug.Break();
 
             rightMousePressed = true;
             var isWristInTargetRange = server.ManagedUpdate("right", dir, rightTrajReached);
