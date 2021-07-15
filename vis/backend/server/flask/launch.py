@@ -19,7 +19,8 @@ controller_in_out_dir = os.path.join("backend", "controller", "controller_in_out
 frd_win_epochs = frd_win + '_ep_' + str(epochs)
 all_models_path = os.path.join("train", "models", "mann_tf2_v2")
 # trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-05-18_19-35-24", "epochs", "epoch_99")
-trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-06-17_19-39-35", "epochs", "epoch_99")
+# trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-06-17_19-39-35", "epochs", "epoch_99")
+trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-07-15_10-53-55", "epochs", "epoch_99")
 target_file = os.path.join(trained_base_path, 'saved_model')
 
 x_mean, y_mean = load_binary(os.path.join(trained_base_path, "means", "Xmean.bin")), \
