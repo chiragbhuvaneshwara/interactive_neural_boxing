@@ -209,7 +209,8 @@ def prepare_output_data(frame_num, handler, col_demarcation_finished=True):
         return y_curr_frame
 
 
-def process_data(handler: FeatureExtractor, punch_labels_csv_path, frame_rate_div, forward_dir, tr_window, develop,
+def process_data(handler: FeatureExtractor, punch_labels_csv_path, frame_rate_div, forward_dir, tr_window_root,
+                 tr_window_wrist, develop,
                  gen_data_config=False, punch_stats=None):
     """
     Generates and stacks the X and Y data for one provided bvh file and punch labels file.
@@ -240,11 +241,12 @@ def process_data(handler: FeatureExtractor, punch_labels_csv_path, frame_rate_di
         handler.calculate_new_forward_dirs()
         handler.get_foot_concats()
 
-        x_col_demarcation_ids, x_col_names = prepare_input_data(handler.window, handler, col_demarcation_finished=False)
-        y_col_demarcation_ids, y_col_names = prepare_output_data(handler.window, handler,
+        x_col_demarcation_ids, x_col_names = prepare_input_data(handler.window_wrist, handler,
+                                                                col_demarcation_finished=False)
+        y_col_demarcation_ids, y_col_names = prepare_output_data(handler.window_wrist, handler,
                                                                  col_demarcation_finished=False)
 
-        for i in range(handler.window, handler.n_frames - handler.window - 1, 1):
+        for i in range(handler.window_wrist, handler.n_frames - handler.window_wrist - 1, 1):
             if i % 50 == 0:
                 print('Frames processed: ', i)
                 if develop:
@@ -265,10 +267,12 @@ def process_data(handler: FeatureExtractor, punch_labels_csv_path, frame_rate_di
 
             "frame_rate_div": frame_rate_div,
             "forward_dir": list(forward_dir),
-            "traj_window": tr_window,
+            "traj_window_root": tr_window_root,
+            "traj_window_wrist": tr_window_wrist,
 
             "num_traj_samples": handler.num_traj_sampling_pts,
-            "traj_step": handler.traj_step,
+            "traj_step_root": handler.traj_step_root,
+            "traj_step_wrist": handler.traj_step_wrist,
             "num_joints": len(handler.joint_id_map.keys()),
             "zero_posture": handler.reference_skeleton,
             "bone_map": handler.joint_id_map,
@@ -290,9 +294,8 @@ def process_data(handler: FeatureExtractor, punch_labels_csv_path, frame_rate_di
     return np.array(x), np.array(y), dataset_config
 
 
-def process_folder(bvh_path, punch_labels_path, frame_rate_division, forward_direction, traj_window,
-                   num_tr_sampling_pts,
-                   develop):
+def process_folder(bvh_path, punch_labels_path, frame_rate_division, forward_direction, traj_window_root,
+                   traj_window_wrist, num_tr_sampling_pts, develop):
     """
     Generates and stacks the X and Y data for provided files in the bvh and punch label folders.
 
@@ -322,17 +325,18 @@ def process_folder(bvh_path, punch_labels_path, frame_rate_division, forward_dir
     for b_f, p_f in zip(bvh_files, punch_labels_files):
         print('\n')
         print(b_f, '\n', p_f)
-        handler = FeatureExtractor(b_f, traj_window, forward_dir=forward_direction,
+        handler = FeatureExtractor(b_f, traj_window_root, traj_window_wrist, forward_dir=forward_direction,
                                    num_traj_sampling_pts=num_tr_sampling_pts)
 
         if b_f == bvh_files[-1]:
             x_cur_file, y_per_file, dataset_config = process_data(handler, p_f, frame_rate_division, forward_direction,
-                                                                  traj_window, develop=False, gen_data_config=True,
+                                                                  traj_window_root, traj_window_wrist, develop=False,
+                                                                  gen_data_config=True,
                                                                   punch_stats=punch_stats)
 
         else:
             x_cur_file, y_per_file, dataset_config = process_data(handler, p_f, frame_rate_division, forward_direction,
-                                                                  traj_window, develop=False)
+                                                                  traj_window_root, traj_window_wrist, develop=False)
 
         x_per_folder.append(x_cur_file)
         y_per_folder.append(y_per_file)

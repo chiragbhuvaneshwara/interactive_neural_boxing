@@ -25,7 +25,7 @@ def get_rotation_to_ref_direction(dir_vecs, ref_dir):
 
 
 class FeatureExtractor:
-    def __init__(self, bvh_file_path, window,
+    def __init__(self, bvh_file_path, window_root, window_wrist,
                  to_meters=1, forward_dir=np.array([0.0, 0.0, 1.0]),
                  shoulder_joints={'r': 8, 'l': 12},  # [right, left]
                  hip_joints={'r': 15, 'l': 19},  # [right, left]
@@ -44,7 +44,8 @@ class FeatureExtractor:
         in pipeline). Other configurations may be added later.
 
         :param bvh_file_path: path to motion data in bvh format
-        :param window: trajectory window for both walking and punching motions
+        :param window_root: trajectory window for walking motions
+        :param window_wrist: trajectory window for punching motions
         :param to_meters=1: to convert BVH data to proper scaling i.e height of char ~1.7m and all motions in this scale
         :param forward_dir = [0,0,1]: z axis
         :param shoulder_joints = {'r': 8, 'l': 12},  # [right, left]
@@ -88,14 +89,16 @@ class FeatureExtractor:
         self.hand_left = hid_l
         self.hand_right = hid_r
 
-        self.window = window
+        self.window_wrist = window_wrist
+        self.window_root = window_root
         self.to_meters = to_meters
 
         self.reference_skeleton = []
 
         self.joint_id_map = {}
         self.num_traj_sampling_pts = num_traj_sampling_pts
-        self.traj_step = ((self.window * 2) // self.num_traj_sampling_pts)
+        self.traj_step_wrist = ((self.window_wrist * 2) // self.num_traj_sampling_pts)
+        self.traj_step_root = ((self.window_root * 2) // self.num_traj_sampling_pts)
 
         self.left_wrist_pos_avg_diff_punch = None
         self.right_wrist_pos_avg_diff_punch = None
@@ -118,8 +121,7 @@ class FeatureExtractor:
         :return FeatureExtractor
         """
         # TODO Check
-        copy_feature_extractor = FeatureExtractor(self.bvh_file_path, self.window,
-                                                  # self.type,
+        copy_feature_extractor = FeatureExtractor(self.bvh_file_path, self.window_root, self.window_wrist,
                                                   self.to_meters, self.__ref_dir, self.shoulder_joints,
                                                   self.hip_joints, self.foot_left, self.foot_right, self.head,
                                                   self.hand_left, self.hand_right, self.num_traj_sampling_pts)
@@ -576,36 +578,39 @@ class FeatureExtractor:
 
         if start_from < 0:
             calc_pos_diff = True
-            start_from = frame - self.window
+            start_from = frame - self.window_wrist
 
-        step = self.traj_step
+        step_wrist = self.traj_step_wrist
+        step_root = self.traj_step_root
 
         root_pos = np.array(
-            global_positions[start_from:frame + self.window:step, 0] - global_positions[frame:frame + 1, 0])
-        root_vels = np.array(root_vel[start_from:frame + self.window:step])
-        root_dirs = np.array(forward[start_from:frame + self.window:step])
+            global_positions[start_from:frame + self.window_wrist:step_root, 0] - global_positions[frame:frame + 1, 0])
+        root_vels = np.array(root_vel[start_from:frame + self.window_wrist:step_root])
+        root_dirs = np.array(forward[start_from:frame + self.window_wrist:step_root])
 
         # head_pos = np.array(
-        #     global_positions[start_from:frame + self.window:step, self.head]
+        #     global_positions[start_from:frame + self.window:step_wrist, self.head]
         #     - global_positions[frame:frame + 1, 0])
-        # headdirs = np.array(head_directions[start_from:frame + self.window:step])
+        # headdirs = np.array(head_directions[start_from:frame + self.window:step_wrist])
 
         # Setting y to zero in root so that traj of wrist and head are at correct height
         global_positions[:, 0, 1] = 0
 
         right_wrist_pos = np.array(
-            global_positions[start_from:frame + self.window:step, self.hand_right]
+            global_positions[start_from:frame + self.window_wrist:step_wrist, self.hand_right]
             - global_positions[frame:frame + 1, 0])
-        right_wrist_vels = np.array(right_wrist_vel[start_from:frame + self.window:step])
-        # right_punch_labels = np.array(self.punch_labels[self.hand_right][start_from:frame + self.window:step])
-        right_punch_labels = np.array(self.punch_labels_binary[self.hand_right][start_from:frame + self.window:step])
+        right_wrist_vels = np.array(right_wrist_vel[start_from:frame + self.window_wrist:step_wrist])
+        # right_punch_labels = np.array(self.punch_labels[self.hand_right][start_from:frame + self.window:step_wrist])
+        right_punch_labels = np.array(
+            self.punch_labels_binary[self.hand_right][start_from:frame + self.window_wrist:step_wrist])
 
         left_wrist_pos = np.array(
-            global_positions[start_from:frame + self.window:step, self.hand_left]
+            global_positions[start_from:frame + self.window_wrist:step_wrist, self.hand_left]
             - global_positions[frame:frame + 1, 0])
-        left_wrist_vels = np.array(left_wrist_vel[start_from:frame + self.window:step])
-        # left_punch_labels = np.array(self.punch_labels[self.hand_left][start_from:frame + self.window:step])
-        left_punch_labels = np.array(self.punch_labels_binary[self.hand_left][start_from:frame + self.window:step])
+        left_wrist_vels = np.array(left_wrist_vel[start_from:frame + self.window_wrist:step_wrist])
+        # left_punch_labels = np.array(self.punch_labels[self.hand_left][start_from:frame + self.window:step_wrist])
+        left_punch_labels = np.array(
+            self.punch_labels_binary[self.hand_left][start_from:frame + self.window_wrist:step_wrist])
 
         for j in range(len(root_pos)):
             # multiplying by root_rotation is rotating vectors to point to forward direction
@@ -623,52 +628,56 @@ class FeatureExtractor:
 
         if calc_pos_diff:
             start_from = frame
-            match_cond = [np.array([1])] * (self.window)
+            match_cond = [np.array([1])] * (self.window_wrist)
             if self.left_wrist_pos_avg_diff_punch is None:
-                if np.all(self.punch_labels_binary[self.hand_left][start_from:frame + self.window] == match_cond):
+                if np.all(self.punch_labels_binary[self.hand_left][start_from:frame + self.window_wrist] == match_cond):
                     self.left_wrist_pos_avg_diff_punch = np.expand_dims(
                         np.mean(left_wrist_vels, axis=0),
                         axis=0)
 
             if self.right_wrist_pos_avg_diff_punch is None:
-                if np.all(self.punch_labels_binary[self.hand_right][start_from:frame + self.window] == match_cond):
+                if np.all(
+                        self.punch_labels_binary[self.hand_right][start_from:frame + self.window_wrist] == match_cond):
                     self.right_wrist_pos_avg_diff_punch = np.expand_dims(
                         np.mean(right_wrist_vels, axis=0),
                         axis=0)
             if self.left_wrist_pos_avg_diff_punch is not None and self.right_wrist_pos_avg_diff_punch is not None:
-                if np.all(self.punch_labels_binary[self.hand_left][start_from:frame + self.window] == match_cond):
+                if np.all(self.punch_labels_binary[self.hand_left][start_from:frame + self.window_wrist] == match_cond):
                     self.left_wrist_pos_avg_diff_punch = np.expand_dims(
                         np.mean(np.append(self.left_wrist_pos_avg_diff_punch, left_wrist_vels, axis=0),
                                 axis=0),
                         axis=0)
-                if np.all(self.punch_labels_binary[self.hand_right][start_from:frame + self.window] == match_cond):
+                if np.all(
+                        self.punch_labels_binary[self.hand_right][start_from:frame + self.window_wrist] == match_cond):
                     self.right_wrist_pos_avg_diff_punch = np.expand_dims(
                         np.mean(
                             np.append(self.right_wrist_pos_avg_diff_punch, right_wrist_vels, axis=0),
                             axis=0),
                         axis=0)
 
-            start_from = frame - self.window
-            match_cond = [np.array([0])] * (self.window * 2)
+            start_from = frame - self.window_wrist
+            match_cond = [np.array([0])] * (self.window_wrist * 2)
             if self.left_wrist_pos_no_punch is None:
-                if np.all(self.punch_labels_binary[self.hand_left][start_from:frame + self.window] == match_cond):
+                if np.all(self.punch_labels_binary[self.hand_left][start_from:frame + self.window_wrist] == match_cond):
                     start = left_wrist_pos[0]
                     end = left_wrist_pos[-1]
                     self.left_wrist_pos_no_punch = {'start': start, 'end': end}
 
             if self.right_wrist_pos_no_punch is None:
-                if np.all(self.punch_labels_binary[self.hand_right][start_from:frame + self.window] == match_cond):
+                if np.all(
+                        self.punch_labels_binary[self.hand_right][start_from:frame + self.window_wrist] == match_cond):
                     start = right_wrist_pos[0]
                     end = right_wrist_pos[-1]
                     self.right_wrist_pos_no_punch = {'start': start, 'end': end}
 
             if self.left_wrist_pos_no_punch is not None and self.right_wrist_pos_no_punch is not None:
-                if np.all(self.punch_labels_binary[self.hand_left][start_from:frame + self.window] == match_cond):
+                if np.all(self.punch_labels_binary[self.hand_left][start_from:frame + self.window_wrist] == match_cond):
                     start = (left_wrist_pos[0] + self.left_wrist_pos_no_punch['start']) / 2
                     end = (left_wrist_pos[-1] + self.left_wrist_pos_no_punch['end']) / 2
                     self.left_wrist_pos_no_punch = {'start': start, 'end': end}
 
-                if np.all(self.punch_labels_binary[self.hand_right][start_from:frame + self.window] == match_cond):
+                if np.all(
+                        self.punch_labels_binary[self.hand_right][start_from:frame + self.window_wrist] == match_cond):
                     start = (right_wrist_pos[0] + self.right_wrist_pos_no_punch['start']) / 2
                     end = (right_wrist_pos[-1] + self.right_wrist_pos_no_punch['end']) / 2
                     self.right_wrist_pos_no_punch = {'start': start, 'end': end}

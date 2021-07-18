@@ -51,16 +51,17 @@ if DEVELOP:
 
 PUNCH_LABELS_PATH = os.path.join(INPUT_BASE_PATH, "punch_label_gen", "punch_label", "tertiary")
 BVH_PATH = os.path.join(INPUT_BASE_PATH, "mocap", "hq", "processed")
-FRAME_RATE_DIV = 1
+FRAME_RATE_DIV = 2
 FORWARD_DIR = np.array([0.0, 0.0, 1.0])
 # TR_WINDOW = math.ceil(14 / FRAME_RATE_DIV)
-TR_WINDOW = math.ceil(5 / FRAME_RATE_DIV)
+TR_WINDOW_WRIST = math.ceil(10 / FRAME_RATE_DIV)
+TR_WINDOW_ROOT = math.ceil(20 / FRAME_RATE_DIV)
 TR_SAMPLES = 10
 ####################### CONTROL PARAMS ###################################
 
-x_train, y_train, dataset_config = process_folder(BVH_PATH, PUNCH_LABELS_PATH, FRAME_RATE_DIV, FORWARD_DIR, TR_WINDOW,
-                                                  TR_SAMPLES, DEVELOP)
-frd_win = 'fr_' + str(FRAME_RATE_DIV) + '_tr_' + str(TR_WINDOW)
+x_train, y_train, dataset_config = process_folder(BVH_PATH, PUNCH_LABELS_PATH, FRAME_RATE_DIV, FORWARD_DIR,
+                                                  TR_WINDOW_ROOT, TR_WINDOW_WRIST, TR_SAMPLES, DEVELOP)
+frd_win = 'fr_' + str(FRAME_RATE_DIV) + '_tr_' + str(TR_WINDOW_ROOT) + "_" + str(TR_WINDOW_WRIST)
 setup_output_dir(OUTPUT_BASE_PATH, frd_win)
 out_dir = os.path.join(OUTPUT_BASE_PATH, frd_win)
 
