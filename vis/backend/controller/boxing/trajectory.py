@@ -283,8 +283,6 @@ class Trajectory:
                 wrist_reached = self.wrist_reached_right_wrist
                 punch_frames = self.punch_frames_right
 
-
-
             tr_mid_idx = self.median_idx
             # wrist_pos_avg_diff_g = np.linalg.norm(_loc_to_glob(wrist_pos_avg_diff, True))
             wrist_pos_avg_diff_g = 0.04
@@ -309,7 +307,6 @@ class Trajectory:
             else:
                 desired_punch_target = _loc_to_glob(
                     _glob_to_loc(desired_punch_target, root_position, root_rotation) + np.array([0, 0, 0.1]))
-
 
             if 0 < traj_reached['f'] < tr_mid_idx - 1:
                 fwd = True

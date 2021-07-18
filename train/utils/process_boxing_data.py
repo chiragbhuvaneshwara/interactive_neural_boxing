@@ -60,12 +60,14 @@ def get_gating_indices(x_ids, joint_ids):
     # the current action variables
     # and the desired velocity of the character
     # TODO: try not to include punch targets
+    # TODO: increase traj window for walking
+    # TODO: label walking and not walking
     gating_ids = [
         wrist_velocities_tr_ids,
         # punch_target_ids,
         wrist_end_effector_velocities_ids,
         current_punch_labels_ids,
-        root_velocities_tr_ids,
+        root_velocities_tr_ids,  # TODO put only goal
         # root_pos_tr_ids,
         foot_end_effector_velocities_ids,
         # foot_end_effector_pos_ids
