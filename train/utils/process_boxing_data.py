@@ -32,8 +32,10 @@ def get_gating_indices(x_ids, joint_ids):
                               _generate_id_sequence(x_ids, 'x_left_wrist_vels_tr')
 
     root_velocities_tr_ids = _generate_id_sequence(x_ids, 'x_root_vels_tr')
+    root_velocities_goal_ids = _generate_id_sequence(x_ids, 'x_root_vels_tr')[-3:]
 
     root_pos_tr_ids = _generate_id_sequence(x_ids, 'x_root_pos_tr')
+    root_pos_goal_ids = _generate_id_sequence(x_ids, 'x_root_pos_tr')[-3:]
 
     # punch_labels_tr_ids = _generate_id_sequence(x_ids, 'x_right_punch_labels_tr') + \
     #                       _generate_id_sequence(x_ids, 'x_left_punch_labels_tr')
@@ -67,10 +69,12 @@ def get_gating_indices(x_ids, joint_ids):
         # punch_target_ids,
         wrist_end_effector_velocities_ids,
         current_punch_labels_ids,
-        root_velocities_tr_ids,  # TODO put only goal
+        # root_velocities_tr_ids,  # TODO put only goal
         # root_pos_tr_ids,
+        root_velocities_goal_ids,
+        root_pos_goal_ids,
         foot_end_effector_velocities_ids,
-        # foot_end_effector_pos_ids
+        foot_end_effector_pos_ids
     ]
     # desired_vel (part of OG MANN gating input)
 
