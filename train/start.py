@@ -15,7 +15,7 @@ args = args_parser.parse_args()
 DEVELOP = args.develop
 LOCAL = args.local
 
-FRAME_RATE_DIV = 2
+FRAME_RATE_DIV = 1
 # TR_WINDOW = math.ceil(14 / FRAME_RATE_DIV)
 TR_WINDOW_WRIST = math.ceil(10 / FRAME_RATE_DIV)
 TR_WINDOW_ROOT = math.ceil(20 / FRAME_RATE_DIV)
