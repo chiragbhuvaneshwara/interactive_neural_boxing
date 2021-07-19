@@ -122,7 +122,6 @@ def train_boxing_data(data_config_path, output_dir, epochs=30, batchsize=32):
 
     gating_indices, gating_variable_names = get_gating_indices(x_col_demarcation, bone_map)
 
-    # X, Y, norm = prepare_mann_data(data_npz_path, dataset_config)
     X, Y, norm = prepare_mann_data(dataset_config)
     x_mean = np.array(norm['x_mean'], dtype=np.float64)
     x_std = np.array(norm['x_std'], dtype=np.float64)

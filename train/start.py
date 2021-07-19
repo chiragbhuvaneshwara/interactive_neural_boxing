@@ -2,6 +2,7 @@ import argparse
 import os
 import shutil
 from datetime import datetime
+import math
 
 from train.utils.process_boxing_data import train_boxing_data
 
@@ -14,12 +15,13 @@ args = args_parser.parse_args()
 DEVELOP = args.develop
 LOCAL = args.local
 
-FRD = 1
-# WINDOW = 14
-WINDOW = 5
+FRAME_RATE_DIV = 2
+# TR_WINDOW = math.ceil(14 / FRAME_RATE_DIV)
+TR_WINDOW_WRIST = math.ceil(10 / FRAME_RATE_DIV)
+TR_WINDOW_ROOT = math.ceil(20 / FRAME_RATE_DIV)
 OUT_BASE_PATH = os.path.join("train", "models", "mann_tf2_v2")
 ############################################
-frd_win = 'fr_' + str(FRD) + '_tr_' + str(WINDOW)
+frd_win = 'fr_' + str(FRAME_RATE_DIV) + '_tr_' + str(TR_WINDOW_ROOT) + "_" + str(TR_WINDOW_WRIST)
 current_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 if not DEVELOP:
