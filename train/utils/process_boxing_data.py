@@ -69,12 +69,12 @@ def get_gating_indices(x_ids, joint_ids):
         # punch_target_ids,
         wrist_end_effector_velocities_ids,
         current_punch_labels_ids,
-        # root_velocities_tr_ids,  # TODO put only goal
+        root_velocities_tr_ids,  # TODO put only goal
         # root_pos_tr_ids,
-        root_velocities_goal_ids,
-        root_pos_goal_ids,
+        # root_velocities_goal_ids,
+        # root_pos_goal_ids,
         foot_end_effector_velocities_ids,
-        foot_end_effector_pos_ids
+        # foot_end_effector_pos_ids
     ]
     # desired_vel (part of OG MANN gating input)
 
@@ -144,7 +144,7 @@ def train_boxing_data(data_config_path, output_dir, epochs=30, batchsize=32):
         "dataset_config_path": data_config_path,
     }
 
-    num_expert_nodes = 8
+    num_expert_nodes = 6
     network = MANN(input_dim, output_dim, 512, 64, num_expert_nodes, gating_indices, batch_size=batchsize)
     network.compile(optimizer=optimizer, loss=mse_loss_variable_gating(num_expert_nodes))
     tensorboard = tf.keras.callbacks.TensorBoard(log_dir=os.path.join(logdir), write_graph=True, write_images=False,
