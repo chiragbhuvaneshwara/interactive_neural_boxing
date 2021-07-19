@@ -11,8 +11,8 @@ print(os.getcwd())
 app = Flask(__name__)
 
 frd = 1
-window_wrist = math.ceil(10 / frd)
-window_root = math.ceil(20 / frd)
+window_wrist = math.ceil(5 / frd)
+window_root = math.ceil(15 / frd)
 epochs = 100
 DATASET_OUTPUT_BASE_PATH = os.path.join("data", "neural_data", )
 frd_win = 'fr_' + str(frd) + '_tr_' + str(window_root) + "_" + str(window_wrist)
