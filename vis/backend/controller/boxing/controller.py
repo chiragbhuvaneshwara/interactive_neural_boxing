@@ -22,9 +22,11 @@ class BoxingController:
 
         self.data_config = data_config
         self.n_joints = data_config["num_joints"]
-        self.traj_window = data_config["traj_window"]
+        self.traj_window_wrist = data_config["traj_window_wrist"]
+        self.traj_window_root = data_config["traj_window_root"]
         self.num_traj_samples = data_config["num_traj_samples"]
-        self.traj_step = data_config["traj_step"]
+        self.traj_step_root = data_config["traj_step_root"]
+        self.traj_step_wrist = data_config["traj_step_wrist"]
         self.zero_posture = data_config["zero_posture"]
         self.bone_map = data_config["bone_map"]
         self.in_col_demarcation_ids = data_config["col_demarcation_ids"][0]
@@ -231,12 +233,13 @@ class BoxingController:
          right_left_vels_tr: np.arr(num_left_wrist_tr_pts, 3), trajectory of left hand's wrist velocities
         """
         tr = self.traj
-        step = self.traj_step
-        right_wr_tr, left_wr_tr = tr.traj_right_wrist_pos[::step], tr.traj_left_wrist_pos[::step]
-        root_tr = tr.traj_root_pos[::step]
-        root_vels_tr = tr.traj_root_vels[::step]
-        right_wr_vels_tr = tr.traj_right_wrist_vels[::step]
-        left_wrist_vels_tr = tr.traj_left_wrist_vels[::step]
+        step_wrist = self.traj_step_wrist
+        step_root = self.traj_step_root
+        right_wr_tr, left_wr_tr = tr.traj_right_wrist_pos[::step_wrist], tr.traj_left_wrist_pos[::step_wrist]
+        root_tr = tr.traj_root_pos[::step_root]
+        root_vels_tr = tr.traj_root_vels[::step_root]
+        right_wr_vels_tr = tr.traj_right_wrist_vels[::step_wrist]
+        left_wrist_vels_tr = tr.traj_left_wrist_vels[::step_wrist]
         return root_tr, root_vels_tr, right_wr_tr, left_wr_tr, right_wr_vels_tr, left_wrist_vels_tr
 
     def get_world_pos_rot(self):
@@ -290,9 +293,9 @@ class BoxingController:
             right_pos, left_pos = self.input.get_wrist_pos_traj()
             right_pos, left_pos = right_pos.reshape(self.num_traj_samples, 3), left_pos.reshape(self.num_traj_samples,
                                                                                                 3)
-            right_pos, left_pos = np.repeat(right_pos, repeats=self.traj_step, axis=0), np.repeat(left_pos,
-                                                                                                  repeats=self.traj_step,
-                                                                                                  axis=0)
+            right_pos, left_pos = np.repeat(right_pos, repeats=self.traj_step_wrist, axis=0), np.repeat(left_pos,
+                                                                                                        repeats=self.traj_step_wrist,
+                                                                                                        axis=0)
             right_pos = self.traj.convert_local_to_global(right_pos, 'pos', arm='right')
             left_pos = self.traj.convert_local_to_global(left_pos, 'pos', arm='left')
             # EXP Set wrist positions to mean positions ==> Maybe take the positions from the mean position you have in

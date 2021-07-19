@@ -15,7 +15,8 @@ class Trajectory:
     def __init__(self, data_configuration):
         self.bone_map = data_configuration["bone_map"]
         self.n_tr_samples = data_configuration['num_traj_samples']  # 10
-        self.traj_step = data_configuration['traj_step']  # 5
+        self.traj_step_root = data_configuration['traj_step_root']  # 5
+        self.traj_step_wrist = data_configuration['traj_step_wrist']  # 5
         self.left_wrist_pos_avg_diff = np.array(data_configuration['left_wrist_pos_avg_diff']).ravel()
         self.right_wrist_pos_avg_diff = np.array(data_configuration['right_wrist_pos_avg_diff']).ravel()
         self.left_wrist_pos_avg_diff_gp = np.array(data_configuration['left_wrist_pos_avg_diff']).ravel()
@@ -24,28 +25,30 @@ class Trajectory:
         self.right_wrist_pos_no_punch_dist = data_configuration['right_wrist_no_punch']
 
         # 10 * 5 = 50fps trajectory window
-        self.n_frames_tr_win = self.n_tr_samples * self.traj_step
-        self.median_idx = self.n_frames_tr_win // 2
+        self.n_frames_tr_win_root = self.n_tr_samples * self.traj_step_root
+        self.n_frames_tr_win_wrist = self.n_tr_samples * self.traj_step_wrist
+        self.median_idx_root = self.n_frames_tr_win_root // 2
+        self.median_idx_wrist = self.n_frames_tr_win_wrist // 2
 
         self.n_dims = 3
 
         ### Trajectory info of the root
-        self.traj_root_pos = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
-        self.traj_root_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
-        self.traj_root_rotations = np.zeros(self.n_frames_tr_win)
+        self.traj_root_pos = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win_root)
+        self.traj_root_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win_root)
+        self.traj_root_rotations = np.zeros(self.n_frames_tr_win_root)
         # self.traj_root_directions = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
-        self.traj_root_directions = np.array([[0.0, 0.0, 1.0]] * self.n_frames_tr_win)
+        self.traj_root_directions = np.array([[0.0, 0.0, 1.0]] * self.n_frames_tr_win_root)
 
         ### Trajectory info of the right hand
         # Wrist positions contain all 3 components
-        self.traj_right_wrist_pos = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
-        self.traj_right_wrist_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
+        self.traj_right_wrist_pos = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win_wrist)
+        self.traj_right_wrist_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win_wrist)
         # self.traj_right_punch_labels = np.array([0] * self.n_frames_tr_win)
 
         ### Trajectory info of the left hand
         # Wrist positions contain all 3 components
-        self.traj_left_wrist_pos = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
-        self.traj_left_wrist_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
+        self.traj_left_wrist_pos = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win_wrist)
+        self.traj_left_wrist_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win_wrist)
         # self.traj_left_punch_labels = np.array([0] * self.n_frames_tr_win)
 
         self.traj_reached_left_wrist = {'f': 0, 'r': 0}
@@ -57,12 +60,8 @@ class Trajectory:
         self.foot_drifting = np.zeros(2 * 2)  # (n_foot_joints * n_feet)
         self.blend_bias = 2.0
         # self.blend_bias = 10.0  # adjust bias 0.5 to fit to dataset and responsivity (larger value -> more responsive)
-        self.punch_frames = 0
         self.punch_frames_left = 0
         self.punch_frames_right = 0
-
-        self.pos_step_g = np.array([0, 0, 0])
-        self.pos_step_rev_g = np.array([0, 0, 0])
 
     def get_input(self, root_position, root_rotation):
         """
@@ -92,12 +91,12 @@ class Trajectory:
                                                           arg_type='vels', arm='left')
 
         # Deleting Y axis since root pos doesnt contain Y axis
-        input_root_pos = np.delete(tr_root_pos_local[::self.traj_step], obj=1, axis=1).ravel()
-        input_root_vels = np.delete(tr_root_vels_local[::self.traj_step], obj=1, axis=1).ravel()
-        input_right_wrist_pos = tr_right_pos_local[::self.traj_step].ravel()
-        input_left_wrist_pos = tr_left_pos_local[::self.traj_step].ravel()
-        input_right_wrist_vels = tr_right_vels_local[::self.traj_step].ravel()
-        input_left_wrist_vels = tr_left_vels_local[::self.traj_step].ravel()
+        input_root_pos = np.delete(tr_root_pos_local[::self.traj_step_root], obj=1, axis=1).ravel()
+        input_root_vels = np.delete(tr_root_vels_local[::self.traj_step_root], obj=1, axis=1).ravel()
+        input_right_wrist_pos = tr_right_pos_local[::self.traj_step_wrist].ravel()
+        input_left_wrist_pos = tr_left_pos_local[::self.traj_step_wrist].ravel()
+        input_right_wrist_vels = tr_right_vels_local[::self.traj_step_wrist].ravel()
+        input_left_wrist_vels = tr_left_vels_local[::self.traj_step_wrist].ravel()
 
         return input_root_pos, input_root_vels, \
                input_right_wrist_pos, input_left_wrist_pos, \
@@ -118,7 +117,7 @@ class Trajectory:
         target_vel = self.convert_local_to_global(target_vel, arg_type='vels')
 
         trajectory_positions_blend = np.array(self.traj_root_pos)
-        tr_mid_idx = self.median_idx
+        tr_mid_idx = self.median_idx_root
         for i in range(tr_mid_idx + 1, len(trajectory_positions_blend)):
             # adjust bias 0.5 to fit to dataset and responsivity (larger value -> more responsive)
             scale_pos = 1.0 - pow(1.0 - (i - tr_mid_idx) / (1.0 * tr_mid_idx), self.blend_bias)
@@ -139,7 +138,7 @@ class Trajectory:
             self.traj_root_pos[i] = trajectory_positions_blend[i]
 
         # compute trajectory rotations
-        for i in range(0, self.n_frames_tr_win):
+        for i in range(0, self.n_frames_tr_win_root):
             self.traj_root_rotations[i] = utils.z_angle(self.traj_root_directions[i])
 
     def _update_wrist_traj(self, traj_pos_blend, traj_vels_blend, punch_frames, traj_reached, wrist_reached, hand):
@@ -181,8 +180,8 @@ class Trajectory:
             pos_g = self.convert_local_to_global(pos, arg_type='pos')
 
             if p:
-                root_pos = np.array(self.traj_root_pos[self.median_idx])
-                root_rot = np.array(self.traj_root_rotations[self.median_idx])
+                root_pos = np.array(self.traj_root_pos[self.median_idx_root])
+                root_rot = np.array(self.traj_root_rotations[self.median_idx_root])
                 # print(root_pos, root_rot)
 
             return pos_g.ravel()
@@ -283,7 +282,7 @@ class Trajectory:
                 wrist_reached = self.wrist_reached_right_wrist
                 punch_frames = self.punch_frames_right
 
-            tr_mid_idx = self.median_idx
+            tr_mid_idx = self.median_idx_wrist
             # wrist_pos_avg_diff_g = np.linalg.norm(_loc_to_glob(wrist_pos_avg_diff, True))
             wrist_pos_avg_diff_g = 0.04
             wrist_gp = traj_pos_blend[tr_mid_idx]
@@ -366,15 +365,16 @@ class Trajectory:
         pred_root_vel = np.array(pred_root_vel)
         pred_fwd_dir = np.array(pred_fwd_dir)
 
-        tr_mid_idx = self.median_idx
+        tr_mid_idx_root = self.median_idx_root
+        tr_mid_idx_wrist = self.median_idx_wrist
 
         ## current trajectory
-        self.traj_root_pos[:tr_mid_idx] = self.traj_root_pos[1:tr_mid_idx + 1]
-        self.traj_root_vels[:tr_mid_idx] = self.traj_root_vels[1:tr_mid_idx + 1]
-        self.traj_right_wrist_pos[:tr_mid_idx] = self.traj_right_wrist_pos[1:tr_mid_idx + 1]
-        self.traj_left_wrist_pos[:tr_mid_idx] = self.traj_left_wrist_pos[1:tr_mid_idx + 1]
-        self.traj_right_wrist_vels[:tr_mid_idx] = self.traj_right_wrist_vels[1:tr_mid_idx + 1]
-        self.traj_left_wrist_vels[:tr_mid_idx] = self.traj_left_wrist_vels[1:tr_mid_idx + 1]
+        self.traj_root_pos[:tr_mid_idx_root] = self.traj_root_pos[1:tr_mid_idx_root + 1]
+        self.traj_root_vels[:tr_mid_idx_root] = self.traj_root_vels[1:tr_mid_idx_root + 1]
+        self.traj_right_wrist_pos[:tr_mid_idx_wrist] = self.traj_right_wrist_pos[1:tr_mid_idx_wrist + 1]
+        self.traj_left_wrist_pos[:tr_mid_idx_wrist] = self.traj_left_wrist_pos[1:tr_mid_idx_wrist + 1]
+        self.traj_right_wrist_vels[:tr_mid_idx_wrist] = self.traj_right_wrist_vels[1:tr_mid_idx_wrist + 1]
+        self.traj_left_wrist_vels[:tr_mid_idx_wrist] = self.traj_left_wrist_vels[1:tr_mid_idx_wrist + 1]
 
         def _curr_frame_update(local_vel, xz_to_x0yz=False):
             local_vel = np.array(local_vel)
@@ -388,7 +388,7 @@ class Trajectory:
             wrist_pos = wrist_pos.reshape(1, self.n_dims)
             return self.convert_local_to_global(wrist_pos, arg_type="pos", arm=arm)
 
-        idx = self.median_idx
+        idx = self.median_idx_root
         root_lp = pred_root_pos
         root_gp = _convert_wrist_lp_to_gp(root_lp, arm=None)
         root_gp[0][1] = 0
@@ -405,6 +405,7 @@ class Trajectory:
                                                                rotational_vel)
         self.traj_root_rotations[idx] = utils.z_angle(self.traj_root_directions[idx])
 
+        idx = self.median_idx_wrist
         right_wr_lp, left_wr_lp = pred_local_wrist_pos
         right_wr_gp = _convert_wrist_lp_to_gp(right_wr_lp, arm="right")
         left_wr_gp = _convert_wrist_lp_to_gp(left_wr_lp, arm="left")
@@ -441,17 +442,28 @@ class Trajectory:
         right_p_lab = curr_punch_labels['right']
         left_p_lab = curr_punch_labels['left']
 
-        def _smooth_predictions(pred_arr):
-            half_pred_window = self.median_idx // self.traj_step
+
+        def _smooth_predictions(pred_arr, root=True):
+            if root:
+                tr_step = self.traj_step_root
+                n_frames = self.n_frames_tr_win_root
+                half_pred_window = self.median_idx_root // tr_step
+                tr_mid_idx = self.median_idx_root
+            else:
+                tr_step = self.traj_step_wrist
+                n_frames = self.n_frames_tr_win_wrist
+                half_pred_window = self.median_idx_wrist // tr_step
+                tr_mid_idx = self.median_idx_wrist
+
             combo_idxs_1 = []
             combo_idxs_2 = []
             weights = []
-            for i in range(self.median_idx + 1, self.n_frames_tr_win):
-                weight = ((i - self.n_frames_tr_win / 2) / self.traj_step) % 1.0
+            for i in range(tr_mid_idx + 1, n_frames):
+                weight = ((i - n_frames / 2) / tr_step) % 1.0
                 weights.append(weight)
-                combo_idxs_1.append(i // self.traj_step - half_pred_window)
-                combo_idxs_2.append((i // self.traj_step) + (
-                    1 if i < (self.n_frames_tr_win - self.n_tr_samples + 1) else 0) - half_pred_window)
+                combo_idxs_1.append(i // tr_step - half_pred_window)
+                combo_idxs_2.append((i // tr_step) + (
+                    1 if i < (n_frames - self.n_tr_samples + 1) else 0) - half_pred_window)
 
             # weights = np.tile(np.array(weights).reshape(len(weights), 1), pred_arr.shape[1])
             weights = np.array(weights).reshape(len(weights), 1)
@@ -469,13 +481,15 @@ class Trajectory:
         #  punching ==> Did not work
         pred_rp_tr, pred_rv_tr, pred_rwp_tr, pred_lwp_tr, pred_rwv_tr, pred_lwv_tr = prediction
 
-        half_pred_window = self.median_idx // self.traj_step
-        pred_rp_tr = _smooth_predictions(pred_rp_tr.reshape(half_pred_window, self.n_dims - 1))
-        self.traj_root_pos[self.median_idx + 1:] = self.convert_local_to_global(
+        median_idx_root = self.median_idx_root
+        half_pred_window_root = median_idx_root // self.traj_step_root
+
+        pred_rp_tr = _smooth_predictions(pred_rp_tr.reshape(half_pred_window_root, self.n_dims - 1))
+        self.traj_root_pos[median_idx_root + 1:] = self.convert_local_to_global(
             utils.xz_to_x0yz(pred_rp_tr,
                              axis=1))  # TODO maybe apply some correction to prevent drifting ==> suppress movement smaller than a certain amount
-        pred_rv_tr = _smooth_predictions(pred_rv_tr.reshape(half_pred_window, self.n_dims - 1))
-        self.traj_root_vels[self.median_idx + 1:] = self.convert_local_to_global(
+        pred_rv_tr = _smooth_predictions(pred_rv_tr.reshape(half_pred_window_root, self.n_dims - 1))
+        self.traj_root_vels[median_idx_root + 1:] = self.convert_local_to_global(
             utils.xz_to_x0yz(pred_rv_tr, axis=1),
             arg_type='vels')
 
@@ -488,29 +502,33 @@ class Trajectory:
 
         # if curr_punch_labels['right'] != 0:
         #     start = np.array(self.right_wrist_pos_no_punch_dist["start"])
-        #     end = np.array(self.right_wrist_pos_no_punch_dist["end"])
-        #     step = (start - end) / (self.n_frames_tr_win * .5)
-        #     pred_rwp_tr = np.array([start + step * i for i in range(int(self.n_frames_tr_win * .5))])
+        #     n_frames = np.array(self.right_wrist_pos_no_punch_dist["n_frames"])
+        #     tr_step = (start - n_frames) / (self.n_frames_tr_win * .5)
+        #     pred_rwp_tr = np.array([start + tr_step * i for i in range(int(self.n_frames_tr_win * .5))])
         # if curr_punch_labels['left'] != 0:
         #     start = np.array(self.left_wrist_pos_no_punch_dist["start"])
-        #     end = np.array(self.left_wrist_pos_no_punch_dist["end"])
-        #     step = (start - end) / (self.n_frames_tr_win * .5)
-        #     pred_lwp_tr = np.array([start + step * i for i in range(int(self.n_frames_tr_win * .5))])
+        #     n_frames = np.array(self.left_wrist_pos_no_punch_dist["n_frames"])
+        #     tr_step = (start - n_frames) / (self.n_frames_tr_win * .5)
+        #     pred_lwp_tr = np.array([start + tr_step * i for i in range(int(self.n_frames_tr_win * .5))])
+        median_idx_wrist = self.median_idx_wrist
+        half_pred_window_wrist = self.median_idx_wrist // self.traj_step_wrist
 
-        pred_rwp_tr = _smooth_predictions(pred_rwp_tr.reshape(half_pred_window, self.n_dims))
-        self.traj_right_wrist_pos[self.median_idx + 1:] = self.convert_local_to_global(pred_rwp_tr, arg_type='pos',
-                                                                                       arm="right")
+        pred_rwp_tr = _smooth_predictions(pred_rwp_tr.reshape(half_pred_window_wrist, self.n_dims), root=False)
+        self.traj_right_wrist_pos[median_idx_wrist + 1:] = self.convert_local_to_global(pred_rwp_tr, arg_type='pos',
+                                                                            arm="right")
 
-        pred_rwv_tr = _smooth_predictions(pred_rwv_tr.reshape(half_pred_window, self.n_dims))
-        self.traj_right_wrist_vels[self.median_idx + 1:] = self.convert_local_to_global(pred_rwv_tr, arg_type='vels',
-                                                                                        arm="right")
+        pred_rwv_tr = _smooth_predictions(pred_rwv_tr.reshape(half_pred_window_wrist, self.n_dims), root=False)
+        self.traj_right_wrist_vels[median_idx_wrist + 1:] = self.convert_local_to_global(pred_rwv_tr,
+                                                                             arg_type='vels',
+                                                                             arm="right")
 
-        pred_lwp_tr = _smooth_predictions(pred_lwp_tr.reshape(half_pred_window, self.n_dims))
-        self.traj_left_wrist_pos[self.median_idx + 1:] = self.convert_local_to_global(pred_lwp_tr, arg_type='pos',
-                                                                                      arm="left")
-        pred_lwv_tr = _smooth_predictions(pred_lwv_tr.reshape(half_pred_window, self.n_dims))
-        self.traj_left_wrist_vels[self.median_idx + 1:] = self.convert_local_to_global(pred_lwv_tr, arg_type='vels',
-                                                                                       arm="left")
+        pred_lwp_tr = _smooth_predictions(pred_lwp_tr.reshape(half_pred_window_wrist, self.n_dims), root=False)
+        self.traj_left_wrist_pos[median_idx_wrist + 1:] = self.convert_local_to_global(pred_lwp_tr, arg_type='pos',
+                                                                           arm="left")
+        pred_lwv_tr = _smooth_predictions(pred_lwv_tr.reshape(half_pred_window_wrist, self.n_dims), root=False)
+        self.traj_left_wrist_vels[median_idx_wrist + 1:] = self.convert_local_to_global(pred_lwv_tr,
+                                                                            arg_type='vels',
+                                                                            arm="left")
 
     def convert_global_to_local(self, arr_in, root_pos, root_rot, arg_type='pos', arm=None):
         arr_copy = np.array(arr_in)
@@ -537,8 +555,8 @@ class Trajectory:
         arr_copy = np.array(arr_in)
 
         # Info at mid trajectory is info at current frame
-        root_pos = np.array(self.traj_root_pos[self.median_idx])
-        root_rot = np.array(self.traj_root_rotations[self.median_idx])
+        root_pos = np.array(self.traj_root_pos[self.median_idx_root])
+        root_rot = np.array(self.traj_root_rotations[self.median_idx_root])
         if arm == "left" or arm == "right":
             root_pos[1] = 0
 
@@ -551,17 +569,17 @@ class Trajectory:
         return arr_copy
 
     def get_world_pos_rot(self):
-        pos = np.array(self.traj_root_pos[self.median_idx])
+        pos = np.array(self.traj_root_pos[self.median_idx_root])
         pos[1] = 0.0
 
-        rot = self.traj_root_rotations[self.median_idx]
+        rot = self.traj_root_rotations[self.median_idx_root]
         return pos, rot
 
     def get_previous_pos_rot(self):
-        pos = np.array(self.traj_root_pos[self.median_idx - 1])
+        pos = np.array(self.traj_root_pos[self.median_idx_root - 1])
         pos[1] = 0.0
 
-        rot = self.traj_root_rotations[self.median_idx - 1]
+        rot = self.traj_root_rotations[self.median_idx_root - 1]
         return pos, rot
 
     def reset(self, right_shoulder_lp, left_shoulder_lp, start_location=[0.0, 0.0, 0.0], start_orientation=[0.0],
@@ -574,20 +592,20 @@ class Trajectory:
             start_orientation {list} -- [description] (default: {[1,0,0,0]})
             start_direction {list} -- [description] (default: {[0,0,1]})
         """
-        self.traj_root_pos = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
-        self.traj_root_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
-        self.traj_root_rotations = np.zeros(self.n_frames_tr_win)
+        self.traj_root_pos = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win_root)
+        self.traj_root_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win_root)
+        self.traj_root_rotations = np.zeros(self.n_frames_tr_win_root)
         # TODO control rotations using these dirs
-        self.traj_root_directions = np.array([start_direction] * self.n_frames_tr_win)
+        self.traj_root_directions = np.array([start_direction] * self.n_frames_tr_win_root)
 
         ### Trajectory info of the hand
         # Wrist positions contain all 3 components
-        self.traj_right_wrist_pos = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
-        self.traj_right_wrist_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
+        self.traj_right_wrist_pos = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win_wrist)
+        self.traj_right_wrist_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win_wrist)
 
         # Wrist positions contain all 3 components
-        self.traj_left_wrist_pos = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
-        self.traj_left_wrist_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win)
+        self.traj_left_wrist_pos = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win_wrist)
+        self.traj_left_wrist_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win_wrist)
 
         self.traj_reached_left_wrist = {'f': 0, 'r': 0}
         self.traj_reached_right_wrist = {'f': 0, 'r': 0}
