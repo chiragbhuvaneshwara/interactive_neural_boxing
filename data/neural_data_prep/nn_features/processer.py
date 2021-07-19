@@ -241,12 +241,13 @@ def process_data(handler: FeatureExtractor, punch_labels_csv_path, frame_rate_di
         handler.calculate_new_forward_dirs()
         handler.get_foot_concats()
 
-        x_col_demarcation_ids, x_col_names = prepare_input_data(handler.window_wrist, handler,
+        #TODO: Make sure larger among handler.window_root and window_wrist is used both below and in for loop
+        x_col_demarcation_ids, x_col_names = prepare_input_data(handler.window_root, handler,
                                                                 col_demarcation_finished=False)
-        y_col_demarcation_ids, y_col_names = prepare_output_data(handler.window_wrist, handler,
+        y_col_demarcation_ids, y_col_names = prepare_output_data(handler.window_root, handler,
                                                                  col_demarcation_finished=False)
 
-        for i in range(handler.window_wrist, handler.n_frames - handler.window_wrist - 1, 1):
+        for i in range(handler.window_root, handler.n_frames - handler.window_root - 1, 1):
             if i % 50 == 0:
                 print('Frames processed: ', i)
                 if develop:
