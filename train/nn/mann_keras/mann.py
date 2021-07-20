@@ -158,7 +158,7 @@ class MANN(tf.keras.Model):
         if np.isnan(y_prediction).any():
             raise Exception('Nans found')
 
-        num_gating_experts = 8
+        num_gating_experts = 6
         gating_weights = list(y_prediction[-num_gating_experts:])
         y_prediction = y_prediction[:-num_gating_experts]
         y_prediction = np.array(y_prediction * y_std + y_mean).ravel()

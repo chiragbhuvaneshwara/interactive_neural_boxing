@@ -12,7 +12,7 @@ app = Flask(__name__)
 
 frd = 1
 window_wrist = math.ceil(5 / frd)
-window_root = math.ceil(15 / frd)
+window_root = math.ceil(10 / frd)
 epochs = 100
 DATASET_OUTPUT_BASE_PATH = os.path.join("data", "neural_data", )
 frd_win = 'fr_' + str(frd) + '_tr_' + str(window_root) + "_" + str(window_wrist)
@@ -21,7 +21,7 @@ frd_win_epochs = frd_win + '_ep_' + str(epochs)
 all_models_path = os.path.join("train", "models", "mann_tf2_v2")
 # trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-05-18_19-35-24", "epochs", "epoch_99")
 # trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-06-17_19-39-35", "epochs", "epoch_99")
-trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-07-19_13-32-21", "epochs", "epoch_99")
+trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-07-19_20-28-41", "epochs", "epoch_99")
 target_file = os.path.join(trained_base_path, 'saved_model')
 
 x_mean, y_mean = load_binary(os.path.join(trained_base_path, "means", "Xmean.bin")), \
