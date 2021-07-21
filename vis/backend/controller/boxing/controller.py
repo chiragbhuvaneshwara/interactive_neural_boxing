@@ -75,10 +75,12 @@ class BoxingController:
 
         direction = np.array(dir)
         direction = utils.xz_to_x0yz(direction)
-        target_vel_speed = 0.05 * np.linalg.norm(direction)
+        target_vel_speed = 0.028 * np.linalg.norm(direction)
         self.target_vel = utils.glm_mix(self.target_vel, target_vel_speed * direction, 0.9)
+        print("------", utils.euclidian_length(self.target_vel))
         target_vel_dir = self.target_dir if utils.euclidian_length(self.target_vel) \
                                             < 1e-05 else utils.normalize(self.target_vel)
+        # target_vel_dir = utils.normalize(self.target_vel)
         self.target_dir = utils.mix_directions(self.target_dir, target_vel_dir, 0.9)
 
         # 2. Set new punch_phase and new punch target based on input
@@ -149,8 +151,7 @@ class BoxingController:
 
         # 5. Predict: Get MANN Output
         input_data = self.input.data.reshape(1, len(self.input.data))
-        output_data = self.network.forward_pass(self.network, input_data, self.norm,
-                                                [self.in_col_demarcation_ids, self.out_col_demarcation_ids])
+        output_data = self.network.forward_pass(self.network, input_data, self.norm)
         if np.isnan(output_data).any():
             raise Exception('Nans found in: ', np.argwhere(np.isnan(output_data)), '\n Input: ', input_data)
 

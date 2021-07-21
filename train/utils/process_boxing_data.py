@@ -72,9 +72,9 @@ def get_gating_indices(x_ids, joint_ids):
         root_velocities_tr_ids,  # TODO put only goal
         # root_pos_tr_ids,
         # root_velocities_goal_ids,
-        # root_pos_goal_ids,
+        root_pos_goal_ids,
         foot_end_effector_velocities_ids,
-        # foot_end_effector_pos_ids
+        foot_end_effector_pos_ids
     ]
     # desired_vel (part of OG MANN gating input)
 
@@ -86,11 +86,13 @@ def get_gating_indices(x_ids, joint_ids):
     return gating_ids, gating_variables
 
 
-def train_boxing_data(data_config_path, output_dir, epochs=30, batchsize=32):
+def train_boxing_data(data_config_path, output_dir, num_expert_nodes=6, epochs=30, batchsize=32):
     """
     Trains a MANN keras model on supplied boxing data which is processed by neural_data_prep module and is now in
     a format that can be fed into a neural network.
 
+    @param num_expert_nodes:
+    @type num_expert_nodes:
     @param data_npz_path: str, path to boxing data in neural network supported format
     @param data_config_path: str, path to dict containing parameters used to generate dataset and some info for
     accessing different variables in input and output vectors.
@@ -135,6 +137,7 @@ def train_boxing_data(data_config_path, output_dir, epochs=30, batchsize=32):
     optimizer = tf.keras.optimizers.Adam(learning_rate)
 
     training_details = {
+        "num_experts": num_expert_nodes,
         "gating_variables": gating_variable_names,
         "num_data_pts": X.shape[0],
         "learning_rate": type(learning_rate).__name__,
@@ -144,7 +147,6 @@ def train_boxing_data(data_config_path, output_dir, epochs=30, batchsize=32):
         "dataset_config_path": data_config_path,
     }
 
-    num_expert_nodes = 6
     network = MANN(input_dim, output_dim, 512, 64, num_expert_nodes, gating_indices, batch_size=batchsize)
     network.compile(optimizer=optimizer, loss=mse_loss_variable_gating(num_expert_nodes))
     tensorboard = tf.keras.callbacks.TensorBoard(log_dir=os.path.join(logdir), write_graph=True, write_images=False,

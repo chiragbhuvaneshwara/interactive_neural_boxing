@@ -15,10 +15,10 @@ args = args_parser.parse_args()
 DEVELOP = args.develop
 LOCAL = args.local
 
-FRAME_RATE_DIV = 2
+FRAME_RATE_DIV = 1
 # TR_WINDOW = math.ceil(14 / FRAME_RATE_DIV)
-TR_WINDOW_WRIST = math.ceil(10 / FRAME_RATE_DIV)
-TR_WINDOW_ROOT = math.ceil(10 / FRAME_RATE_DIV)
+TR_WINDOW_WRIST = math.ceil(5 / FRAME_RATE_DIV)
+TR_WINDOW_ROOT = math.ceil(20 / FRAME_RATE_DIV)
 OUT_BASE_PATH = os.path.join("train", "models", "mann_tf2_v2")
 ############################################
 frd_win = 'fr_' + str(FRAME_RATE_DIV) + '_tr_' + str(TR_WINDOW_ROOT) + "_" + str(TR_WINDOW_WRIST)
