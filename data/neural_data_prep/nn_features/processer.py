@@ -68,6 +68,8 @@ def prepare_input_data(frame_num, handler, col_demarcation_finished=True):
     local_positions = handler.get_root_local_joint_positions()
     local_velocities = handler.get_root_local_joint_velocities()
 
+    x_root_fwd = handler.get_forward_directions().flatten()
+
     traj_info = handler.get_trajectory(frame_num)
 
     x_root_pos_tr = traj_info['root_pos']
