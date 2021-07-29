@@ -102,7 +102,7 @@ def prepare_input_data(frame_num, handler, col_demarcation_finished=True):
     x_curr_frame = [
         x_root_pos_tr,  # local wrt r in mid frame
         x_root_vels_tr,
-        x_root_dirs_tr,
+        # x_root_dirs_tr,
         x_right_wrist_pos_tr,  # local wrt r in mid frame (TODO then wrt wrist in mid frame)
         x_left_wrist_pos_tr,  # local wrt r in mid frame (TODO then wrt wrist in mid frame)
         x_right_wrist_vels_tr,
