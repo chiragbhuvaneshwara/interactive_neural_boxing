@@ -148,6 +148,7 @@ class MANN(tf.keras.Model):
     def forward_pass(mann, x, norm, num_gating_experts=6):
 
         # TODO make norm save and extract functions
+        # Put np array creation into init functions
         x_mean = np.array(norm['x_mean'], dtype=np.float64)
         x_std = np.array(norm['x_std'], dtype=np.float64)
         y_mean = np.array(norm['y_mean'], dtype=np.float64)
@@ -162,9 +163,9 @@ class MANN(tf.keras.Model):
         gating_weights = list(y_prediction[-num_gating_experts:])
         y_prediction = y_prediction[:-num_gating_experts]
         y_prediction = np.array(y_prediction * y_std + y_mean).ravel()
-        print(gating_weights)
+        # print(gating_weights)
         m = max(gating_weights)
-        print(gating_weights.index(m))
+        # print(gating_weights.index(m))
         if np.isnan(y_prediction).any():
             raise Exception('Nans found')
 

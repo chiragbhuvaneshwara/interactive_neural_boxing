@@ -24,18 +24,18 @@ def get_punch_count(punch_labels_df, hand, punch_val):
 
 def gen_punch_stats(data_directory):
     count_r_fwd = np.array([])
-    countr_r_rev = np.array([])
+    count_r_rev = np.array([])
     count_l_fwd = np.array([])
     count_l_rev = np.array([])
     for file in os.listdir(data_directory):
         filename = os.path.join(data_directory, file)
         punch_phase_df = pd.read_csv(filename)
         count_r_fwd = np.append(count_r_fwd, get_punch_count(punch_phase_df, 'right punch', 1.0))
-        countr_r_rev = np.append(countr_r_rev, get_punch_count(punch_phase_df, 'right punch', -1.0))
+        count_r_rev = np.append(count_r_rev, get_punch_count(punch_phase_df, 'right punch', -1.0))
         count_l_fwd = np.append(count_l_fwd, get_punch_count(punch_phase_df, 'left punch', 1.0))
         count_l_rev = np.append(count_l_rev, get_punch_count(punch_phase_df, 'left punch', -1.0))
 
-    punch_count_print = [count_r_fwd, countr_r_rev, count_l_fwd, count_l_rev]
+    punch_count_print = [count_r_fwd, count_r_rev, count_l_fwd, count_l_rev]
     names = list(map(retrieve_name, punch_count_print))
     punch_stats = []
 

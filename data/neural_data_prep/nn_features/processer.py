@@ -76,6 +76,9 @@ def prepare_input_data(frame_num, handler, col_demarcation_finished=True):
     x_root_vels_tr = traj_info['root_vels']
     x_root_vels_tr = np.delete(x_root_vels_tr, 1, 1).ravel()
 
+    x_root_dirs_tr = traj_info['root_dirs']
+    x_root_dirs_tr = np.delete(x_root_dirs_tr, 1, 1).ravel()
+
     x_right_wrist_pos_tr = traj_info['right_wrist_pos'].ravel()
     x_left_wrist_pos_tr = traj_info['left_wrist_pos'].ravel()
 
@@ -97,6 +100,7 @@ def prepare_input_data(frame_num, handler, col_demarcation_finished=True):
     x_curr_frame = [
         x_root_pos_tr,  # local wrt r in mid frame
         x_root_vels_tr,
+        x_root_dirs_tr,
         x_right_wrist_pos_tr,  # local wrt r in mid frame (TODO then wrt wrist in mid frame)
         x_left_wrist_pos_tr,  # local wrt r in mid frame (TODO then wrt wrist in mid frame)
         x_right_wrist_vels_tr,
@@ -181,18 +185,18 @@ def prepare_output_data(frame_num, handler, col_demarcation_finished=True):
     y_curr_frame = [
         y_root_velocity,
         y_root_new_forward,
-        y_right_punch_labels,  # TODO:Janis said remove
-        y_left_punch_labels,  # TODO:Janis said remove
-        y_right_foot_contacts,
-        y_left_foot_contacts,
         y_root_pos_tr,
         y_root_vels_tr,
+        y_right_punch_labels,  # TODO:Janis said remove
+        y_left_punch_labels,  # TODO:Janis said remove
         y_right_wrist_pos_tr,
         y_left_wrist_pos_tr,
         y_right_wrist_vels_tr,
         y_left_wrist_vels_tr,
         # y_right_punch_labels_tr,                                   #TODO:Janis said remove
         # y_left_punch_labels_tr,                                   #TODO:Janis said remove
+        y_right_foot_contacts,
+        y_left_foot_contacts,
         y_local_pos,
         y_local_vel
     ]
