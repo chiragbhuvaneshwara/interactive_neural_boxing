@@ -506,24 +506,6 @@ class FeatureExtractor:
         return root_rvelocity
 
     # TODO Verify difference between get_rotational_velocity and get_new_forward_dirs
-    # def calculate_new_forward_dirs(self):
-    #     """
-    #     Returns the new forward direction relative to the last position.
-    #     Alternative to rotational velocity, as this can be computed out of the new forward direction
-    #     with np.arctan2(new_dir[0], new_dir[1])
-    #
-    #     :return root_rvel (np.array(n_frames, 1, 2))
-    #     """
-    #     root_rvelocity = np.zeros((self.n_frames - 1, 2))
-    #     root_rotations = self.get_root_rotations()
-    #
-    #     for i in range(self.n_frames - 1):
-    #         q = root_rotations[i + 1] * (-root_rotations[i])
-    #         td = q * self.__ref_dir
-    #         root_rvelocity[i] = np.array([td[0], td[2]])
-    #
-    #     self.new_fwd_dirs = root_rvelocity
-
     def calculate_new_forward_dirs(self):
         """
         Returns the new forward direction relative to the last position.
@@ -532,8 +514,26 @@ class FeatureExtractor:
 
         :return root_rvel (np.array(n_frames, 1, 2))
         """
-        forward = self.get_forward_directions()
-        self.new_fwd_dirs = np.delete(forward[1:], 1, 1)
+        root_rvelocity = np.zeros((self.n_frames - 1, 2))
+        root_rotations = self.get_root_rotations()
+
+        for i in range(self.n_frames - 1):
+            q = root_rotations[i + 1] * (-root_rotations[i])
+            td = q * self.__ref_dir
+            root_rvelocity[i] = np.array([td[0], td[2]])
+
+        self.new_fwd_dirs = root_rvelocity
+
+    # def calculate_new_forward_dirs(self):
+    #     """
+    #     Returns the new forward direction relative to the last position.
+    #     Alternative to rotational velocity, as this can be computed out of the new forward direction
+    #     with np.arctan2(new_dir[0], new_dir[1])
+    #
+    #     :return root_rvel (np.array(n_frames, 1, 2))
+    #     """
+    #     forward = self.get_forward_directions()
+    #     self.new_fwd_dirs = np.delete(forward[1:], 1, 1)
 
     def get_foot_concats(self, velfactor=np.array([0.05, 0.05])):
         """
