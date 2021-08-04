@@ -34,7 +34,7 @@ def get_gating_indices(x_ids, joint_ids):
     root_velocities_tr_ids = _generate_id_sequence(x_ids, 'x_root_vels_tr')
     root_velocities_goal_ids = _generate_id_sequence(x_ids, 'x_root_vels_tr')[-3:]
 
-    # root_dirs_tr_ids = _generate_id_sequence(x_ids, 'x_root_dirs_tr')
+    root_dirs_tr_ids = _generate_id_sequence(x_ids, 'x_root_dirs_tr')
 
     root_pos_tr_ids = _generate_id_sequence(x_ids, 'x_root_pos_tr')
     root_pos_goal_ids = _generate_id_sequence(x_ids, 'x_root_pos_tr')[-3:]
@@ -68,6 +68,7 @@ def get_gating_indices(x_ids, joint_ids):
     # TODO: label walking and not walking
     gating_ids = [
         root_velocities_tr_ids,  # TODO put only goal
+        root_dirs_tr_ids,
         # root_pos_tr_ids,
         # root_velocities_goal_ids,
         root_pos_goal_ids,
