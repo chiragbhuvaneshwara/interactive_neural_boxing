@@ -515,13 +515,25 @@ class FeatureExtractor:
         :return root_rvel (np.array(n_frames, 1, 2))
         """
         root_rvelocity = np.zeros((self.n_frames - 1, 2))
+        # TODO Check root rotations
         root_rotations = self.get_root_rotations()
-
+        # a = []
+        # b = []
+        # c = []
+        minus_real_quat = Quaternion(-1, 0, 0, 0)
         for i in range(self.n_frames - 1):
-            q = root_rotations[i + 1] * (-root_rotations[i])
+            # TODO a * ref dir and b * ref dir
+            #  q = a * b
+            q = root_rotations[i + 1] * (minus_real_quat * root_rotations[i])
+            a.append(root_rotations[i+1] * self.__ref_dir)
+            b.append(-root_rotations[i] * self.__ref_dir)
+            c.append(root_rotations[i] * self.__ref_dir)
             td = q * self.__ref_dir
             root_rvelocity[i] = np.array([td[0], td[2]])
 
+        # a = np.array(a)
+        # b = np.array(b)
+        # c = np.array(c)
         self.new_fwd_dirs = root_rvelocity
 
     # def calculate_new_forward_dirs(self):
