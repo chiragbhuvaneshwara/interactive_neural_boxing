@@ -525,9 +525,9 @@ class FeatureExtractor:
             # TODO a * ref dir and b * ref dir
             #  q = a * b
             q = root_rotations[i + 1] * (minus_real_quat * root_rotations[i])
-            a.append(root_rotations[i+1] * self.__ref_dir)
-            b.append(-root_rotations[i] * self.__ref_dir)
-            c.append(root_rotations[i] * self.__ref_dir)
+            # a.append(root_rotations[i+1] * self.__ref_dir)
+            # b.append(-root_rotations[i] * self.__ref_dir)
+            # c.append(root_rotations[i] * self.__ref_dir)
             td = q * self.__ref_dir
             root_rvelocity[i] = np.array([td[0], td[2]])
 
