@@ -24,7 +24,10 @@ def get_rotation_to_ref_direction(dir_vecs, ref_dir):
     for dir_vec in dir_vecs:
         q = Quaternion.between(dir_vec, ref_dir)
         rotations.append(q)
-        sp_r = Quaternion(R.align_vectors(dir_vec.reshape(1,len(dir_vec)), ref_dir.reshape(1,len(dir_vec)))[0].as_quat())
+        sp_r = R.align_vectors(dir_vec.reshape(1, len(dir_vec)), ref_dir.reshape(1, len(dir_vec)))[
+            0].as_quat()  # x,y,z,w format
+        sp_r[0], sp_r[-1] = sp_r[-1], sp_r[0]
+        sp_r = Quaternion(sp_r)
         # sp_r = Quaternion(R.align_vectors(ref_dir.reshape(1,len(dir_vec)), dir_vec.reshape(1,len(dir_vec)))[0].as_quat())
         rotations_2.append(sp_r)
 
