@@ -7,6 +7,7 @@ from data.neural_data_prep.mosi_utils_anim.animation_data.utils import convert_e
     quaternion_from_matrix, quaternion_matrix
 from data.neural_data_prep.mosi_utils_anim.animation_data import BVHReader, SkeletonBuilder
 from data.neural_data_prep.mosi_utils_anim.animation_data.quaternion import Quaternion
+from scipy.spatial.transform import Rotation as R
 
 
 def get_rotation_to_ref_direction(dir_vecs, ref_dir):
@@ -18,10 +19,17 @@ def get_rotation_to_ref_direction(dir_vecs, ref_dir):
     @return: rotations to reference direction in radians
     """
     rotations = []
+    rotations_2 = []
+
     for dir_vec in dir_vecs:
         q = Quaternion.between(dir_vec, ref_dir)
         rotations.append(q)
-    return rotations
+        # sp_r = Quaternion(R.align_vectors(dir_vec.reshape(1,len(dir_vec)), ref_dir.reshape(1,len(dir_vec)))[0].as_quat())
+        sp_r = Quaternion(R.align_vectors(ref_dir.reshape(1,len(dir_vec)), dir_vec.reshape(1,len(dir_vec)))[0].as_quat())
+        rotations_2.append(sp_r)
+
+    # return rotations
+    return rotations_2
 
 
 class FeatureExtractor:
@@ -514,9 +522,13 @@ class FeatureExtractor:
 
         :return root_rvel (np.array(n_frames, 1, 2))
         """
-        root_rvelocity = np.zeros((self.n_frames - 1, 2))
+        # root_rvelocity = np.zeros((self.n_frames - 1, 2))
+        # root_rvelocity2 = np.zeros((self.n_frames - 1, 2))
+        root_rvelocity_s = np.zeros((self.n_frames - 1, 2))
         # TODO Check root rotations
         root_rotations = self.get_root_rotations()
+        root_rotations_s = [R.from_quat(rr.toVector()) for rr in root_rotations]
+        root_rotations_s2 = [R.from_quat((-rr).toVector()) for rr in root_rotations]
         # a = []
         # b = []
         # c = []
@@ -524,17 +536,24 @@ class FeatureExtractor:
         for i in range(self.n_frames - 1):
             # TODO a * ref dir and b * ref dir
             #  q = a * b
-            q = root_rotations[i + 1] * (minus_real_quat * root_rotations[i])
-            # a.append(root_rotations[i+1] * self.__ref_dir)
+            # q1 = root_rotations[i + 1] * (-root_rotations[i])
+            # q2 = root_rotations[i + 1] * (minus_real_quat * root_rotations[i])
+            qs = root_rotations_s[i + 1] * root_rotations_s2[i]
+            # a.append(root_rotations[i + 1] * self.__ref_dir)
             # b.append(-root_rotations[i] * self.__ref_dir)
             # c.append(root_rotations[i] * self.__ref_dir)
-            td = q * self.__ref_dir
-            root_rvelocity[i] = np.array([td[0], td[2]])
+            # td = q1 * self.__ref_dir
+            # td2 = q2 * self.__ref_dir
+            tds = qs.apply(self.__ref_dir)
+            # root_rvelocity[i] = np.array([td[0], td[2]])
+            # root_rvelocity2[i] = np.array([td2[0], td2[2]])
+            root_rvelocity_s[i] = np.array([tds[0], tds[2]])
 
         # a = np.array(a)
         # b = np.array(b)
         # c = np.array(c)
-        self.new_fwd_dirs = root_rvelocity
+        # self.new_fwd_dirs = root_rvelocity
+        self.new_fwd_dirs = root_rvelocity_s
 
     # def calculate_new_forward_dirs(self):
     #     """
