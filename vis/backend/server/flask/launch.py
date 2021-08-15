@@ -18,16 +18,27 @@ app = Flask(__name__)
 # window_root = math.ceil(5 / frd)
 frd = 1
 window_wrist = math.ceil(5 / frd)
-window_root = math.ceil(20 / frd)
+window_root = math.ceil(5 / frd)
 epochs = 100
 DATASET_OUTPUT_BASE_PATH = os.path.join("data", "neural_data", )
 frd_win = 'fr_' + str(frd) + '_tr_' + str(window_root) + "_" + str(window_wrist)
 controller_in_out_dir = os.path.join("backend", "controller", "controller_in_out")
 frd_win_epochs = frd_win + '_ep_' + str(epochs)
 all_models_path = os.path.join("train", "models", "mann_tf2_v2")
-trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-07-20_17-46-29", "epochs", "epoch_99") #1, 5, 5
+# trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-07-20_17-46-29", "epochs", "epoch_99") #1, 5, 5 min gating inputs
+# trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-07-29_14-49-35", "epochs", "epoch_99") #1, 5, 5 min gating inputs + traj root dirs
+
+
+trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-08-04_17-39-31", "epochs",
+                                 "epoch_99")  # 1, 5, 5 min gating inputs + traj root dirs
+
+# trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-08-12_15-29-17", "epochs",
+#                                  "epoch_99")  # 1, 5, 5 min gating inputs + traj root dirs, updated new fwd dirs but old rots
+# trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-08-13_19-04-36", "epochs",
+#                                  "epoch_99")  # 1, 5, 5 min gating inputs + traj root dirs, updated new fwd dirs and rots
+# trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-07-21_21-20-46", "epochs", "epoch_99") #1, 5, 5 more gating inputs
 # trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-07-20_19-05-14", "epochs", "epoch_99") #2, 10, 10
-# trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-07-20_13-40-51", "epochs", "epoch_99")
+# trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-07-21_12-43-51", "epochs", "epoch_99") # 1, 20 ro, 5 wr
 target_file = os.path.join(trained_base_path, 'saved_model')
 
 x_mean, y_mean = load_binary(os.path.join(trained_base_path, "means", "Xmean.bin")), \
@@ -54,10 +65,6 @@ bc = BoxingController(mann, dataset_configuration, norm)
 zp = build_zero_posture(bc, num_traj_pts=dataset_configuration["num_traj_samples"])
 
 
-# print(zp.bones)
-# print(zp.bone_map)
-
-
 def controller_to_posture():
     """
     This function converts the various character and trajectory information stored in the character and trajectory
@@ -77,7 +84,6 @@ def controller_to_posture():
     tr_keys = ['rt', 'rt_v', 'rwt', 'lwt', 'rwt_v', 'lwt_v']
     for i in range(len(tr_keys)):
         curr_tr = tr[i]
-        # print(tr_keys[i], len(curr_tr))
         for j in range(len(curr_tr)):
             posture.traj[tr_keys[i]][j] = np_to_tvector3(curr_tr[j])
 
@@ -101,7 +107,6 @@ def fetch_frame():
 
         punch_hand = punch_in["hand"]
         traj_reached = punch_in["target_reached"]
-        # print("---", traj_reached)
         punch_right_target = tvector3_to_np(punch_in["target_right"])
         punch_left_target = tvector3_to_np(punch_in["target_left"])
 
@@ -126,8 +131,6 @@ def fetch_frame():
 
 @app.route('/fetch_punch_completed/<target_hand>', methods=['GET'])
 def get_punch_completed(target_hand):
-    # if target_hand == 'left':
-    #     print(target_hand)
     if request.method == 'GET':
         if target_hand == "left":
             p_comp = bc.traj.wrist_reached_left_wrist
@@ -149,24 +152,10 @@ def get_zero_posture():
 
     @return: str, json data of the posture is sent as string to Unity
     """
-    if request.method == 'POST':
-        print(request.get_json()["name"])
-        if request.method == 'POST' and request.get_json()["name"] == "fetch_zp":
-            posture = controller_to_posture()
-            return json.dumps(posture, default=serialize)
-        elif request.method == 'POST' and request.get_json()["name"] == "fetch_zp_reset":
-            posture = controller_to_posture()
-            # bc.reset()
-            # bc.reset([0, 0, 0], math.pi, [0, 0, 0])
-            bc.reset([0, 0, 0], 0.0, [0, 0, 0])
-            # bc.reset([0, 0, 0], 0.0, [0, 0, 1])
-            return json.dumps(posture, default=serialize)
-    elif request.method == 'GET':
+    if request.method == 'GET':
         posture = controller_to_posture()
-        # bc.reset()
-        # bc.reset([0, 0, 0], -math.pi, [0, 0, 0])
-        bc.reset([0, 0, 0], 0.0, [0, 0, 0])
-        # bc.reset([0, 0, 0], 0.0, [0, 0, 1])
+        # bc.reset([0, 0, 0], 0.0, [0, 0, 0])
+        bc.reset([0, 0, 0], 0.0, [0, 0, 1])
         return json.dumps(posture, default=serialize)
 
     else:

@@ -37,6 +37,9 @@ class MANNInput(object):
     def set_root_vels_tr(self, root_vels_traj):
         self.__set_data__("x_root_vels_tr", root_vels_traj)
 
+    def set_root_dirs_tr(self, root_vels_traj):
+        self.__set_data__("x_root_dirs_tr", root_vels_traj)
+
     def set_wrist_pos_tr(self, right_wrist_pos_traj, left_wrist_pos_traj):
         self.__set_data__("x_right_wrist_pos_tr", right_wrist_pos_traj)
         self.__set_data__("x_left_wrist_pos_tr", left_wrist_pos_traj)

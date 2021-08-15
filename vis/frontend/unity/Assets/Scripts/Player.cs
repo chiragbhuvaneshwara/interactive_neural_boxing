@@ -291,6 +291,7 @@ public partial class Player : MonoBehaviour
         }
 
         var temp = new Vector2(dir[0], dir[1]).normalized;
+        //var temp = new Vector2(dir[0], dir[1]);
 
         dir[0] = temp.x;
         dir[1] = temp.y;

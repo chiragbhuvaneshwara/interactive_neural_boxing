@@ -14,6 +14,7 @@ class Character:
 
     def __init__(self, data_configuration):
         self.joints = data_configuration["num_joints"]
+        self.bone_map = data_configuration["bone_map"]
 
         # fields for joint positions and velocities in global space.
         self.joint_positions = np.array([[0.0, 0.0, 0.0]] * self.joints)
@@ -27,6 +28,10 @@ class Character:
         self.root_rotation = 0.0
         # root position projected to ground (y-axis = 0)
         self.root_position = np.array([0.0, 0.0, 0.0])
+
+        # Indices from dataset_config json
+        self.foot_left = [self.bone_map["LeftAnkle"], self.bone_map["LeftToe"]]  # [ankle, toe]
+        self.foot_right = [self.bone_map["RightAnkle"], self.bone_map["RightToe"]]
 
     def set_pose(self, joint_positions, joint_velocities, joint_rotations, init=False):
         """
@@ -58,7 +63,7 @@ class Character:
                 # mix positions and velocities.
                 self.joint_positions[j] = utils.glm_mix(self.joint_positions[j] + vel, pos, 0.5)
             elif init:
-                self.joint_positions[j] = pos
+                self.joint_positions[j] = self.root_position + pos
 
             self.joint_velocities[j] = vel
 
@@ -82,6 +87,33 @@ class Character:
             joint_vel[i * 3:i * 3 + 3] = curr_joint_vel.ravel()
 
         return joint_pos, joint_vel
+
+    def compute_foot_sliding(self, joint_positions, joint_velocities, foot_contacts=[0, 0, 0, 0]):
+        def compute_foot_movement(j):
+            local_pos = np.array(
+                [joint_positions[j * 3 + 0], joint_positions[j * 3 + 1], joint_positions[j * 3 + 2]]).reshape(3, )
+            pos = utils.rot_around_z_3d(local_pos, self.root_rotation) + self.root_position
+            local_vel = np.array(
+                [joint_velocities[j * 3 + 0], joint_velocities[j * 3 + 1], joint_velocities[j * 3 + 2]]).reshape(3, )
+            vel = utils.rot_around_z_3d(local_vel, self.root_rotation)
+            return self.joint_positions[j] - utils.glm_mix(self.joint_positions[j] + vel, pos, 0.5)
+
+        global_foot_drift = np.array([0.0, 0.0, 0.0])
+        if foot_contacts[0]:
+            global_foot_drift += compute_foot_movement(self.foot_left[0])
+        if foot_contacts[1]:
+            global_foot_drift += compute_foot_movement(self.foot_left[1])
+        if foot_contacts[2]:
+            global_foot_drift += compute_foot_movement(self.foot_right[0])
+        if foot_contacts[3]:
+            global_foot_drift += compute_foot_movement(self.foot_right[1])
+
+        if (np.sum(foot_contacts) > 0):
+            global_foot_drift /= np.sum(foot_contacts)
+            global_foot_drift[1] = 0.0
+        # print("foot correction: ", foot_contacts, global_foot_drift)
+        # return np.array([0.0, 0.0, 0.0])
+        return global_foot_drift
 
     def convert_global_to_local(self, arr, root_pos, root_rot, type_in='pos'):
 

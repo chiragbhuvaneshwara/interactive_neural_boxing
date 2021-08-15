@@ -57,8 +57,8 @@ class MANNOutput(object):
         return {'right': ph_r, 'left': ph_l}
 
     def get_foot_contacts(self):
-        right_foot = self.__get_data__('y_foot_contacts')
-        left_foot = self.__get_data__('y_foot_contacts')
+        right_foot = self.__get_data__('y_right_foot_contacts')
+        left_foot = self.__get_data__('y_left_foot_contacts')
         return np.concatenate((right_foot, left_foot))
 
     def get_root_pos_traj(self):
@@ -66,6 +66,9 @@ class MANNOutput(object):
 
     def get_root_vel_traj(self):
         return self.__get_data__('y_root_vels_tr')
+
+    def get_root_dir_traj(self):
+        return self.__get_data__('y_root_dirs_tr')
 
     def get_wrist_pos_traj(self):
         right_pos_traj = self.__get_data__('y_right_wrist_pos_tr')
@@ -132,14 +135,14 @@ class MANNOutput(object):
     def get_next_traj(self):
         rp_tr = self.get_root_pos_traj()
         rv_tr = self.get_root_vel_traj()
+        rd_tr = self.get_root_dir_traj()
         rwp_tr, lwp_tr = self.get_wrist_pos_traj()
         rwv_tr, lwv_tr = self.get_wrist_vels_traj()
         # rpunch_tr, lpunch_tr = self.get_punch_labels_traj()
-        # pred_dir = self.get_root_new_forward()
 
-        return rp_tr, rv_tr, rwp_tr, lwp_tr, rwv_tr, lwv_tr, \
+        return rp_tr, rv_tr, rd_tr, rwp_tr, lwp_tr, rwv_tr, lwv_tr, \
             # rpunch_tr, lpunch_tr
-        # , pred_dir
+
 
     def set_wrist_pos_tr(self, right_wrist_pos_traj, left_wrist_pos_traj):
         self.__set_data__("y_right_wrist_pos_tr", right_wrist_pos_traj)
