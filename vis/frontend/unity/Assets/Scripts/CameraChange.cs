@@ -22,12 +22,12 @@ public class CameraChange : MonoBehaviour
     void Update()
     {
         // Check for input and swap accordingly
-        if (Input.GetKeyDown(KeyCode.H))
+        if (Input.GetKeyDown(KeyCode.Y))
         {
             //Debug.Log("cam1");
             SwapCamera(cam1);
         };
-        if (Input.GetKeyDown(KeyCode.J))
+        if (Input.GetKeyDown(KeyCode.X))
         {
             //Debug.Log("cam2");
             SwapCamera(cam2);

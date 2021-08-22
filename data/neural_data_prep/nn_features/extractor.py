@@ -19,20 +19,13 @@ def get_rotation_to_ref_direction(dir_vecs, ref_dir):
     @return: rotations to reference direction in radians
     """
     rotations = []
-    rotations_2 = []
 
     for dir_vec in dir_vecs:
         q = Quaternion.between(dir_vec, ref_dir)
         rotations.append(q)
-        sp_r = R.align_vectors(dir_vec.reshape(1, len(dir_vec)), ref_dir.reshape(1, len(dir_vec)))[
-            0].as_quat()  # x,y,z,w format
-        sp_r[0], sp_r[-1] = sp_r[-1], sp_r[0]
-        sp_r = Quaternion(sp_r)
-        # sp_r = Quaternion(R.align_vectors(ref_dir.reshape(1,len(dir_vec)), dir_vec.reshape(1,len(dir_vec)))[0].as_quat())
-        rotations_2.append(sp_r)
 
-    # return rotations
-    return rotations_2
+    rotations = np.array(rotations)
+    return rotations
 
 
 class FeatureExtractor:
@@ -68,9 +61,6 @@ class FeatureExtractor:
         :param hid_r: 10, right hand joint number
         :param num_traj_sampling_pts: number of traj pts to sample from specified window param
         """
-        # TODO: separate trajectory window for walking and punching. Maybe even separate window for left and right
-        #  punching.
-        # TODO: maybe even different num_sampling_pts while changing window
 
         self.bvh_file_path = bvh_file_path
         self.__global_positions = []
@@ -391,7 +381,7 @@ class FeatureExtractor:
 
             if space == 'local':
                 grp = np.array(self.__global_positions[:, 0])
-                grp[:, 1] = 0  # TODO Check if punch target height is correct
+                grp[:, 1] = 0
                 punch_target_array = np.array(self.__global_positions[:, hand_id]) - grp
                 root_rotations = self.get_root_rotations()
                 for f in range(len(punch_labels)):
@@ -516,7 +506,6 @@ class FeatureExtractor:
 
         return root_rvelocity
 
-    # TODO Verify difference between get_rotational_velocity and get_new_forward_dirs
     def calculate_new_forward_dirs(self):
         """
         Returns the new forward direction relative to the last position.
@@ -525,49 +514,14 @@ class FeatureExtractor:
 
         :return root_rvel (np.array(n_frames, 1, 2))
         """
-        # root_rvelocity = np.zeros((self.n_frames - 1, 2))
-        # root_rvelocity2 = np.zeros((self.n_frames - 1, 2))
-        root_rvelocity_s = np.zeros((self.n_frames - 1, 2))
-        # TODO Check root rotations
+        root_rvelocity = np.zeros((self.n_frames - 1, 2))
         root_rotations = self.get_root_rotations()
-        root_rotations_s = [R.from_quat(rr.toVector()) for rr in root_rotations]
-        root_rotations_s2 = [R.from_quat((-rr).toVector()) for rr in root_rotations]
-        # a = []
-        # b = []
-        # c = []
-        minus_real_quat = Quaternion(-1, 0, 0, 0)
         for i in range(self.n_frames - 1):
-            # TODO a * ref dir and b * ref dir
-            #  q = a * b
-            # q1 = root_rotations[i + 1] * (-root_rotations[i])
-            # q2 = root_rotations[i + 1] * (minus_real_quat * root_rotations[i])
-            qs = root_rotations_s[i + 1] * root_rotations_s2[i]
-            # a.append(root_rotations[i + 1] * self.__ref_dir)
-            # b.append(-root_rotations[i] * self.__ref_dir)
-            # c.append(root_rotations[i] * self.__ref_dir)
-            # td = q1 * self.__ref_dir
-            # td2 = q2 * self.__ref_dir
-            tds = qs.apply(self.__ref_dir)
-            # root_rvelocity[i] = np.array([td[0], td[2]])
-            # root_rvelocity2[i] = np.array([td2[0], td2[2]])
-            root_rvelocity_s[i] = np.array([tds[0], tds[2]])
+            q1 = root_rotations[i + 1] * (-root_rotations[i])
+            td = q1 * self.__ref_dir
+            root_rvelocity[i] = np.array([td[0], td[2]])
 
-        # a = np.array(a)
-        # b = np.array(b)
-        # c = np.array(c)
-        # self.new_fwd_dirs = root_rvelocity
-        self.new_fwd_dirs = root_rvelocity_s
-
-    # def calculate_new_forward_dirs(self):
-    #     """
-    #     Returns the new forward direction relative to the last position.
-    #     Alternative to rotational velocity, as this can be computed out of the new forward direction
-    #     with np.arctan2(new_dir[0], new_dir[1])
-    #
-    #     :return root_rvel (np.array(n_frames, 1, 2))
-    #     """
-    #     forward = self.get_forward_directions()
-    #     self.new_fwd_dirs = np.delete(forward[1:], 1, 1)
+        self.new_fwd_dirs = root_rvelocity
 
     def get_foot_concats(self, velfactor=np.array([0.05, 0.05])):
         """
@@ -576,7 +530,6 @@ class FeatureExtractor:
         :param velfactor=np.array([0.05, 0.05])
         :return feet_l, feet_r  (np.array(n_frames, 1), dtype = np.float)
         """
-        # TODO: see if required
         fid_l, fid_r = [self.foot_left['a'], self.foot_left['t']], [self.foot_right['a'], self.foot_right['t']]
         velfactor = velfactor / self.to_meters
 

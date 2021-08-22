@@ -13,6 +13,7 @@ namespace MultiMosiServer
             [SerializeField] public double[] target_left;
             [SerializeField] public double[] target_right;
             [SerializeField] public List<float> movement_dir;
+            [SerializeField] public List<float> facing_dir;
 
         }
 

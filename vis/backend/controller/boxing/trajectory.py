@@ -121,7 +121,9 @@ class Trajectory:
         trajectory_positions_blend = np.array(self.traj_root_pos)
         tr_mid_idx = self.median_idx_root
         tr_root_rots_degrees = [i * 180 / math.pi for i in self.traj_root_rotations]
-        print(tr_root_rots_degrees)
+        # print(tr_root_rots_degrees)
+        print(self.traj_root_directions[self.median_idx_root+1])
+        # print("....", target_dir)
         for i in range(tr_mid_idx + 1, len(trajectory_positions_blend)):
             # adjust bias 0.5 to fit to dataset and responsivity (larger value -> more responsive)
             scale_pos = 1.0 - pow(1.0 - (i - tr_mid_idx) / (1.0 * tr_mid_idx), self.blend_bias)
@@ -134,17 +136,14 @@ class Trajectory:
             self.traj_root_vels[i] = utils.glm_mix(self.traj_root_vels[i],
                                                    target_vel, scale_pos)
             # adjust scale bias 0.5 to fit to dataset and responsivity (larger value -> more responsive)
-            scale_dir = 1.0 - pow(1.0 - (i - tr_mid_idx) / (1.0 * tr_mid_idx), 0.05)
-            # if np.sum(target_dir) == 0:
-            #     self.traj_root_directions[i] = facing_dir
-            # else:
-            #     self.traj_root_directions[i] = utils.mix_directions(self.traj_root_directions[i], facing_dir,
-            #                                                         scale_dir)
-            # self.traj_root_directions[i] = utils.mix_directions(self.traj_root_directions[i], facing_dir,
-            #                                                         scale_dir)
+            scale_dir = 1.0 - pow(1.0 - (i - tr_mid_idx) / (1.0 * tr_mid_idx), 0.1)
             self.traj_root_directions[i] = utils.mix_directions(self.traj_root_directions[i], target_dir,
-                                                                    scale_dir)
-            # self.traj_root_directions[i] = self.traj_root_directions[i]
+                                                                scale_dir)
+            # if np.sum(self.traj_root_directions[i]) != 0:
+            #     self.traj_root_directions[i] = utils.mix_directions(self.traj_root_directions[i], target_dir,
+            #                                                         scale_dir)
+            # else:
+            #     self.traj_root_directions[i] = self.traj_root_directions[i]
             #TODO target_dir should be unit vec
 
         for i in range(tr_mid_idx + 1, len(trajectory_positions_blend)):
@@ -156,8 +155,8 @@ class Trajectory:
             self.traj_root_rotations[i] = utils.z_angle(self.traj_root_directions[i])
 
         tr_root_rots_degrees = [i * 180 / math.pi for i in self.traj_root_rotations]
-        print(tr_root_rots_degrees)
-        # print(self.traj_root_directions)
+        # print(tr_root_rots_degrees)
+        print(self.traj_root_directions[self.median_idx_root+1])
 
     def _update_wrist_traj(self, traj_pos_blend, traj_vels_blend, punch_frames, traj_reached, wrist_reached, hand):
         if hand == 'left':
@@ -436,11 +435,11 @@ class Trajectory:
         # pred_fwd_dir_x = _limit_pred_dir(pred_fwd_dir_x)
         # pred_fwd_dir_z = _limit_pred_dir(pred_fwd_dir_z)
 
-        if np.sum(target_dir) == 0:
-            pred_fwd_dir_x = 0
-            pred_fwd_dir_z = 1
-        print(target_dir)
-        print("pd", pred_fwd_dir_x, pred_fwd_dir_z)
+        # if np.sum(target_dir) == 0:
+        #     pred_fwd_dir_x = 0
+        #     pred_fwd_dir_z = 1
+        # print(target_dir)
+        # print("pd", pred_fwd_dir_x, pred_fwd_dir_z)
         rotational_vel = math.atan2(pred_fwd_dir_x, pred_fwd_dir_z)
 
         # if rotational_vel < -0.06:
@@ -556,8 +555,12 @@ class Trajectory:
 
         self.traj_root_directions[self.median_idx_root + 1:] = self.convert_local_to_global(
             pred_rdir_tr, arg_type="dir")
+        ###################################################
+        # self.traj_root_directions[self.median_idx_root + 1:][:,0] *= -1
+        ###################################################
+
         pdg = self.convert_local_to_global(pred_rdir_tr, arg_type="dir")
-        print([math.atan2(pdg[i][0], pdg[i][2])*180/math.pi for i in range(0,len(pdg))])
+        # print([math.atan2(pdg[i][0], pdg[i][2])*180/math.pi for i in range(0,len(pdg))])
         pred_r_rot = np.array(
             [utils.z_angle(self.traj_root_directions[i]) for i in range(self.median_idx_root + 1, self.n_frames_tr_win_root)])
         self.traj_root_rotations[self.median_idx_root + 1:] = pred_r_rot

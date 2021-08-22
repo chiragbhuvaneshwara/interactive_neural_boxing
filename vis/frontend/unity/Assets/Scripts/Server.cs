@@ -83,7 +83,7 @@ namespace MultiMosiServer
         }
 
 
-        public TPosture UpdatePunchTargetFetchPosture(string TargetHand, List<float> MovementDir, int TrajectoryPtsReached)
+        public TPosture UpdatePunchTargetFetchPosture(string TargetHand, List<float> MovementDir, List<float> FacingDir, int TrajectoryPtsReached)
         {
             punchInput punch_in = new punchInput();
 
@@ -119,6 +119,7 @@ namespace MultiMosiServer
             }
 
             punch_in.movement_dir = MovementDir;
+            punch_in.facing_dir = FacingDir;
 
             string punch_input = JsonConvert.SerializeObject(punch_in);
             string json_obj = JsonPostWithResp("fetch_frame", punch_input);
@@ -224,11 +225,11 @@ namespace MultiMosiServer
         //}
 
         //public void ManagedUpdate(string TargetHand, List<float> MovementDir, int TrajPtsReached) // void Update()
-        public bool ManagedUpdate(string TargetHand, List<float> MovementDir, int TrajPtsReached) 
+        public bool ManagedUpdate(string TargetHand, List<float> MovementDir, List<float> FacingDir, int TrajPtsReached) 
         {
             if (this.active)
             {
-                this.posture = this.UpdatePunchTargetFetchPosture(TargetHand, MovementDir, TrajPtsReached);
+                this.posture = this.UpdatePunchTargetFetchPosture(TargetHand, MovementDir, FacingDir, TrajPtsReached);
                 string punch_completed_str = this.GetZpJson("fetch_punch_completed/"+TargetHand);
                 bool punch_completed = JsonConvert.DeserializeObject<bool>(punch_completed_str);
                 return punch_completed;

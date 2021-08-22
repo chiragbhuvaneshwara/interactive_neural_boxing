@@ -18,6 +18,8 @@ public partial class Player : MonoBehaviour
     private bool rightMousePressed;
     private bool midMousePressed;
 
+    private List<float> facing_dir = new List<float> { 1, 0 };
+
     public Transform rootBone = null;
     public Transform characterTransform = null;
 
@@ -295,6 +297,30 @@ public partial class Player : MonoBehaviour
 
         dir[0] = temp.x;
         dir[1] = temp.y;
+        
+        
+        if (Input.GetKey(KeyCode.H))
+        {
+            facing_dir = new List<float> { 1, 0 } ;
+        }
+        if (Input.GetKey(KeyCode.K))
+        {
+            facing_dir = new List<float> { -1, 0 } ;
+        }
+        if (Input.GetKey(KeyCode.U))
+        {
+            facing_dir = new List<float> { 0, -1 } ;
+        }
+        if (Input.GetKey(KeyCode.J))
+        {
+            facing_dir = new List<float> { 0, 1 } ;
+        }
+
+        var facing_dir_vec = new Vector2(facing_dir[0], facing_dir[1]).normalized;
+        //var temp = new Vector2(dir[0], dir[1]);
+
+        facing_dir[0] = facing_dir_vec.x;
+        facing_dir[1] = facing_dir_vec.y;
 
         if (Input.GetMouseButton(0) || leftMousePressed)
         {
@@ -302,7 +328,7 @@ public partial class Player : MonoBehaviour
                 //Debug.Break();
 
             leftMousePressed = true;
-            var isWristInTargetRange = server.ManagedUpdate("left", dir, leftTrajReached);
+            var isWristInTargetRange = server.ManagedUpdate("left", dir, facing_dir, leftTrajReached);
             if (isWristInTargetRange) {
                 Debug.Log("LEnd");
                 leftMousePressed = false;
@@ -314,7 +340,7 @@ public partial class Player : MonoBehaviour
                 //Debug.Break();
 
             rightMousePressed = true;
-            var isWristInTargetRange = server.ManagedUpdate("right", dir, rightTrajReached);
+            var isWristInTargetRange = server.ManagedUpdate("right", dir, facing_dir, rightTrajReached);
 
             if (isWristInTargetRange) { 
                 Debug.Log("REnd");
@@ -328,7 +354,7 @@ public partial class Player : MonoBehaviour
         }
         else
         {
-            bool status = server.ManagedUpdate("none", dir, 0);
+            bool status = server.ManagedUpdate("none", dir, facing_dir, 0);
             //server.ManagedUpdate("left", dir);
             //server.ManagedUpdate("left", dir, 0);
         }

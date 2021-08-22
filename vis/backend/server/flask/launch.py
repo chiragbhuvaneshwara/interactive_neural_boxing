@@ -103,7 +103,9 @@ def fetch_frame():
         punch_in = request.get_json()
 
         dir = punch_in["movement_dir"]
-        dir[1] *= -1
+        facing_dir = punch_in["facing_dir"]
+        facing_dir[0] *= -1
+        dir[0] *= -1
 
         punch_hand = punch_in["hand"]
         traj_reached = punch_in["target_reached"]
@@ -118,7 +120,7 @@ def fetch_frame():
             label = [0, 1]
 
         punch_target = punch_right_target + punch_left_target
-        bc.pre_render(punch_target, label, dir, traj_reached, space='global')
+        bc.pre_render(punch_target, label, dir, facing_dir, traj_reached, space='global')
         posture = controller_to_posture()
         bc.post_render()
         json_str = json.dumps(posture, default=serialize)

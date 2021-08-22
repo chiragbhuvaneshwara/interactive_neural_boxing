@@ -43,14 +43,14 @@ class BoxingController:
         self.num_targets = 2  # one for each hand
 
         self.target_vel = np.array((0.0, 0.0, 0.0))
-        self.target_dir = np.array((0.0, 0.0, 0.0))
+        self.target_dir = np.array((0.0, 0.0, 1.0))
 
         self.traj = Trajectory(data_config)
         self.char = Character(data_config)
         self.dataset_npz_path = data_config["dataset_npz_path"]
         self.norm = norm
-        self.user_dir = np.array([0,0])
-        self.facing_dir = np.array([0, 0, 1])
+        self.user_dir = np.array([0, 0])
+        self.facing_dir = np.array([1, 0, 0])
         self.__initialize()
 
         # self.facing_dir = np.array([1, 0, 0])
@@ -58,7 +58,7 @@ class BoxingController:
     # TODO: Breakdown functionality into smaller units and move them into functions or internal methods for pre_render
     # EXP: with punch target as curr wrist pos when not punching
     # EXP: with only punch target and punch action and without any trajectory of the hands
-    def pre_render(self, punch_targets, punch_labels, dir, traj_reached, space='local'):
+    def pre_render(self, punch_targets, punch_labels, dir, facing_dir, traj_reached, space='local'):
         """
         This method is called before rendering. It prepares character and trajectory to be rendered.
 
@@ -80,15 +80,20 @@ class BoxingController:
         direction = np.array(dir)
         self.user_dir = direction[:]
         # direction = np.array([1,0])
-        print("dir", direction)
+        # print("dir", direction)
         direction = utils.xz_to_x0yz(direction)
         target_vel_speed = 0.04 * np.linalg.norm(direction)
         # target_vel_speed = 0.035 * np.linalg.norm(direction)
         # target_vel_speed = 0.075 * np.linalg.norm(direction)
         self.target_vel = utils.glm_mix(self.target_vel, target_vel_speed * direction, 0.9)
-        target_vel_dir = self.target_dir if utils.euclidian_length(self.target_vel) \
-                                            < 1e-05 else utils.normalize(self.target_vel)
-        self.target_dir = utils.mix_directions(self.target_dir, target_vel_dir, 0.9)
+        # target_vel_dir = self.target_dir if utils.euclidian_length(self.target_vel) \
+        #                                     < 1e-05 else utils.normalize(self.target_vel)
+        # self.target_dir = utils.mix_directions(self.target_dir, target_vel_dir, 0.9)
+        # self.target_dir = np.array((0.0, 0.0, -1.0))
+        self.target_dir = utils.xz_to_x0yz(np.array(facing_dir))
+
+        print("t dir", facing_dir)
+        print("t dir", self.target_dir)
 
         # 2. Set new punch_label and new punch target based on input
         prev_root_pos, prev_root_rot = self.traj.get_previous_pos_rot()
@@ -130,7 +135,8 @@ class BoxingController:
                                                   right_wrist_lp, left_wrist_lp,
                                                   self.char.root_position, self.char.root_rotation, traj_reached)
 
-        self.traj.compute_future_root_trajectory(self.target_dir, self.facing_dir, self.target_vel)
+        # self.traj.compute_future_root_trajectory(self.target_dir, self.facing_dir, self.target_vel)
+        self.traj.compute_future_root_trajectory(self.target_dir, direction, self.target_vel)
 
         # 3. Set Trajectory input
         root_pos_tr, root_vels_tr, root_dirs_tr, right_wrist_pos_tr, left_wrist_pos_tr, right_wrist_vels_tr, \
