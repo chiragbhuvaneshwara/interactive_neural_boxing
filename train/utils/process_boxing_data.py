@@ -15,7 +15,7 @@ for gpu in gpus:
     tf.config.experimental.set_memory_growth(gpu, True)
 
 
-def get_gating_indices(x_ids, joint_ids):
+def get_gating_indices(x_ids, joint_ids, traj_window_root, traj_window_wrist):
     """
     The gating input is a subset of the motion network input.
     This function returns the exact index positions of the subset to be extracted from the motion network input.
@@ -28,16 +28,24 @@ def get_gating_indices(x_ids, joint_ids):
     def _generate_id_sequence(column_demarcation_ids, key):
         return [i for i in range(column_demarcation_ids[key][0], column_demarcation_ids[key][1])]
 
-    wrist_velocities_tr_ids = _generate_id_sequence(x_ids, 'x_right_wrist_vels_tr') + \
-                              _generate_id_sequence(x_ids, 'x_left_wrist_vels_tr')
+    def _get_past_curr_future_ids(sequence, multiplier, tr_window):
+        sequence = sequence[:multiplier] + sequence[tr_window*multiplier:(tr_window+1)*multiplier] + sequence[-multiplier:]
+        return sequence
+
+    right_wrist_velocities_tr_ids = _generate_id_sequence(x_ids, 'x_right_wrist_vels_tr')
+    left_wrist_velocities_tr_ids = _generate_id_sequence(x_ids, 'x_left_wrist_vels_tr')
+    right_wrist_velocities_tr_ids = _get_past_curr_future_ids(right_wrist_velocities_tr_ids, 3, traj_window_wrist)
+    left_wrist_velocities_tr_ids = _get_past_curr_future_ids(left_wrist_velocities_tr_ids, 3, traj_window_wrist)
+    wrist_velocities_tr_ids = right_wrist_velocities_tr_ids + left_wrist_velocities_tr_ids
 
     root_velocities_tr_ids = _generate_id_sequence(x_ids, 'x_root_vels_tr')
-    root_velocities_goal_ids = _generate_id_sequence(x_ids, 'x_root_vels_tr')[-3:]
+    root_velocities_tr_ids = _get_past_curr_future_ids(root_velocities_tr_ids, 2, traj_window_root)
 
     root_dirs_tr_ids = _generate_id_sequence(x_ids, 'x_root_dirs_tr')
+    root_dirs_tr_ids = _get_past_curr_future_ids(root_dirs_tr_ids, 2, traj_window_root)
 
     root_pos_tr_ids = _generate_id_sequence(x_ids, 'x_root_pos_tr')
-    root_pos_goal_ids = _generate_id_sequence(x_ids, 'x_root_pos_tr')[-3:]
+    root_pos_tr_ids = _get_past_curr_future_ids(root_pos_tr_ids, 2, traj_window_root)
 
     # punch_labels_tr_ids = _generate_id_sequence(x_ids, 'x_right_punch_labels_tr') + \
     #                       _generate_id_sequence(x_ids, 'x_left_punch_labels_tr')
@@ -48,12 +56,18 @@ def get_gating_indices(x_ids, joint_ids):
     punch_target_ids = _generate_id_sequence(x_ids, 'x_right_punch_target') + \
                        _generate_id_sequence(x_ids, 'x_left_punch_target')
 
-    f_r_id = joint_ids["RightAnkle"] * 3
-    f_l_id = joint_ids["LeftAnkle"] * 3
-    foot_end_effector_velocities_ids = _generate_id_sequence(x_ids, 'x_local_vel')[f_r_id: f_r_id + 3] + \
-                                       _generate_id_sequence(x_ids, 'x_local_vel')[f_l_id: f_l_id + 3]
-    foot_end_effector_pos_ids = _generate_id_sequence(x_ids, 'x_local_pos')[f_r_id: f_r_id + 3] + \
-                                _generate_id_sequence(x_ids, 'x_local_pos')[f_l_id: f_l_id + 3]
+    f_r_a_id = joint_ids["RightAnkle"] * 3
+    f_l_a_id = joint_ids["LeftAnkle"] * 3
+    foot_ankle_velocities_ids = _generate_id_sequence(x_ids, 'x_local_vel')[f_r_a_id: f_r_a_id + 3] + \
+                                       _generate_id_sequence(x_ids, 'x_local_vel')[f_l_a_id: f_l_a_id + 3]
+    foot_ankle_pos_ids = _generate_id_sequence(x_ids, 'x_local_pos')[f_r_a_id: f_r_a_id + 3] + \
+                                _generate_id_sequence(x_ids, 'x_local_pos')[f_l_a_id: f_l_a_id + 3]
+    f_r_t_id = joint_ids["RightToe"] * 3
+    f_l_t_id = joint_ids["LeftToe"] * 3
+    foot_toes_velocities_ids = _generate_id_sequence(x_ids, 'x_local_vel')[f_r_t_id: f_r_t_id + 3] + \
+                                       _generate_id_sequence(x_ids, 'x_local_vel')[f_l_t_id: f_l_t_id + 3]
+    foot_toes_pos_ids = _generate_id_sequence(x_ids, 'x_local_pos')[f_r_t_id: f_r_t_id + 3] + \
+                                _generate_id_sequence(x_ids, 'x_local_pos')[f_l_t_id: f_l_t_id + 3]
     w_r_id = joint_ids["RightWrist"] * 3
     w_l_id = joint_ids["LeftWrist"] * 3
     wrist_end_effector_velocities_ids = _generate_id_sequence(x_ids, 'x_local_vel')[w_r_id: w_r_id + 3] + \
@@ -67,17 +81,16 @@ def get_gating_indices(x_ids, joint_ids):
     # TODO: increase traj window for walking
     # TODO: label walking and not walking
     gating_ids = [
-        root_velocities_tr_ids,  # TODO put only goal
+        root_pos_tr_ids,
         root_dirs_tr_ids,
-        # root_pos_tr_ids,
-        # root_velocities_goal_ids,
-        root_pos_goal_ids,
         wrist_velocities_tr_ids,
         # punch_target_ids,
         wrist_end_effector_velocities_ids,
         current_punch_labels_ids,
-        foot_end_effector_velocities_ids,
-        foot_end_effector_pos_ids,
+        foot_ankle_velocities_ids,
+        foot_toes_velocities_ids,
+        foot_ankle_pos_ids,
+        foot_toes_pos_ids,
     ]
     # desired_vel (part of OG MANN gating input)
 
@@ -124,8 +137,10 @@ def train_boxing_data(data_config_path, output_dir, num_expert_nodes=6, epochs=3
     bone_map = dataset_config['bone_map']
     col_demarcation_ids = dataset_config['col_demarcation_ids']
     x_col_demarcation = col_demarcation_ids[0]
+    tr_win_root = dataset_config["traj_window_root"]
+    tr_win_wr = dataset_config["traj_window_wrist"]
 
-    gating_indices, gating_variable_names = get_gating_indices(x_col_demarcation, bone_map)
+    gating_indices, gating_variable_names = get_gating_indices(x_col_demarcation, bone_map, tr_win_root, tr_win_wr)
 
     X, Y, norm = prepare_mann_data(dataset_config)
     x_mean = np.array(norm['x_mean'], dtype=np.float64)
