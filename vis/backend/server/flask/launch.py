@@ -12,10 +12,6 @@ from vis.backend.server.flask.utils import *
 print(os.getcwd())
 app = Flask(__name__)
 
-# frd 1, wr 5, root 5 has more steps with simple gating inp
-# frd = 1
-# window_wrist = math.ceil(5 / frd)
-# window_root = math.ceil(5 / frd)
 frd = 1
 window_wrist = math.ceil(5 / frd)
 window_root = math.ceil(5 / frd)
@@ -25,24 +21,14 @@ frd_win = 'fr_' + str(frd) + '_tr_' + str(window_root) + "_" + str(window_wrist)
 controller_in_out_dir = os.path.join("backend", "controller", "controller_in_out")
 frd_win_epochs = frd_win + '_ep_' + str(epochs)
 all_models_path = os.path.join("train", "models", "mann_tf2_v2")
-# trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-07-20_17-46-29", "epochs", "epoch_99") #1, 5, 5 min gating inputs
-# trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-07-29_14-49-35", "epochs", "epoch_99") #1, 5, 5 min gating inputs + traj root dirs
-
 ###################################################################################################
 trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-08-04_17-39-31", "epochs",
-                                 "epoch_99")  # 1, 5, 5 min gating inputs + traj root dirs
+                                 "epoch_99")  # 1, 5, 5 min gating inputs + traj root dirs ==> full traj
 ###################################################################################################
 
 # trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-08-23_14-32-24", "epochs",
-#                                  "epoch_99")  # 1, 5, 5 min gating inputs + traj root dirs
-
-# trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-08-12_15-29-17", "epochs",
-#                                  "epoch_99")  # 1, 5, 5 min gating inputs + traj root dirs, updated new fwd dirs but old rots
-# trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-08-13_19-04-36", "epochs",
-#                                  "epoch_99")  # 1, 5, 5 min gating inputs + traj root dirs, updated new fwd dirs and rots
-# trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-07-21_21-20-46", "epochs", "epoch_99") #1, 5, 5 more gating inputs
-# trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-07-20_19-05-14", "epochs", "epoch_99") #2, 10, 10
-# trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-07-21_12-43-51", "epochs", "epoch_99") # 1, 20 ro, 5 wr
+#                                  "epoch_99")  # 1, 5, 5 min gating inputs + traj root dirs ==> traj earliest, mid and
+#                                  future most
 target_file = os.path.join(trained_base_path, 'saved_model')
 
 x_mean, y_mean = load_binary(os.path.join(trained_base_path, "means", "Xmean.bin")), \
@@ -108,8 +94,6 @@ def fetch_frame():
 
         dir = punch_in["movement_dir"]
         facing_dir = punch_in["facing_dir"]
-        # facing_dir[0] *= -1
-        # dir[0] *= -1
 
         punch_hand = punch_in["hand"]
         traj_reached = punch_in["target_reached"]
@@ -160,7 +144,6 @@ def get_zero_posture():
     """
     if request.method == 'GET':
         posture = controller_to_posture()
-        # bc.reset([0, 0, 0], 0.0, [0, 0, 0])
         bc.reset([0, 0, 0], 0.0, [0, 0, 1])
         return json.dumps(posture, default=serialize)
 

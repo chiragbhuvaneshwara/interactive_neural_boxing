@@ -1,11 +1,8 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Net;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using MultiMosiServer;
+using System;
+
 
 
 
@@ -26,79 +23,18 @@ public partial class Player : MonoBehaviour
     private Dictionary<string, Bone> bonemap = new Dictionary<string, Bone>();
 
     public bool start = false;
+    public bool eval = false;
     public bool fix_global_pos = false;
     public float velocity_scale = 1.0f;
     public int num_traj_pts;
     private Dictionary<string, List<GameObject>>Trajectory = new Dictionary<string, List<GameObject>>();
     private Dictionary<string, LineRenderer> TrajLineRenderer = new Dictionary<string, LineRenderer>();
     private List<string> TrajNames = new List<string> { "root", "right_wrist", "left_wrist"};
-    //public List<GameObject> Trajectory;
-    //public LineRenderer TrajLineRenderer;
     private Vector3 global_offset = Vector3.zero;
 
-    //public MultiMotionServer server = null;
     public MultiMotionServer server = new MultiMotionServer();
 
-    public int TrajInTargetRange(int num_traj_reached_target, string target, string dict_key)
-    {
-
-        //Debug.Log(num_traj_reached_target);
-        Vector3 punch_target = GameObject.Find(target).transform.position;
-        //Vector3 wrist_pos = GameObject.Find(wrist).transform.position;
-        //int num_traj_reached_target = 0;
-        for (var i = Mathf.RoundToInt(num_traj_pts/2)+1; i < num_traj_pts - num_traj_reached_target; i++) 
-        { 
-            var tr_go = Trajectory[dict_key][i];
-            
-            Vector3 tr_pos = tr_go.transform.position;
-            //Debug.Log((punch_target - tr_pos).magnitude);
-            if ((punch_target - tr_pos).magnitude < 0.1)
-            {
-                //Debug.Log(tr_go.name);
-                num_traj_reached_target += 1;
-            }
-        }
-        //Debug.Log(num_traj_reached_target);
-
-        //if ((punch_target - tr_pos).magnitude < 0.25)
-        //{
-        //    return true;
-        //}
-        //else
-        //{
-        //    return false;
-        //}
-
-        return num_traj_reached_target;
-    }    
     
-    public bool WristInTargetRange(string target, string wrist, bool reverse=false)
-    {
-
-        Vector3 punch_target = GameObject.Find(target).transform.position;
-        Vector3 wrist_pos = GameObject.Find(wrist).transform.position;
-
-
-        //Debug.Log((punch_target - wrist_pos).magnitude);
-
-        var diff_mag = 0.25;
-        if (reverse){
-            diff_mag = 0.11;
-            punch_target += new Vector3(0, 0, (float)-0.2);
-        }
-
-        Debug.Log((punch_target - wrist_pos).magnitude);
-
-        //if ((punch_target - wrist_pos).magnitude < 0.13) {
-        if ((punch_target - wrist_pos).magnitude < diff_mag) {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-
-    }
 
     private void initializeBones(Transform t)
     {
@@ -151,7 +87,6 @@ public partial class Player : MonoBehaviour
 
     private void createTrajVisObjs(string tr_name, Color col, int num_tr_pts)
     {
-        ////////////////////////TRAJ_OBJS///////////////////////////////////////
         var traj_spheres = new List<GameObject>(num_tr_pts);
         var GameObjectScale = 0.01f;
         for (int i = 0; i < num_tr_pts; i++)
@@ -180,12 +115,10 @@ public partial class Player : MonoBehaviour
         traj_line.endColor = c2;
 
         TrajLineRenderer.Add(tr_name, traj_line);
-        ////////////////////////TRAJ_OBJS///////////////////////////////////////
     }
 
     private void updateTrajVisObjs(string target)
     {
-        ////////////////////////TRAJ_OBJS///////////////////////////////////////
         var tr = Trajectory[target];
         for (int i = 0; i < num_traj_pts; i++)
         {
@@ -201,7 +134,6 @@ public partial class Player : MonoBehaviour
             tr_line.SetPosition(i, Trajectory[target][i].transform.position);
         }
         TrajLineRenderer[target] = tr_line;
-        ////////////////////////TRAJ_OBJS///////////////////////////////////////
     }
 
     private void processTransforms(Transform t)
@@ -240,12 +172,10 @@ public partial class Player : MonoBehaviour
 
     private void processTraj()
     {
-        ////////////////////////TRAJ_OBJS///////////////////////////////////////
         foreach (string target in TrajNames) 
         {
             updateTrajVisObjs(target);
         }
-        ////////////////////////TRAJ_OBJS///////////////////////////////////////
     }
 
     void LateUpdate()
@@ -269,6 +199,23 @@ public partial class Player : MonoBehaviour
             }
         }
 
+    }
+
+    private float GetRandomFloat(System.Random random, double min, double max)
+    {
+        return Convert.ToSingle(min + (random.NextDouble() * (max - min)));
+    }
+
+    public void UpdatePunchTargetPosition()
+    {
+
+        GameObject go = GameObject.Find("punch_target");
+        var random = new System.Random();
+        var x = GetRandomFloat(random, -0.4, 0.4);
+        var y = GetRandomFloat(random, 1.45, 1.9);
+        var z = GetRandomFloat(random, 0.3, 0.6);
+
+        go.transform.position = new Vector3(x, y, z);
     }
 
     // Update is called once per frame
@@ -317,7 +264,6 @@ public partial class Player : MonoBehaviour
         }
 
         var facing_dir_vec = new Vector2(facing_dir[0], facing_dir[1]).normalized;
-        //var temp = new Vector2(dir[0], dir[1]);
 
         facing_dir[0] = facing_dir_vec.x;
         facing_dir[1] = facing_dir_vec.y;
@@ -328,7 +274,7 @@ public partial class Player : MonoBehaviour
                 //Debug.Break();
 
             leftMousePressed = true;
-            var isWristInTargetRange = server.ManagedUpdate("left", dir, facing_dir, leftTrajReached);
+            var isWristInTargetRange = server.ManagedUpdate("left", dir, facing_dir, leftTrajReached, false);
             if (isWristInTargetRange) {
                 Debug.Log("LEnd");
                 leftMousePressed = false;
@@ -340,7 +286,7 @@ public partial class Player : MonoBehaviour
                 //Debug.Break();
 
             rightMousePressed = true;
-            var isWristInTargetRange = server.ManagedUpdate("right", dir, facing_dir, rightTrajReached);
+            var isWristInTargetRange = server.ManagedUpdate("right", dir, facing_dir, rightTrajReached, false);
 
             if (isWristInTargetRange) { 
                 Debug.Log("REnd");
@@ -354,9 +300,10 @@ public partial class Player : MonoBehaviour
         }
         else
         {
-            bool status = server.ManagedUpdate("none", dir, facing_dir, 0);
-            //server.ManagedUpdate("left", dir);
-            //server.ManagedUpdate("left", dir, 0);
+            bool status = server.ManagedUpdate("none", dir, facing_dir, 0, eval);
+            //if (eval & status) {
+                //UpdatePunchTargetPosition();
+            //}
         }
     }
 

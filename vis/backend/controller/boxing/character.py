@@ -111,8 +111,6 @@ class Character:
         if (np.sum(foot_contacts) > 0):
             global_foot_drift /= np.sum(foot_contacts)
             global_foot_drift[1] = 0.0
-        # print("foot correction: ", foot_contacts, global_foot_drift)
-        # return np.array([0.0, 0.0, 0.0])
         return global_foot_drift
 
     def convert_global_to_local(self, arr, root_pos, root_rot, type_in='pos'):
