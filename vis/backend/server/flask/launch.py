@@ -28,9 +28,13 @@ all_models_path = os.path.join("train", "models", "mann_tf2_v2")
 # trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-07-20_17-46-29", "epochs", "epoch_99") #1, 5, 5 min gating inputs
 # trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-07-29_14-49-35", "epochs", "epoch_99") #1, 5, 5 min gating inputs + traj root dirs
 
-
+###################################################################################################
 trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-08-04_17-39-31", "epochs",
                                  "epoch_99")  # 1, 5, 5 min gating inputs + traj root dirs
+###################################################################################################
+
+# trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-08-23_14-32-24", "epochs",
+#                                  "epoch_99")  # 1, 5, 5 min gating inputs + traj root dirs
 
 # trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-08-12_15-29-17", "epochs",
 #                                  "epoch_99")  # 1, 5, 5 min gating inputs + traj root dirs, updated new fwd dirs but old rots
@@ -104,8 +108,8 @@ def fetch_frame():
 
         dir = punch_in["movement_dir"]
         facing_dir = punch_in["facing_dir"]
-        facing_dir[0] *= -1
-        dir[0] *= -1
+        # facing_dir[0] *= -1
+        # dir[0] *= -1
 
         punch_hand = punch_in["hand"]
         traj_reached = punch_in["target_reached"]

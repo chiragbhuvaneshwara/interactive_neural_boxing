@@ -18,7 +18,7 @@ public partial class Player : MonoBehaviour
     private bool rightMousePressed;
     private bool midMousePressed;
 
-    private List<float> facing_dir = new List<float> { 1, 0 };
+    private List<float> facing_dir = new List<float> { 0, 1 };
 
     public Transform rootBone = null;
     public Transform characterTransform = null;
@@ -285,11 +285,11 @@ public partial class Player : MonoBehaviour
         }
         if (Input.GetKey(KeyCode.W))
         {
-            dir[1] = -1;
+            dir[1] = 1;
         }
         if (Input.GetKey(KeyCode.S))
         {
-            dir[1] = 1;
+            dir[1] = -1;
         }
 
         var temp = new Vector2(dir[0], dir[1]).normalized;
@@ -309,11 +309,11 @@ public partial class Player : MonoBehaviour
         }
         if (Input.GetKey(KeyCode.U))
         {
-            facing_dir = new List<float> { 0, -1 } ;
+            facing_dir = new List<float> { 0, 1 } ;
         }
         if (Input.GetKey(KeyCode.J))
         {
-            facing_dir = new List<float> { 0, 1 } ;
+            facing_dir = new List<float> { 0, -1 } ;
         }
 
         var facing_dir_vec = new Vector2(facing_dir[0], facing_dir[1]).normalized;

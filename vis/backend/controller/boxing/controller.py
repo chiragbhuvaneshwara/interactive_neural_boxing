@@ -86,13 +86,13 @@ class BoxingController:
         # target_vel_speed = 0.035 * np.linalg.norm(direction)
         # target_vel_speed = 0.075 * np.linalg.norm(direction)
         self.target_vel = utils.glm_mix(self.target_vel, target_vel_speed * direction, 0.9)
-        # target_vel_dir = self.target_dir if utils.euclidian_length(self.target_vel) \
-        #                                     < 1e-05 else utils.normalize(self.target_vel)
-        # self.target_dir = utils.mix_directions(self.target_dir, target_vel_dir, 0.9)
+        target_vel_dir = self.target_dir if utils.euclidian_length(self.target_vel) \
+                                            < 1e-05 else utils.normalize(self.target_vel)
+        self.target_dir = utils.mix_directions(self.target_dir, target_vel_dir, 0.9)
         # self.target_dir = np.array((0.0, 0.0, -1.0))
-        self.target_dir = utils.xz_to_x0yz(np.array(facing_dir))
+        # self.target_dir = utils.xz_to_x0yz(np.array(facing_dir))
 
-        print("t dir", facing_dir)
+        # print("t dir", facing_dir)
         print("t dir", self.target_dir)
 
         # 2. Set new punch_label and new punch target based on input
