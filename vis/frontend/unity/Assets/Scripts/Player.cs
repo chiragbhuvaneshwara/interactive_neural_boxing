@@ -26,7 +26,8 @@ public partial class Player : MonoBehaviour
     public bool eval = false;
     public bool fix_global_pos = false;
     public float velocity_scale = 1.0f;
-    public int num_traj_pts;
+    private int num_traj_pts;
+    public int n_punches = 10;
     private Dictionary<string, List<GameObject>>Trajectory = new Dictionary<string, List<GameObject>>();
     private Dictionary<string, LineRenderer> TrajLineRenderer = new Dictionary<string, LineRenderer>();
     private List<string> TrajNames = new List<string> { "root", "right_wrist", "left_wrist"};
@@ -301,6 +302,15 @@ public partial class Player : MonoBehaviour
         else
         {
             bool status = server.ManagedUpdate("none", dir, facing_dir, 0, eval);
+            if (status) {
+                n_punches -= 1;
+            }
+
+            if (n_punches == 0)
+            {
+                eval = false;
+            }
+            
             //if (eval & status) {
                 //UpdatePunchTargetPosition();
             //}

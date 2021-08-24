@@ -33,6 +33,8 @@ class Character:
         self.foot_left = [self.bone_map["LeftAnkle"], self.bone_map["LeftToe"]]  # [ankle, toe]
         self.foot_right = [self.bone_map["RightAnkle"], self.bone_map["RightToe"]]
 
+        self.punch_target = np.array([0,0,0])
+
     def set_pose(self, joint_positions, joint_velocities, joint_rotations, init=False):
         """
         Sets a new pose after prediction.
@@ -143,6 +145,18 @@ class Character:
                     root_pos[1] = 0
                 arr_copy[i] = arr_copy[i] + root_pos
         return arr_copy
+
+    def compute_punch_metrics(self, hand):
+        pm = {}
+        if hand == "left":
+            hand_pos = self.joint_positions[self.bone_map["LeftWrist"]].ravel()
+        elif hand == "right":
+            hand_pos = self.joint_positions[self.bone_map["RightWrist"]].ravel()
+        mse = ((self.punch_target - hand_pos) ** 2).mean(axis=0)
+        pm["mse"] = mse
+        return pm
+
+
 
     def reset(self, root_position=np.array([0.0, 0.0, 0.0]), start_orientation=0.0):
         self.root_position = root_position

@@ -239,6 +239,10 @@ class BoxingController:
         """
         return np.array(self.char.root_position), float(self.char.root_rotation)
 
+    def get_punch_metrics(self, hand):
+        pm = self.char.compute_punch_metrics(hand)
+        return pm
+
     def __initialize(self, init_type="mean", init_tr_wrist=True):
         """
         This method needs to be called at the beginning i.e when the controller is initialized. It initializes the

@@ -123,12 +123,28 @@ def fetch_frame():
 def get_punch_completed(target_hand):
     if request.method == 'GET':
         if target_hand == "left":
-            p_comp = bc.traj.wrist_reached_left_wrist
+            p_comp = bc.traj.punch_completed_left
+            p_h_comp = bc.traj.punch_half_completed_left
         elif target_hand == "right":
-            p_comp = bc.traj.wrist_reached_right_wrist
+            p_comp = bc.traj.punch_completed_right
+            p_h_comp = bc.traj.punch_half_completed_right
         else:
             p_comp = False
+            p_h_comp = False
+        p_comp = {"punch_completed": p_comp,
+                  "punch_half_completed": p_h_comp
+                  }
         return json.dumps(p_comp, default=serialize)
+
+    else:
+        print("Problem")
+
+
+@app.route('/compute_punch_metrics/<target_hand>', methods=['GET'])
+def compute_punch_metrics(target_hand):
+    if request.method == 'GET':
+        pm = bc.get_punch_metrics(target_hand)
+        return json.dumps(pm, default=serialize)
 
     else:
         print("Problem")

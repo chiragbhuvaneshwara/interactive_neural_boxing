@@ -24,7 +24,7 @@ namespace MultiMosiServer
         public float global_scale = 1.0f;
         public string target_hand = "left";
 
-        public string GetZpJson(string route)
+        public string GetJsonStr(string route)
         {
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://127.0.0.1:5000/" + route);
 
@@ -81,6 +81,10 @@ namespace MultiMosiServer
         {
 
             GameObject go = GameObject.Find("punch_target");
+            float radius = go.GetComponent<SphereCollider>().radius;
+
+            Debug.Log(radius);
+
             var random = new System.Random();
             var x = GetRandomFloat(random, -0.3, 0.3);
             var y = GetRandomFloat(random, 1.45, 1.75);
@@ -190,7 +194,7 @@ namespace MultiMosiServer
 
         public TPosture getZeroPosture()
         {
-            string zp_json_obj = GetZpJson("fetch_zp");
+            string zp_json_obj = GetJsonStr("fetch_zp");
 
             TPosture posture = JsonConvert.DeserializeObject<TPosture>(zp_json_obj);
 
@@ -267,6 +271,18 @@ namespace MultiMosiServer
             }
         }
 
+        public void compute_punch_metrics(string target_hand)
+        {
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://127.0.0.1:5000/compute_punch_metrics/"+ target_hand);
+
+            var httpResponse = (HttpWebResponse)request.GetResponse();
+
+            var streamReader = new StreamReader(httpResponse.GetResponseStream());
+            string json_obj = streamReader.ReadToEnd();
+            streamReader.Close();
+            Debug.Log(json_obj);
+        }
+
         public bool ManagedUpdate(string TargetHand, List<float> MovementDir, List<float> FacingDir, int TrajPtsReached, bool evaluation) 
         {
             if (this.active)
@@ -274,24 +290,31 @@ namespace MultiMosiServer
                 if (evaluation)
                 {
                     this.posture = this.UpdatePunchTargetFetchPostureEval(TargetHand, MovementDir, FacingDir, TrajPtsReached);
-                    string punch_completed_str = this.GetZpJson("fetch_punch_completed/" + this.target_hand);
-                    bool punch_completed = JsonConvert.DeserializeObject<bool>(punch_completed_str);
-                    if (punch_completed) { 
-                    UpdatePunchTargetPosition();
+                    string punch_completed_str = this.GetJsonStr("fetch_punch_completed/" + this.target_hand);
+                    //bool punch_completed = JsonConvert.DeserializeObject<bool>(punch_completed_str);
+                    var jsonData = (JObject)JsonConvert.DeserializeObject(punch_completed_str);
+                    var punch_completed = jsonData["punch_completed"].Value<bool>();
+                    var punch_half_completed = jsonData["punch_half_completed"].Value<bool>();
+
+                    if (punch_half_completed)
+                    {
+                        this.compute_punch_metrics(this.target_hand);
+                    }
+
+                    if (punch_completed)
+                    {
+                        UpdatePunchTargetPosition();
                     }
 
                     return punch_completed;
                 }
                 else {
                     this.posture = this.UpdatePunchTargetFetchPosture(TargetHand, MovementDir, FacingDir, TrajPtsReached);
-                    string punch_completed_str = this.GetZpJson("fetch_punch_completed/" + TargetHand);
-                    bool punch_completed = JsonConvert.DeserializeObject<bool>(punch_completed_str);
+                    string punch_completed_str = this.GetJsonStr("fetch_punch_completed/" + TargetHand);
+                    var jsonData = (JObject)JsonConvert.DeserializeObject(punch_completed_str);
+                    var punch_completed = jsonData["punch_completed"].Value<bool>();
                     return punch_completed;
                 }
-
-
-
-
             }
             else
                 return false;

@@ -65,7 +65,13 @@ PrefabInstance:
     - target: {fileID: -927199367670048503, guid: 0e6cb88270022df44b2a75b6c9bcc2b7,
         type: 3}
       propertyPath: m_Name
-      value: XSENS_Skeleton
+      value: CenteredXsemsSkel
       objectReference: {fileID: 0}
+    - target: {fileID: 3058311018593085697, guid: 0e6cb88270022df44b2a75b6c9bcc2b7,
+        type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: -1080701825774767172, guid: 0e6cb88270022df44b2a75b6c9bcc2b7,
+        type: 3}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0e6cb88270022df44b2a75b6c9bcc2b7, type: 3}
