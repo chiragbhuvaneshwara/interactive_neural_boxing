@@ -115,6 +115,7 @@ class BoxingController:
         right_shoulder_lp, left_shoulder_lp = self.output.get_shoulder_local_pos()
         right_wrist_lp, left_wrist_lp = self.output.get_wrist_local_pos()
         self.traj.compute_future_wrist_trajectory(right_p_target, left_p_target, right_shoulder_lp, left_shoulder_lp,
+        # self.traj.compute_future_wrist_trajectory(right_p_target_local, left_p_target_local, right_shoulder_lp, left_shoulder_lp,
                                                   right_wrist_lp, left_wrist_lp,
                                                   self.char.root_position, self.char.root_rotation, traj_reached)
 

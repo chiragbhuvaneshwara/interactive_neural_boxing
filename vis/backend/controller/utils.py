@@ -27,18 +27,6 @@ def z_angle(v1):
     return math.atan2(v[0], v[-1])
 
 
-# def mix_directions(v1, v2, a):
-#     if v1.all(0) and v2.all(0):
-#         return v1
-#     v1 = normalize(v1)
-#     v2 = normalize(v2)
-#     omega = math.acos(max(min(np.dot(v1, v2), 1), -1))
-#     sinom = math.sin(omega)
-#     if sinom < 0.000001:
-#         return v1
-#     slerp = math.sin((1 - a) * omega) / sinom * v1 + math.sin(a * omega) / sinom * v2
-#     return normalize(slerp)
-
 def mix_directions(v1, v2, a):
     if v1.all(0) and v2.all(0):
         return v1
@@ -50,30 +38,6 @@ def mix_directions(v1, v2, a):
         return v1
     slerp = math.sin((1 - a) * omega) / sinom * v1 + math.sin(a * omega) / sinom * v2
     return normalize(slerp)
-
-
-# def mix_directions(v1, v2, a, pr=False, wr=False):
-#     # if v1.all(0) and v2.all(0):
-#     #     return v1
-#     v2_1 = v2[1]
-#     v1 = normalize(v1)
-#     v2 = normalize(v2)
-#     omega = math.acos(max(min(np.dot(v1, v2), 1), -1))
-#     sinom = math.sin(omega)
-#     if pr:
-#         print("sinom", sinom)
-#     if sinom < 0.000001:
-#         return v1
-#     slerp = math.sin((1 - a) * omega) / sinom * v1 + math.sin(a * omega) / sinom * v2
-#     if pr:
-#         print(v1, v2, normalize(slerp))
-#
-#     res = normalize(slerp)
-#     if not wr:
-#         return res
-#     elif wr:
-#         res[1] = v2_1
-#         return res
 
 
 # Angle in radians

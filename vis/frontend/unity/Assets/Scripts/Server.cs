@@ -74,7 +74,7 @@ namespace MultiMosiServer
 
         private float GetRandomFloat(System.Random random, double min, double max)
         {
-            return Convert.ToSingle(min + (random.NextDouble() * (max - min)));
+            return Convert.ToSingle(min + ((float)random.NextDouble() * (max - min)));
         }
 
         public void UpdatePunchTargetPosition()
@@ -82,8 +82,7 @@ namespace MultiMosiServer
 
             GameObject go = GameObject.Find("punch_target");
             float radius = go.GetComponent<SphereCollider>().radius;
-
-            Debug.Log(radius);
+            //Debug.Log(radius.ToString("F4"));
 
             var random = new System.Random();
             var x = GetRandomFloat(random, -0.3, 0.3);
