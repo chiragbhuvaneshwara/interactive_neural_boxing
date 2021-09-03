@@ -150,6 +150,24 @@ def compute_punch_metrics(target_hand):
         print("Problem")
 
 
+@app.route('/eval_values/<action>', methods=['GET'])
+def evaluation_values(action):
+    if request.method == 'GET':
+        if action == "record":
+            pm = {}
+            bc.eval_values(record=True)
+            pm["recorded"] = True
+            return json.dumps(pm, default=serialize)
+        elif action == "save":
+            pm = {}
+            bc.eval_values(save=True)
+            pm["saved"] = True
+            return json.dumps(pm, default=serialize)
+
+    else:
+        print("Problem")
+
+
 @app.route('/fetch_zp', methods=['GET', 'POST'])
 def get_zero_posture():
     """
