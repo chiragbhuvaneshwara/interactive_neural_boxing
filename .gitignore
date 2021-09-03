@@ -98,3 +98,8 @@ train/models/mann_tf2_v2/*
 
 
 /vis/frontend/unity/Assets/Scenes/*
+/eval.csv
+/eval_res.csv
+/vis/eval/data/punch_left_data.png
+/vis/eval/data/punch_right_data.png
+/vis/eval/data/punch_targets_dataset_local_pos.npz
