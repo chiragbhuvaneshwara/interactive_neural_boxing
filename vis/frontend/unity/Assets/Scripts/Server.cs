@@ -22,7 +22,7 @@ namespace MultiMosiServer
         private float total_anim_time = 0.0f;
 
         public float global_scale = 1.0f;
-        public string target_hand = "left";
+        public string target_hand = "right";
 
         public string GetJsonStr(string route)
         {
@@ -85,19 +85,27 @@ namespace MultiMosiServer
             //Debug.Log(radius.ToString("F4"));
 
             var random = new System.Random();
-            var x = GetRandomFloat(random, -0.3, 0.3);
-            var y = GetRandomFloat(random, 1.45, 1.75);
-            var z = GetRandomFloat(random, 0.3, 0.6);
-
-            go.transform.position = new Vector3(x,y,z);
+            
 
             if (this.target_hand == "left")
             {
+                var x = GetRandomFloat(random, -0.4, 0.1);
+                var y = GetRandomFloat(random, 1.05, 1.75);
+                var z = GetRandomFloat(random, 0.45, 0.78);
+
+                go.transform.position = new Vector3(x, y, z);
+                this.target_hand = "left";
+
                 this.target_hand = "right";
             }
             else
             {
-                this.target_hand = "left";
+                var x = GetRandomFloat(random, -0.01, 0.6);
+                var y = GetRandomFloat(random, 1.05, 1.75);
+                var z = GetRandomFloat(random, 0.3, 0.7);
+
+                go.transform.position = new Vector3(x, y, z);
+               
             }
 
         }
@@ -281,6 +289,31 @@ namespace MultiMosiServer
             streamReader.Close();
             Debug.Log(json_obj);
         }
+        
+        public void record_eval_values()
+        {
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://127.0.0.1:5000/eval_values/record");
+
+            var httpResponse = (HttpWebResponse)request.GetResponse();
+
+            var streamReader = new StreamReader(httpResponse.GetResponseStream());
+            string json_obj = streamReader.ReadToEnd();
+            streamReader.Close();
+            //Debug.Log(json_obj);
+        }
+
+        public void save_eval_values()
+        {
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://127.0.0.1:5000/eval_values/save");
+
+            var httpResponse = (HttpWebResponse)request.GetResponse();
+
+            var streamReader = new StreamReader(httpResponse.GetResponseStream());
+            string json_obj = streamReader.ReadToEnd();
+            streamReader.Close();
+            //Debug.Log(json_obj);
+
+        }
 
         public bool ManagedUpdate(string TargetHand, List<float> MovementDir, List<float> FacingDir, int TrajPtsReached, bool evaluation) 
         {
@@ -294,6 +327,8 @@ namespace MultiMosiServer
                     var jsonData = (JObject)JsonConvert.DeserializeObject(punch_completed_str);
                     var punch_completed = jsonData["punch_completed"].Value<bool>();
                     var punch_half_completed = jsonData["punch_half_completed"].Value<bool>();
+
+                    this.record_eval_values();
 
                     if (punch_half_completed)
                     {

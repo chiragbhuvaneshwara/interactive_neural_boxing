@@ -275,8 +275,8 @@ public partial class Player : MonoBehaviour
                 //Debug.Break();
 
             leftMousePressed = true;
-            var isWristInTargetRange = server.ManagedUpdate("left", dir, facing_dir, leftTrajReached, false);
-            if (isWristInTargetRange) {
+            var punch_completed_status = server.ManagedUpdate("left", dir, facing_dir, leftTrajReached, false);
+            if (punch_completed_status) {
                 Debug.Log("LEnd");
                 leftMousePressed = false;
             }
@@ -287,9 +287,9 @@ public partial class Player : MonoBehaviour
                 //Debug.Break();
 
             rightMousePressed = true;
-            var isWristInTargetRange = server.ManagedUpdate("right", dir, facing_dir, rightTrajReached, false);
+            var punch_completed_status = server.ManagedUpdate("right", dir, facing_dir, rightTrajReached, false);
 
-            if (isWristInTargetRange) { 
+            if (punch_completed_status) { 
                 Debug.Log("REnd");
                 rightMousePressed = false;
             }
@@ -301,19 +301,20 @@ public partial class Player : MonoBehaviour
         }
         else
         {
-            bool status = server.ManagedUpdate("none", dir, facing_dir, 0, eval);
-            if (status) {
+            if (n_punches == 0)
+            {
+                server.save_eval_values();
+                eval = false;
+                Debug.Break();
+            }
+
+            bool punch_completed_status = server.ManagedUpdate("none", dir, facing_dir, 0, eval);
+            if (punch_completed_status) {
                 n_punches -= 1;
             }
 
-            if (n_punches == 0)
-            {
-                eval = false;
-            }
             
-            //if (eval & status) {
-                //UpdatePunchTargetPosition();
-            //}
+            
         }
     }
 
