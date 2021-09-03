@@ -146,13 +146,13 @@ class Character:
                 arr_copy[i] = arr_copy[i] + root_pos
         return arr_copy
 
-    def compute_punch_metrics(self, hand):
+    def compute_punch_metrics(self, hand, punch_target):
         pm = {}
         if hand == "left":
             hand_pos = self.joint_positions[self.bone_map["LeftWrist"]].ravel()
         elif hand == "right":
             hand_pos = self.joint_positions[self.bone_map["RightWrist"]].ravel()
-        mse = ((self.punch_target - hand_pos) ** 2).mean(axis=0)
+        mse = ((punch_target - hand_pos) ** 2).mean(axis=0)
         pm["mse"] = mse
         return pm
 
