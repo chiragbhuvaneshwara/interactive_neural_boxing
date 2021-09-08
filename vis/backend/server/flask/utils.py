@@ -112,7 +112,7 @@ def np_to_tvector3(x, vis=False):
         return TVector3(x[0], x[1], x[2])
 
 
-def build_zero_posture(base_controller, position_str="position", num_traj_pts=10):
+def build_zero_posture(base_controller, position_str="position", num_traj_pts_root=10, num_traj_pts_wrist=10):
     """
     Sets up zero posture information that was collected during data extraction in neural_data_prep and saved in the
     dataset configuration.
@@ -143,13 +143,14 @@ def build_zero_posture(base_controller, position_str="position", num_traj_pts=10
         tb = TBone(bone["name"], position, rotation, children, bone["parent"])
         bonelist.append(tb)
 
-    ntp = num_traj_pts
-    traj = {'rt': [0] * ntp,
-            'rt_v': [0] * ntp,
-            'rwt': [0] * ntp,
-            'lwt': [0] * ntp,
-            'rwt_v': [0] * ntp,
-            'lwt_v': [0] * ntp}
+    ntpr = num_traj_pts_root
+    ntpw = num_traj_pts_wrist
+    traj = {'rt': [0] * ntpr,
+            'rt_v': [0] * ntpr,
+            'rwt': [0] * ntpw,
+            'lwt': [0] * ntpw,
+            'rwt_v': [0] * ntpw,
+            'lwt_v': [0] * ntpw}
 
     return TPosture(bonelist, mapping, [0, 0, 0], 0.0, traj)
 

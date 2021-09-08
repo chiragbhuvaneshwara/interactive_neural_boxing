@@ -25,7 +25,8 @@ class BoxingController:
         self.n_joints = data_config["num_joints"]
         self.traj_window_wrist = data_config["traj_window_wrist"]
         self.traj_window_root = data_config["traj_window_root"]
-        self.num_traj_samples = data_config["num_traj_samples"]
+        self.num_traj_samples_wrist = data_config["num_traj_samples_wrist"]
+        self.num_traj_samples_root = data_config["num_traj_samples_root"]
         self.traj_step_root = data_config["traj_step_root"]
         self.traj_step_wrist = data_config["traj_step_wrist"]
         self.zero_posture = data_config["zero_posture"]
@@ -319,8 +320,8 @@ class BoxingController:
 
         if init_tr_wrist:
             right_pos, left_pos = self.input.get_wrist_pos_traj()
-            right_pos, left_pos = right_pos.reshape(self.num_traj_samples, 3), left_pos.reshape(self.num_traj_samples,
-                                                                                                3)
+            right_pos, left_pos = right_pos.reshape(self.num_traj_samples_wrist, 3), left_pos.reshape(self.num_traj_samples_wrist,
+                                                                                                      3)
             right_pos, left_pos = np.repeat(right_pos, repeats=self.traj_step_wrist, axis=0), np.repeat(left_pos,
                                                                                                         repeats=self.traj_step_wrist,
                                                                                                         axis=0)

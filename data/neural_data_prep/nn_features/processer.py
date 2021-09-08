@@ -281,7 +281,8 @@ def process_data(handler: FeatureExtractor, punch_labels_csv_path, frame_rate_di
             "traj_window_root": tr_window_root,
             "traj_window_wrist": tr_window_wrist,
 
-            "num_traj_samples": handler.num_traj_sampling_pts,
+            "num_traj_samples_root": handler.num_traj_sampling_pts_root,
+            "num_traj_samples_wrist": handler.num_traj_sampling_pts_wrist,
             "traj_step_root": handler.traj_step_root,
             "traj_step_wrist": handler.traj_step_wrist,
             "num_joints": len(handler.joint_id_map.keys()),
@@ -306,7 +307,7 @@ def process_data(handler: FeatureExtractor, punch_labels_csv_path, frame_rate_di
 
 
 def process_folder(bvh_path, punch_labels_path, frame_rate_division, forward_direction, traj_window_root,
-                   traj_window_wrist, num_tr_sampling_pts, develop):
+                   traj_window_wrist, num_tr_sampling_pts_root, num_traj_sampling_pts_wrist, develop):
     """
     Generates and stacks the X and Y data for provided files in the bvh and punch label folders.
 
@@ -337,7 +338,8 @@ def process_folder(bvh_path, punch_labels_path, frame_rate_division, forward_dir
         print('\n')
         print(b_f, '\n', p_f)
         handler = FeatureExtractor(b_f, traj_window_root, traj_window_wrist, forward_dir=forward_direction,
-                                   num_traj_sampling_pts=num_tr_sampling_pts)
+                                   num_traj_sampling_pts_root=num_tr_sampling_pts_root,
+                                   num_traj_sampling_pts_wrist=num_traj_sampling_pts_wrist)
 
         if b_f == bvh_files[-1]:
             x_cur_file, y_per_file, dataset_config = process_data(handler, p_f, frame_rate_division, forward_direction,

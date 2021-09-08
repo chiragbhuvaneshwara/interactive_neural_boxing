@@ -26,7 +26,8 @@ public partial class Player : MonoBehaviour
     public bool eval = false;
     public bool fix_global_pos = false;
     public float velocity_scale = 1.0f;
-    private int num_traj_pts;
+    private int num_traj_pts_root;
+    private int num_traj_pts_wrist;
     public int n_punches = 10;
     private Dictionary<string, List<GameObject>>Trajectory = new Dictionary<string, List<GameObject>>();
     private Dictionary<string, LineRenderer> TrajLineRenderer = new Dictionary<string, LineRenderer>();
@@ -78,12 +79,13 @@ public partial class Player : MonoBehaviour
         server = new MultiMotionServer();
         this.initializeBones(this.rootBone);
         server.Start();
-        num_traj_pts = 10;
+        num_traj_pts_root = 12;
+        num_traj_pts_wrist = 10;
         leftTrajReached = 0;
         rightTrajReached = 0;
-        createTrajVisObjs("root", Color.black, num_traj_pts);
-        createTrajVisObjs("right_wrist", Color.red, num_traj_pts);
-        createTrajVisObjs("left_wrist", Color.blue, num_traj_pts);
+        createTrajVisObjs("root", Color.black, num_traj_pts_root);
+        createTrajVisObjs("right_wrist", Color.red, num_traj_pts_wrist);
+        createTrajVisObjs("left_wrist", Color.blue, num_traj_pts_wrist);
     }
 
     private void createTrajVisObjs(string tr_name, Color col, int num_tr_pts)
@@ -120,8 +122,19 @@ public partial class Player : MonoBehaviour
 
     private void updateTrajVisObjs(string target)
     {
+
+        var ntp = 0;
+        if (target == "root")
+        {
+            ntp = num_traj_pts_root;
+        }
+        else
+        {
+            ntp = num_traj_pts_wrist;
+        }
+
         var tr = Trajectory[target];
-        for (int i = 0; i < num_traj_pts; i++)
+        for (int i = 0; i < ntp; i++)
         {
             //Trajectory[i].transform.position = this.server.GetTrPos(target, i);
             tr[i].transform.position = this.server.GetTrPos(target, i);
@@ -129,7 +142,7 @@ public partial class Player : MonoBehaviour
         Trajectory[target] = tr;
 
         var tr_line = TrajLineRenderer[target];
-        for (int i = 0; i < num_traj_pts; i++)
+        for (int i = 0; i < ntp; i++)
         {
             //TrajLineRenderer.SetPosition(i, Trajectory[i].transform.position);
             tr_line.SetPosition(i, Trajectory[target][i].transform.position);

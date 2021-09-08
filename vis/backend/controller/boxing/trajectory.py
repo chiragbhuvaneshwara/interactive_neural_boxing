@@ -13,7 +13,8 @@ class Trajectory:
 
     def __init__(self, data_configuration):
         self.bone_map = data_configuration["bone_map"]
-        self.n_tr_samples = data_configuration['num_traj_samples']  # 10
+        self.n_tr_samples_root = data_configuration['num_traj_samples_root']  # 10
+        self.n_tr_samples_wrist = data_configuration['num_traj_samples_wrist']  # 10
         self.traj_step_root = data_configuration['traj_step_root']  # 5
         self.traj_step_wrist = data_configuration['traj_step_wrist']  # 5
         self.left_wrist_pos_avg_diff = np.array(data_configuration['left_wrist_pos_avg_diff']).ravel()
@@ -24,8 +25,8 @@ class Trajectory:
         self.right_wrist_pos_no_punch_dist = data_configuration['right_wrist_no_punch']
 
         # 10 * 5 = 50fps trajectory window
-        self.n_frames_tr_win_root = self.n_tr_samples * self.traj_step_root
-        self.n_frames_tr_win_wrist = self.n_tr_samples * self.traj_step_wrist
+        self.n_frames_tr_win_root = self.n_tr_samples_root * self.traj_step_root
+        self.n_frames_tr_win_wrist = self.n_tr_samples_wrist * self.traj_step_wrist
         self.median_idx_root = self.n_frames_tr_win_root // 2
         self.median_idx_wrist = self.n_frames_tr_win_wrist // 2
 
@@ -509,11 +510,13 @@ class Trajectory:
             if root:
                 tr_step = self.traj_step_root
                 n_frames = self.n_frames_tr_win_root
+                n_tr_samples = self.n_tr_samples_root
                 half_pred_window = self.median_idx_root // tr_step
                 tr_mid_idx = self.median_idx_root
             else:
                 tr_step = self.traj_step_wrist
                 n_frames = self.n_frames_tr_win_wrist
+                n_tr_samples = self.n_tr_samples_wrist
                 half_pred_window = self.median_idx_wrist // tr_step
                 tr_mid_idx = self.median_idx_wrist
 
@@ -525,7 +528,7 @@ class Trajectory:
                 weights.append(weight)
                 combo_idxs_1.append(i // tr_step - half_pred_window)
                 combo_idxs_2.append((i // tr_step) + (
-                    1 if i < (n_frames - self.n_tr_samples + 1) else 0) - half_pred_window)
+                    1 if i < (n_frames - n_tr_samples + 1) else 0) - half_pred_window)
 
             # weights = np.tile(np.array(weights).reshape(len(weights), 1), pred_arr.shape[1])
             weights = np.array(weights).reshape(len(weights), 1)

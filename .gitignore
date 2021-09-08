@@ -1,6 +1,7 @@
 # new gitignore for restructured project
 __pycache__
 .idea
+.DS_store
 
 data/raw_data/mocap/*
 !data/raw_data/mocap/README.md

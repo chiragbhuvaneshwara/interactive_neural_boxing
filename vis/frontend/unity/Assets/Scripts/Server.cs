@@ -94,7 +94,7 @@ namespace MultiMosiServer
                 var z = GetRandomFloat(random, 0.45, 0.78);
 
                 go.transform.position = new Vector3(x, y, z);
-                this.target_hand = "left";
+                
 
                 this.target_hand = "right";
             }
@@ -105,7 +105,8 @@ namespace MultiMosiServer
                 var z = GetRandomFloat(random, 0.3, 0.7);
 
                 go.transform.position = new Vector3(x, y, z);
-               
+                this.target_hand = "left";
+
             }
 
         }

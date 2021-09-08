@@ -14,9 +14,12 @@ app = Flask(__name__)
 
 frd = 1
 window_wrist = math.ceil(5 / frd)
-window_root = math.ceil(5 / frd)
+window_root = math.ceil(6 / frd)
 epochs = 100
-DATASET_OUTPUT_BASE_PATH = os.path.join("data", "neural_data", )
+
+# DATASET_OUTPUT_BASE_PATH = os.path.join("data", "neural_data", )
+DATASET_OUTPUT_BASE_PATH = os.path.join("data", "neural_data", "dev")
+
 frd_win = 'fr_' + str(frd) + '_tr_' + str(window_root) + "_" + str(window_wrist)
 controller_in_out_dir = os.path.join("backend", "controller", "controller_in_out")
 frd_win_epochs = frd_win + '_ep_' + str(epochs)
@@ -26,9 +29,8 @@ trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-08-04_17
                                  "epoch_99")  # 1, 5, 5 min gating inputs + traj root dirs ==> full traj
 ###################################################################################################
 
-# trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-08-23_14-32-24", "epochs",
-#                                  "epoch_99")  # 1, 5, 5 min gating inputs + traj root dirs ==> traj earliest, mid and
-#                                  future most
+trained_base_path = os.path.join("train/models/mann_tf2_v2/dev/fr_1_tr_6_5_ep_2/2021-09-08_17-20-04", "epochs",
+                                 "epoch_1")
 target_file = os.path.join(trained_base_path, 'saved_model')
 
 x_mean, y_mean = load_binary(os.path.join(trained_base_path, "means", "Xmean.bin")), \
@@ -52,7 +54,9 @@ with open(dataset_config_path) as f:
     dataset_configuration = json.load(f)
 
 bc = BoxingController(mann, dataset_configuration, norm)
-zp = build_zero_posture(bc, num_traj_pts=dataset_configuration["num_traj_samples"])
+zp = build_zero_posture(bc, num_traj_pts_root=dataset_configuration["num_traj_samples_root"],
+                        num_traj_pts_wrist= dataset_configuration["num_traj_samples_wrist"]
+                        )
 
 
 def controller_to_posture():

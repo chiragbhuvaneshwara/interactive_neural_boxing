@@ -80,7 +80,7 @@ def process_folder(bvh_path, punch_labels_path, frame_rate_division, forward_dir
         print('\n')
         print(b_f, '\n', p_f)
         handler = FeatureExtractor(b_f, traj_window_root, traj_window_wrist, forward_dir=forward_direction,
-                                   num_traj_sampling_pts=num_tr_sampling_pts)
+                                   num_traj_sampling_pts_root=num_tr_sampling_pts)
 
         punch_targets_cur_file_right, punch_targets_cur_file_left = process_data(handler, p_f, frame_rate_division)
 

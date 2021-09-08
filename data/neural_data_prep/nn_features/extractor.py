@@ -38,7 +38,8 @@ class FeatureExtractor:
                  head_id=6,
                  hid_l=14,
                  hid_r=10,
-                 num_traj_sampling_pts=10):
+                 num_traj_sampling_pts_root=10,
+                 num_traj_sampling_pts_wrist=10):
         """
         This class provides functionality to preprocess raw bvh data into a Neural Network favored format.
         It does not actually transfer the data to a NN model, but provides the possibilities to create these. An
@@ -97,9 +98,10 @@ class FeatureExtractor:
         self.reference_skeleton = []
 
         self.joint_id_map = {}
-        self.num_traj_sampling_pts = num_traj_sampling_pts
-        self.traj_step_wrist = ((self.window_wrist * 2) // self.num_traj_sampling_pts)
-        self.traj_step_root = ((self.window_root * 2) // self.num_traj_sampling_pts)
+        self.num_traj_sampling_pts_root = num_traj_sampling_pts_root
+        self.num_traj_sampling_pts_wrist = num_traj_sampling_pts_wrist
+        self.traj_step_root = ((self.window_root * 2) // self.num_traj_sampling_pts_root)
+        self.traj_step_wrist = ((self.window_wrist * 2) // self.num_traj_sampling_pts_wrist)
 
         self.left_wrist_pos_avg_diff_punch = None
         self.right_wrist_pos_avg_diff_punch = None
@@ -125,7 +127,7 @@ class FeatureExtractor:
         copy_feature_extractor = FeatureExtractor(self.bvh_file_path, self.window_root, self.window_wrist,
                                                   self.to_meters, self.__ref_dir, self.shoulder_joints,
                                                   self.hip_joints, self.foot_left, self.foot_right, self.head,
-                                                  self.hand_left, self.hand_right, self.num_traj_sampling_pts)
+                                                  self.hand_left, self.hand_right, self.num_traj_sampling_pts_root)
         copy_feature_extractor.__global_positions = np.array(self.__global_positions)
         return copy_feature_extractor
 
@@ -621,9 +623,10 @@ class FeatureExtractor:
             # handles only inverse rotation)
             root_pos[j] = root_rotations[frame] * root_pos[j]
             root_dirs[j] = root_rotations[frame] * root_dirs[j]
+
+        for j in range(len(right_wrist_pos)):
             right_wrist_pos[j] = root_rotations[frame] * right_wrist_pos[j]
             left_wrist_pos[j] = root_rotations[frame] * left_wrist_pos[j]
-            # headdirs[j] = root_rotations[frame] * headdirs[j]
 
         # # TODO explain why you need mid frame removal or not (probably trivial and can be included)
         # right_wrist_pos = right_wrist_pos - right_wrist_pos[len(right_wrist_pos) // 2]
