@@ -3,7 +3,7 @@ import json
 import math
 import os
 
-from flask import Flask, request
+from flask import Flask, request, jsonify
 
 from train.nn.mann_keras.utils import load_mann, load_binary
 from vis.backend.controller.boxing.controller import BoxingController
@@ -25,14 +25,13 @@ controller_in_out_dir = os.path.join("backend", "controller", "controller_in_out
 frd_win_epochs = frd_win + '_ep_' + str(epochs)
 all_models_path = os.path.join("train", "models", "mann_tf2_v2")
 ###################################################################################################
-trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-08-04_17-39-31", "epochs",
-                                 "epoch_99")  # 1, 5, 5 min gating inputs + traj root dirs ==> full traj
+# trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-08-04_17-39-31", "epochs",
+#                                  "epoch_99")  # 1, 5, 5 min gating inputs + traj root dirs ==> full traj
 ###################################################################################################
 
-trained_base_path = os.path.join("train/models/mann_tf2_v2/dev/fr_1_tr_6_5_ep_2/2021-09-08_17-20-04", "epochs",
+trained_base_path = os.path.join("train/models/mann_tf2_v2/dev/fr_1_tr_6_5_ep_2/2021-09-09_14-10-39", "epochs",
                                  "epoch_1")
 target_file = os.path.join(trained_base_path, 'saved_model')
-
 x_mean, y_mean = load_binary(os.path.join(trained_base_path, "means", "Xmean.bin")), \
                  load_binary(os.path.join(trained_base_path, "means", "Ymean.bin"))
 x_std, y_std = load_binary(os.path.join(trained_base_path, "means", "Xstd.bin")), \
@@ -50,13 +49,19 @@ mann = load_mann(os.path.join(trained_base_path, "saved_model"))
 dataset_config_path = os.path.join(DATASET_OUTPUT_BASE_PATH, frd_win, "dataset_config.json")
 dataset_config_path = os.path.join(dataset_config_path)
 
+# eval_save_path = os.path.join(os.sep.join(trained_base_path.split(os.sep)[:-2]), "eval_{n_punches}.csv")
+eval_save_path = os.path.join(os.sep.join(trained_base_path.split(os.sep)[:-2]), "{eval_csv_name}")
+
 with open(dataset_config_path) as f:
     dataset_configuration = json.load(f)
 
 bc = BoxingController(mann, dataset_configuration, norm)
 zp = build_zero_posture(bc, num_traj_pts_root=dataset_configuration["num_traj_samples_root"],
-                        num_traj_pts_wrist= dataset_configuration["num_traj_samples_wrist"]
+                        num_traj_pts_wrist=dataset_configuration["num_traj_samples_wrist"]
                         )
+
+n_punches_eval = 0
+eval_csv_name = ""
 
 
 def controller_to_posture():
@@ -123,6 +128,43 @@ def fetch_frame():
         print("Problem")
 
 
+@app.route('/set_n_punches_eval/<n_punches>', methods=['POST'])
+def set_n_punches_eval(n_punches):
+    """
+
+    @return:
+    """
+    if request.method == 'POST':
+        global n_punches_eval
+        n_punches_eval = n_punches
+
+        return jsonify(success=True)
+
+    else:
+        print("Problem")
+
+
+@app.route('/set_eval_name/',
+           methods=['POST'])
+def set_eval_name():
+    """
+
+    @return:
+    """
+    if request.method == 'POST':
+        global eval_csv_name
+        # exp_duration_indicator = str(exp_duration_indicator)
+        eval_type = request.args.get("eval_type")
+        exp_type = request.args.get("exp_type")
+        exp_duration_indicator = request.args.get("exp_duration_indicator")
+        eval_csv_name = "eval_" + "_".join([eval_type, exp_type, exp_duration_indicator]) + ".csv"
+
+        return jsonify(success=True)
+
+    else:
+        print("Problem")
+
+
 @app.route('/fetch_punch_completed/<target_hand>', methods=['GET'])
 def get_punch_completed(target_hand):
     if request.method == 'GET':
@@ -135,6 +177,7 @@ def get_punch_completed(target_hand):
         else:
             p_comp = False
             p_h_comp = False
+
         p_comp = {"punch_completed": p_comp,
                   "punch_half_completed": p_h_comp
                   }
@@ -163,8 +206,15 @@ def evaluation_values(action):
             pm["recorded"] = True
             return json.dumps(pm, default=serialize)
         elif action == "save":
+
             pm = {}
-            bc.eval_values(save=True)
+            # global n_punches_eval
+            global eval_csv_name
+            # bc.eval_values(save=True, save_path=eval_save_path.format(n_punches=str(n_punches_eval)))
+            bc.eval_values(save=True, save_path=eval_save_path.format(eval_csv_name=eval_csv_name))
+            # n_punches_eval = 0
+            eval_csv_name = ""
+
             pm["saved"] = True
             return json.dumps(pm, default=serialize)
 

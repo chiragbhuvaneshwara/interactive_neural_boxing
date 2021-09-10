@@ -13,15 +13,12 @@ namespace MultiMosiServer
     public partial class MultiMotionServer
     {
 
-        //string serverAddress = "http://127.0.0.1:5000/";
-
         private TPosture posture;
         public Traj trajectory;
 
         private bool active { get; set; } = true;
-        private float total_anim_time = 0.0f;
 
-        public float global_scale = 1.0f;
+        //public float global_scale = 1.0f;
         public string target_hand = "right";
 
         public string GetJsonStr(string route)
@@ -77,7 +74,7 @@ namespace MultiMosiServer
             return Convert.ToSingle(min + ((float)random.NextDouble() * (max - min)));
         }
 
-        public void UpdatePunchTargetPosition()
+        public void UpdatePunchTargetPosition(string exp_type)
         {
 
             GameObject go = GameObject.Find("punch_target");
@@ -85,27 +82,54 @@ namespace MultiMosiServer
             //Debug.Log(radius.ToString("F4"));
 
             var random = new System.Random();
-            
 
-            if (this.target_hand == "left")
+
+            if (exp_type == "random")
             {
-                var x = GetRandomFloat(random, -0.4, 0.1);
-                var y = GetRandomFloat(random, 1.05, 1.75);
-                var z = GetRandomFloat(random, 0.45, 0.78);
+                if (this.target_hand == "left")
+                {
+                    var x = GetRandomFloat(random, -0.4, 0.1);
+                    var y = GetRandomFloat(random, 1.05, 1.75);
+                    var z = GetRandomFloat(random, 0.45, 0.78);
 
-                go.transform.position = new Vector3(x, y, z);
-                
+                    go.transform.position = new Vector3(x, y, z);
 
-                this.target_hand = "right";
+
+                    this.target_hand = "right";
+                }
+                else
+                {
+                    var x = GetRandomFloat(random, -0.01, 0.6);
+                    var y = GetRandomFloat(random, 1.05, 1.75);
+                    var z = GetRandomFloat(random, 0.3, 0.7);
+
+                    go.transform.position = new Vector3(x, y, z);
+                    this.target_hand = "left";
+
+                }
             }
-            else
-            {
-                var x = GetRandomFloat(random, -0.01, 0.6);
-                var y = GetRandomFloat(random, 1.05, 1.75);
-                var z = GetRandomFloat(random, 0.3, 0.7);
+            else { // exp_type == "uniform"
+                if (this.target_hand == "left")
+                {
+                    var x = GetRandomFloat(random, -0.4, 0.1);
+                    var y = GetRandomFloat(random, 1.05, 1.75);
+                    var z = GetRandomFloat(random, 0.45, 0.78);
 
-                go.transform.position = new Vector3(x, y, z);
-                this.target_hand = "left";
+                    go.transform.position = new Vector3(x, y, z);
+
+
+                    this.target_hand = "right";
+                }
+                else
+                {
+                    var x = GetRandomFloat(random, -0.01, 0.6);
+                    var y = GetRandomFloat(random, 1.05, 1.75);
+                    var z = GetRandomFloat(random, 0.3, 0.7);
+
+                    go.transform.position = new Vector3(x, y, z);
+                    this.target_hand = "left";
+
+                }
 
             }
 
@@ -235,7 +259,8 @@ namespace MultiMosiServer
 
         public Vector3 GetGlobalLocation()
         {
-            Vector3 pos = Tvec2vec(this.posture.Location) * this.global_scale;
+            //Vector3 pos = Tvec2vec(this.posture.Location) * this.global_scale;
+            Vector3 pos = Tvec2vec(this.posture.Location);
             //pos.x = pos.x;
             return pos;
         }
@@ -290,7 +315,7 @@ namespace MultiMosiServer
             streamReader.Close();
             Debug.Log(json_obj);
         }
-        
+
         public void record_eval_values()
         {
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://127.0.0.1:5000/eval_values/record");
@@ -301,6 +326,35 @@ namespace MultiMosiServer
             string json_obj = streamReader.ReadToEnd();
             streamReader.Close();
             //Debug.Log(json_obj);
+        }
+
+        //public void report_n_punches(int n_punches)
+        public void report_n_punches(string eval_type, string exp_type, string exp_duration_indicator)
+        {
+            //HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://127.0.0.1:5000/set_n_punches_eval/"+n_punches.ToString());
+            string eval_name_route = String.Format("http://127.0.0.1:5000/set_eval_name/?eval_type={0}&exp_type={1}&exp_duration_indicator={2}", eval_type, exp_type, exp_duration_indicator);
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(eval_name_route);
+            request.ContentType = "application/json";
+            request.Method = "POST";
+            var httpResponse = (HttpWebResponse)request.GetResponse();
+
+            //var httpWebRequest = (HttpWebRequest)WebRequest.Create("http://127.0.0.1:5000/" + route);
+            //httpWebRequest.ContentType = "application/json";
+            //httpWebRequest.Method = "POST";
+
+            //httpWebRequest.Timeout = System.Threading.Timeout.Infinite;
+
+            //using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
+            //{
+            //    streamWriter.Write(VarToPost);
+            //}
+
+            //var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
+
+            //var streamReader = new StreamReader(httpResponse.GetResponseStream());
+            //string json_obj = streamReader.ReadToEnd();
+            //streamReader.Close();
+
         }
 
         public void save_eval_values()
@@ -316,32 +370,53 @@ namespace MultiMosiServer
 
         }
 
-        public bool ManagedUpdate(string TargetHand, List<float> MovementDir, List<float> FacingDir, int TrajPtsReached, bool evaluation) 
+        public bool ManagedUpdate(string TargetHand, List<float> MovementDir, List<float> FacingDir, int TrajPtsReached, bool evaluation, string eval_type=null, string exp_type=null) 
         {
             if (this.active)
             {
                 if (evaluation)
                 {
-                    this.posture = this.UpdatePunchTargetFetchPostureEval(TargetHand, MovementDir, FacingDir, TrajPtsReached);
-                    string punch_completed_str = this.GetJsonStr("fetch_punch_completed/" + this.target_hand);
-                    //bool punch_completed = JsonConvert.DeserializeObject<bool>(punch_completed_str);
-                    var jsonData = (JObject)JsonConvert.DeserializeObject(punch_completed_str);
-                    var punch_completed = jsonData["punch_completed"].Value<bool>();
-                    var punch_half_completed = jsonData["punch_half_completed"].Value<bool>();
-
-                    this.record_eval_values();
-
-                    if (punch_half_completed)
+                    if (eval_type == "punch")
                     {
-                        this.compute_punch_metrics(this.target_hand);
-                    }
+                        TargetHand = this.target_hand;
+                        //this.posture = this.UpdatePunchTargetFetchPostureEval(TargetHand, MovementDir, FacingDir, TrajPtsReached);
+                        this.posture = this.UpdatePunchTargetFetchPosture(TargetHand, MovementDir, FacingDir, TrajPtsReached);
+                        string punch_completed_str = this.GetJsonStr("fetch_punch_completed/" + this.target_hand);
+                        var jsonData = (JObject)JsonConvert.DeserializeObject(punch_completed_str);
+                        var punch_completed = jsonData["punch_completed"].Value<bool>();
+                        var punch_half_completed = jsonData["punch_half_completed"].Value<bool>();
 
-                    if (punch_completed)
-                    {
-                        UpdatePunchTargetPosition();
-                    }
+                        this.record_eval_values();
 
-                    return punch_completed;
+                        if (punch_half_completed)
+                        {
+                            this.compute_punch_metrics(this.target_hand);
+                        }
+
+                        if (punch_completed)
+                        {
+                            UpdatePunchTargetPosition(exp_type);
+                        }
+
+                        return punch_completed;
+                    }
+                    else { // eval_type == "walk"
+                        if (exp_type == "forward")
+                        {
+                            MovementDir = new List<float> { 0, 1 };
+                        }
+                        else
+                        {
+                            MovementDir = new List<float> { 0, -1 };
+                        }
+
+                        this.posture = this.UpdatePunchTargetFetchPosture(TargetHand, MovementDir, FacingDir, TrajPtsReached);
+
+                        this.record_eval_values();
+
+                        var walk_frame_updated = true;
+                        return walk_frame_updated;
+                    }
                 }
                 else {
                     this.posture = this.UpdatePunchTargetFetchPosture(TargetHand, MovementDir, FacingDir, TrajPtsReached);

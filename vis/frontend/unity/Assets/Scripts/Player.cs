@@ -5,11 +5,12 @@ using System;
 
 
 
-
 public partial class Player : MonoBehaviour
 {
     private int leftTrajReached;
     private int rightTrajReached;
+
+
 
     private bool leftMousePressed;
     private bool rightMousePressed;
@@ -22,17 +23,23 @@ public partial class Player : MonoBehaviour
 
     private Dictionary<string, Bone> bonemap = new Dictionary<string, Bone>();
 
+    public int num_traj_pts_root;
+    public int num_traj_pts_wrist;
     public bool start = false;
     public bool eval = false;
-    public bool fix_global_pos = false;
-    public float velocity_scale = 1.0f;
-    private int num_traj_pts_root;
-    private int num_traj_pts_wrist;
-    public int n_punches = 10;
+
+    private Dictionary<int, List<string>> evaluation_type_map;
+    public enum EvaluationType { walk_forward, walk_backward, punch_uniform, punch_random }
+    public EvaluationType evaluation_type;
+    public int exp_duration = 10; // represenets 10 punches for punch exps and 10 frames for walking experiment
+
+    private bool report_exp_details = true;
+
+
     private Dictionary<string, List<GameObject>>Trajectory = new Dictionary<string, List<GameObject>>();
     private Dictionary<string, LineRenderer> TrajLineRenderer = new Dictionary<string, LineRenderer>();
     private List<string> TrajNames = new List<string> { "root", "right_wrist", "left_wrist"};
-    private Vector3 global_offset = Vector3.zero;
+    //private Vector3 global_offset = Vector3.zero;
 
     public MultiMotionServer server = new MultiMotionServer();
 
@@ -75,12 +82,19 @@ public partial class Player : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        this.global_offset += this.transform.position;
+        this.report_exp_details = true;
+        //this.global_offset += this.transform.position;
         server = new MultiMotionServer();
         this.initializeBones(this.rootBone);
         server.Start();
-        num_traj_pts_root = 12;
-        num_traj_pts_wrist = 10;
+        //num_traj_pts_root = 12;
+        //num_traj_pts_wrist = 10;
+        evaluation_type_map = new Dictionary< int, List<string>> (){
+            { 0, new List<string>(){ "walk","forward" } },
+            { 1, new List<string>(){"walk","backward" } },
+            { 2, new List<string>(){"punch","uniform"} },
+            { 3, new List<string>(){"punch","random"} }
+        };
         leftTrajReached = 0;
         rightTrajReached = 0;
         createTrajVisObjs("root", Color.black, num_traj_pts_root);
@@ -199,18 +213,6 @@ public partial class Player : MonoBehaviour
             this.rootBone.rotation = Quaternion.identity;
             processTransforms(this.rootBone);
             processTraj();
-            if (!this.fix_global_pos)
-            {
-                Vector3 q = this.server.GetGlobalRotation().eulerAngles;
-                Vector3 qt = this.rootBone.rotation.eulerAngles;
-                qt.y = -q.y;
-
-                Vector3 global_pos = this.server.GetGlobalLocation() + this.global_offset;
-
-                this.characterTransform.position = global_pos;
-                this.rootBone.position += global_pos; //* 1.7f;// * 1.7f;
-                this.rootBone.rotation = Quaternion.Euler(qt.x, qt.y, qt.z);
-            }
         }
 
     }
@@ -235,6 +237,7 @@ public partial class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+
         List<float> dir = new List<float> { 0, 0 };
         if (Input.GetKey(KeyCode.A))
         {
@@ -314,21 +317,31 @@ public partial class Player : MonoBehaviour
         }
         else
         {
-            if (n_punches == 0)
+            string[] eval_exp_input = evaluation_type.ToString().Split('_');
+            string eval_type = eval_exp_input[0];
+            string exp_type = eval_exp_input[1];
+
+            if (eval && report_exp_details)
+            {
+                int exp_duration_indicator = exp_duration;
+
+                server.report_n_punches(eval_type, exp_type, exp_duration_indicator.ToString());
+                report_exp_details = false;
+            }
+
+
+            if (exp_duration == 0)
             {
                 server.save_eval_values();
                 eval = false;
-                Debug.Break();
+                UnityEditor.EditorApplication.isPlaying = false;
+                //Debug.Break();
             }
-
-            bool punch_completed_status = server.ManagedUpdate("none", dir, facing_dir, 0, eval);
+          
+            bool punch_completed_status = server.ManagedUpdate("none", dir, facing_dir, 0, eval, eval_type, exp_type);
             if (punch_completed_status) {
-                n_punches -= 1;
-            }
-
-            
-            
+                exp_duration -= 1;
+            }           
         }
     }
-
 }
