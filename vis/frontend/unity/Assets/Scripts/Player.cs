@@ -28,10 +28,9 @@ public partial class Player : MonoBehaviour
     public bool start = false;
     public bool eval = false;
 
-    private Dictionary<int, List<string>> evaluation_type_map;
     public enum EvaluationType { walk_forward, walk_backward, punch_uniform, punch_random }
     public EvaluationType evaluation_type;
-    public int exp_duration = 10; // represenets 10 punches for punch exps and 10 frames for walking experiment
+    public int exp_duration; // represenets 10 punches for punch exps and 10 frames for walking experiment
 
     private bool report_exp_details = true;
 
@@ -87,14 +86,6 @@ public partial class Player : MonoBehaviour
         server = new MultiMotionServer();
         this.initializeBones(this.rootBone);
         server.Start();
-        //num_traj_pts_root = 12;
-        //num_traj_pts_wrist = 10;
-        evaluation_type_map = new Dictionary< int, List<string>> (){
-            { 0, new List<string>(){ "walk","forward" } },
-            { 1, new List<string>(){"walk","backward" } },
-            { 2, new List<string>(){"punch","uniform"} },
-            { 3, new List<string>(){"punch","random"} }
-        };
         leftTrajReached = 0;
         rightTrajReached = 0;
         createTrajVisObjs("root", Color.black, num_traj_pts_root);
@@ -323,9 +314,17 @@ public partial class Player : MonoBehaviour
 
             if (eval && report_exp_details)
             {
+                if (eval_type == "punch")
+                {
+                    exp_duration = 8 * 2;
+                }
+                else
+                {
+                    exp_duration = 30 * 60;
+                }
                 int exp_duration_indicator = exp_duration;
 
-                server.report_n_punches(eval_type, exp_type, exp_duration_indicator.ToString());
+                server.report_exp_details(eval_type, exp_type, exp_duration_indicator.ToString());
                 report_exp_details = false;
             }
 
@@ -333,6 +332,7 @@ public partial class Player : MonoBehaviour
             if (exp_duration == 0)
             {
                 server.save_eval_values();
+                server.reset_target_pointers();
                 eval = false;
                 UnityEditor.EditorApplication.isPlaying = false;
                 //Debug.Break();

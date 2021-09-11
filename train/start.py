@@ -16,7 +16,7 @@ DEVELOP = args.develop
 LOCAL = args.local
 
 FRAME_RATE_DIV = 1
-# TR_WINDOW = math.ceil(14 / FRAME_RATE_DIV)
+
 TR_WINDOW_WRIST = math.ceil(5 / FRAME_RATE_DIV)
 TR_WINDOW_ROOT = math.ceil(6 / FRAME_RATE_DIV)
 OUT_BASE_PATH = os.path.join("train", "models", "mann_tf2_v2")

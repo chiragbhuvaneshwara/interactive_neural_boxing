@@ -9,6 +9,11 @@ using System;
 
 namespace MultiMosiServer
 {
+    public class PunchTargetsInput
+    {
+        public List<List<float>> left { get; set; }
+        public List<List<float>> right { get; set; }
+    }
 
     public partial class MultiMotionServer
     {
@@ -17,9 +22,19 @@ namespace MultiMosiServer
         public Traj trajectory;
 
         private bool active { get; set; } = true;
+        public PunchTargetsInput punch_targets;
+
+        public int right_target_pointer = 0;
+        public int left_target_pointer = 0;
 
         //public float global_scale = 1.0f;
         public string target_hand = "right";
+
+        public void reset_target_pointers()
+        {
+            right_target_pointer = 0;
+            left_target_pointer = 0;
+        }
 
         public string GetJsonStr(string route)
         {
@@ -74,13 +89,71 @@ namespace MultiMosiServer
             return Convert.ToSingle(min + ((float)random.NextDouble() * (max - min)));
         }
 
+        //public void UpdatePunchTargetPosition(string exp_type)
+        //{
+
+        //    GameObject go = GameObject.Find("punch_target");
+        //    float radius = go.GetComponent<SphereCollider>().radius;
+        //    //Debug.Log(radius.ToString("F4"));
+
+        //    var random = new System.Random();
+
+
+        //    if (exp_type == "random")
+        //    {
+        //        if (this.target_hand == "left")
+        //        {
+        //            var x = GetRandomFloat(random, -0.4, 0.1);
+        //            var y = GetRandomFloat(random, 1.05, 1.75);
+        //            var z = GetRandomFloat(random, 0.45, 0.78);
+
+        //            go.transform.position = new Vector3(x, y, z);
+
+
+        //            this.target_hand = "right";
+        //        }
+        //        else
+        //        {
+        //            var x = GetRandomFloat(random, -0.01, 0.6);
+        //            var y = GetRandomFloat(random, 1.05, 1.75);
+        //            var z = GetRandomFloat(random, 0.3, 0.7);
+
+        //            go.transform.position = new Vector3(x, y, z);
+        //            this.target_hand = "left";
+
+        //        }
+        //    }
+        //    else { // exp_type == "uniform"
+        //        if (this.target_hand == "left")
+        //        {
+        //            var x = GetRandomFloat(random, -0.4, 0.1);
+        //            var y = GetRandomFloat(random, 1.05, 1.75);
+        //            var z = GetRandomFloat(random, 0.45, 0.78);
+
+        //            go.transform.position = new Vector3(x, y, z);
+
+
+        //            this.target_hand = "right";
+        //        }
+        //        else
+        //        {
+        //            var x = GetRandomFloat(random, -0.01, 0.6);
+        //            var y = GetRandomFloat(random, 1.05, 1.75);
+        //            var z = GetRandomFloat(random, 0.3, 0.7);
+
+        //            go.transform.position = new Vector3(x, y, z);
+        //            this.target_hand = "left";
+
+        //        }
+
+        //    }
+
+        //}
+
         public void UpdatePunchTargetPosition(string exp_type)
         {
 
             GameObject go = GameObject.Find("punch_target");
-            float radius = go.GetComponent<SphereCollider>().radius;
-            //Debug.Log(radius.ToString("F4"));
-
             var random = new System.Random();
 
 
@@ -88,22 +161,17 @@ namespace MultiMosiServer
             {
                 if (this.target_hand == "left")
                 {
-                    var x = GetRandomFloat(random, -0.4, 0.1);
-                    var y = GetRandomFloat(random, 1.05, 1.75);
-                    var z = GetRandomFloat(random, 0.45, 0.78);
+                    var curr = punch_targets.left[left_target_pointer];
+                    go.transform.position = new Vector3(curr[0], curr[1], curr[2]);
 
-                    go.transform.position = new Vector3(x, y, z);
-
-
+                    left_target_pointer += 1;
                     this.target_hand = "right";
                 }
                 else
                 {
-                    var x = GetRandomFloat(random, -0.01, 0.6);
-                    var y = GetRandomFloat(random, 1.05, 1.75);
-                    var z = GetRandomFloat(random, 0.3, 0.7);
-
-                    go.transform.position = new Vector3(x, y, z);
+                    var curr = punch_targets.right[right_target_pointer];
+                    go.transform.position = new Vector3(curr[0], curr[1], curr[2]);
+                    right_target_pointer += 1;
                     this.target_hand = "left";
 
                 }
@@ -111,22 +179,17 @@ namespace MultiMosiServer
             else { // exp_type == "uniform"
                 if (this.target_hand == "left")
                 {
-                    var x = GetRandomFloat(random, -0.4, 0.1);
-                    var y = GetRandomFloat(random, 1.05, 1.75);
-                    var z = GetRandomFloat(random, 0.45, 0.78);
-
-                    go.transform.position = new Vector3(x, y, z);
-
+                    var curr = punch_targets.left[left_target_pointer];
+                    go.transform.position = new Vector3(curr[0], curr[1], curr[2]);
+                    left_target_pointer += 1;
 
                     this.target_hand = "right";
                 }
                 else
                 {
-                    var x = GetRandomFloat(random, -0.01, 0.6);
-                    var y = GetRandomFloat(random, 1.05, 1.75);
-                    var z = GetRandomFloat(random, 0.3, 0.7);
-
-                    go.transform.position = new Vector3(x, y, z);
+                    var curr = punch_targets.right[right_target_pointer];
+                    go.transform.position = new Vector3(curr[0], curr[1], curr[2]);
+                    right_target_pointer += 1;
                     this.target_hand = "left";
 
                 }
@@ -328,33 +391,19 @@ namespace MultiMosiServer
             //Debug.Log(json_obj);
         }
 
-        //public void report_n_punches(int n_punches)
-        public void report_n_punches(string eval_type, string exp_type, string exp_duration_indicator)
+
+        public void report_exp_details(string eval_type, string exp_type, string exp_duration_indicator)
         {
-            //HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://127.0.0.1:5000/set_n_punches_eval/"+n_punches.ToString());
-            string eval_name_route = String.Format("http://127.0.0.1:5000/set_eval_name/?eval_type={0}&exp_type={1}&exp_duration_indicator={2}", eval_type, exp_type, exp_duration_indicator);
+            string eval_name_route = string.Format("http://127.0.0.1:5000/set_eval_name/?eval_type={0}&exp_type={1}&exp_duration_indicator={2}", eval_type, exp_type, exp_duration_indicator);
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(eval_name_route);
             request.ContentType = "application/json";
             request.Method = "POST";
             var httpResponse = (HttpWebResponse)request.GetResponse();
+            var streamReader = new StreamReader(httpResponse.GetResponseStream());
+            string json_obj = streamReader.ReadToEnd();
+            streamReader.Close();
 
-            //var httpWebRequest = (HttpWebRequest)WebRequest.Create("http://127.0.0.1:5000/" + route);
-            //httpWebRequest.ContentType = "application/json";
-            //httpWebRequest.Method = "POST";
-
-            //httpWebRequest.Timeout = System.Threading.Timeout.Infinite;
-
-            //using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
-            //{
-            //    streamWriter.Write(VarToPost);
-            //}
-
-            //var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
-
-            //var streamReader = new StreamReader(httpResponse.GetResponseStream());
-            //string json_obj = streamReader.ReadToEnd();
-            //streamReader.Close();
-
+            punch_targets = JsonConvert.DeserializeObject<PunchTargetsInput>(json_obj);
         }
 
         public void save_eval_values()

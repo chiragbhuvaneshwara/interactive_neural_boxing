@@ -51,6 +51,7 @@ dataset_config_path = os.path.join(dataset_config_path)
 
 # eval_save_path = os.path.join(os.sep.join(trained_base_path.split(os.sep)[:-2]), "eval_{n_punches}.csv")
 eval_save_path = os.path.join(os.sep.join(trained_base_path.split(os.sep)[:-2]), "{eval_csv_name}")
+eval_targets_base_path = os.path.join("eval", "saved", "targets", "test")
 
 with open(dataset_config_path) as f:
     dataset_configuration = json.load(f)
@@ -153,13 +154,22 @@ def set_eval_name():
     """
     if request.method == 'POST':
         global eval_csv_name
-        # exp_duration_indicator = str(exp_duration_indicator)
         eval_type = request.args.get("eval_type")
         exp_type = request.args.get("exp_type")
         exp_duration_indicator = request.args.get("exp_duration_indicator")
         eval_csv_name = "eval_" + "_".join([eval_type, exp_type, exp_duration_indicator]) + ".csv"
 
-        return jsonify(success=True)
+        with open(os.path.join(eval_targets_base_path, exp_type + "_punch_targets_left.json")) as json_file:
+            punch_targets_left = json.load(json_file)
+        with open(os.path.join(eval_targets_base_path, exp_type + "_punch_targets_right.json")) as json_file:
+            punch_targets_right = json.load(json_file)
+
+        punch_targets = {
+            "left": punch_targets_left,
+            "right": punch_targets_right
+        }
+
+        return json.dumps(punch_targets, default=serialize)
 
     else:
         print("Problem")

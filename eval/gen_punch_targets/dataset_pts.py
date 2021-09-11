@@ -1,11 +1,11 @@
+import json
 import math
 import os
 import numpy as np
 from matplotlib import pyplot
 from mpl_toolkits.mplot3d import Axes3D
-from scipy.stats import multivariate_normal
-from scipy.interpolate import griddata
 from data.neural_data_prep.nn_features.extractor import FeatureExtractor
+import eval.gen_punch_targets.utils.common as utils
 
 
 def get_files_in_folder(folder):
@@ -23,22 +23,6 @@ def get_files_in_folder(folder):
         files.append(full_path)
 
     return files
-
-
-def setup_output_dir(output_base_path, output_directory):
-    """
-    Sets up output dir if it doesn't exist. If it does exist, it empties the dir.
-    :param output_base_path: str
-    :param output_directory: str
-    """
-    if output_directory not in os.listdir(output_base_path):
-        print('Creating new output dir:', output_directory)
-        os.mkdir(os.path.join(output_base_path, output_directory))
-    else:
-        print('Emptying output dir:', output_directory)
-        files = glob.glob(os.path.join(output_base_path, output_directory, '*'))
-        for fi in files:
-            os.remove(fi)
 
 
 def process_data(handler: FeatureExtractor, punch_labels_csv_path, frame_rate_div):
@@ -94,7 +78,7 @@ def process_folder(bvh_path, punch_labels_path, frame_rate_division, forward_dir
 
 
 INPUT_BASE_PATH = os.path.join("data", "raw_data")
-OUTPUT_BASE_PATH = os.path.join("vis", "eval", "data")
+OUTPUT_BASE_PATH = os.path.join("eval", "saved")
 
 PUNCH_LABELS_PATH = os.path.join(INPUT_BASE_PATH, "punch_label_gen", "punch_label", "tertiary")
 BVH_PATH = os.path.join(INPUT_BASE_PATH, "mocap", "hq", "processed")
@@ -104,14 +88,20 @@ FORWARD_DIR = np.array([0.0, 0.0, 1.0])
 TR_WINDOW_WRIST = math.ceil(5 / FRAME_RATE_DIV)
 TR_WINDOW_ROOT = math.ceil(5 / FRAME_RATE_DIV)
 TR_SAMPLES = 10
-save_punch_targets_file = os.path.join(OUTPUT_BASE_PATH, "punch_targets_dataset_local_pos.npz")
+save_punch_targets_json = os.path.join(OUTPUT_BASE_PATH, "targets", "data",
+                                       "dataset_punch_targets_local_pos_py_space.json")
+save_test_path = os.path.join(OUTPUT_BASE_PATH, "targets", "test")
+
+save_punch_targets_plot_path = os.path.join(OUTPUT_BASE_PATH, "plots")
 
 ####################### CONTROL PARAMS ###################################
 try:
-    punch_data_npz = np.load(save_punch_targets_file)
-    punch_targets_dataset_right = punch_data_npz["punch_targets_dataset_right"]
-    punch_targets_dataset_left = punch_data_npz["punch_targets_dataset_left"]
-except:
+    with open(save_punch_targets_json) as json_file:
+        punch_data = json.load(json_file)
+
+    punch_targets_dataset_right = np.array(punch_data["punch_targets_dataset_right"])
+    punch_targets_dataset_left = np.array(punch_data["punch_targets_dataset_left"])
+except FileNotFoundError:
     punch_targets_dataset_right, punch_targets_dataset_left = process_folder(BVH_PATH, PUNCH_LABELS_PATH,
                                                                              FRAME_RATE_DIV,
                                                                              FORWARD_DIR,
@@ -123,50 +113,30 @@ except:
     punch_targets_dataset_left = punch_targets_dataset_left[
         np.argwhere(np.all(punch_targets_dataset_left != 0, axis=1)).ravel()]
 
-    np.savez(save_punch_targets_file, punch_targets_dataset_right=punch_targets_dataset_right,
-             punch_targets_dataset_left=punch_targets_dataset_left)
+    punch_data = {
+        "punch_targets_dataset_right": punch_targets_dataset_right.tolist(),
+        "punch_targets_dataset_left": punch_targets_dataset_left.tolist()
+    }
 
-punch_targets_dataset_right[:, [1, 2]] = punch_targets_dataset_right[:, [2, 1]]
-punch_targets_dataset_left[:, [1, 2]] = punch_targets_dataset_left[:, [2, 1]]
+    with open(save_punch_targets_json, 'w') as f:
+        json.dump(punch_data, f)
 
-punch_targets_dataset_right[:, [0, 1]] = punch_targets_dataset_right[:, [1, 0]]
-punch_targets_dataset_left[:, [0, 1]] = punch_targets_dataset_left[:, [1, 0]]
-fig = pyplot.figure()
-ax = Axes3D(fig)
 
-x, y, z = punch_targets_dataset_right[:, 0], punch_targets_dataset_right[:, 1], punch_targets_dataset_right[:, 2]
-minimums = [i.min() for i in [x, y, z]]
-maximums = [i.max() for i in [x, y, z]]
-
+with open(os.path.join(save_test_path, "dataset_punch_targets_" + "right" + ".json"), 'w') as f:
+    json.dump(punch_targets_dataset_right.tolist(), f)
+xR, yR, zR = utils.get_mins_maxs(punch_targets_dataset_right, offset=0)
 print("Right target details:")
-print("Mins : ", minimums)
-print("Maxs : ", maximums)
+print("x range : ", xR)
+print("y range : ", yR)
+print("z range : ", zR)
+utils.plot_punch_targets(punch_targets_dataset_right, xR, yR, zR, save_punch_targets_plot_path, "right", "dataset")
 
-ax.scatter(x, y, z, c='r', marker='o')
-# ax.set_xlabel('X axis (lateral direction)')
-# ax.set_ylabel('Z axis (forward direction)')
-# ax.set_zlabel('Y axis')
-ax.set_ylabel('X axis (lateral direction)')
-ax.set_xlabel('Z axis (forward direction)')
-ax.set_zlabel('Y axis')
-pyplot.savefig(os.path.join(OUTPUT_BASE_PATH, "punch_right_data.png"))
-
-fig = pyplot.figure()
-ax = Axes3D(fig)
-
-x, y, z = punch_targets_dataset_left[:, 0], punch_targets_dataset_left[:, 1], punch_targets_dataset_left[:, 2]
-minimums = [i.min() for i in [x, y, z]]
-maximums = [i.max() for i in [x, y, z]]
-
+with open(os.path.join(save_test_path, "dataset_punch_targets_" + "left" + ".json"), 'w') as f:
+    json.dump(punch_targets_dataset_left.tolist(), f)
+xR, yR, zR = utils.get_mins_maxs(punch_targets_dataset_left, offset=0)
 print("Left target details:")
-print("Mins : ", minimums)
-print("Maxs : ", maximums)
+print("x range : ", xR)
+print("y range : ", yR)
+print("z range : ", zR)
 
-ax.scatter(x, y, z, c='r', marker='x')
-# ax.set_xlabel('X axis (lateral direction)')
-# ax.set_ylabel('Z axis (forward direction)')
-# ax.set_zlabel('Y axis')
-ax.set_ylabel('X axis (lateral direction)')
-ax.set_xlabel('Z axis (forward direction)')
-ax.set_zlabel('Y axis')
-pyplot.savefig(os.path.join(OUTPUT_BASE_PATH, "punch_left_data.png"))
+utils.plot_punch_targets(punch_targets_dataset_left, xR, yR, zR, save_punch_targets_plot_path, "left", "dataset")
