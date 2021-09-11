@@ -18,7 +18,7 @@ LOCAL = args.local
 FRAME_RATE_DIV = 1
 
 TR_WINDOW_WRIST = math.ceil(5 / FRAME_RATE_DIV)
-TR_WINDOW_ROOT = math.ceil(6 / FRAME_RATE_DIV)
+TR_WINDOW_ROOT = math.ceil(5 / FRAME_RATE_DIV)
 OUT_BASE_PATH = os.path.join("train", "models", "mann_tf2_v2")
 ############################################
 frd_win = 'fr_' + str(FRAME_RATE_DIV) + '_tr_' + str(TR_WINDOW_ROOT) + "_" + str(TR_WINDOW_WRIST)
@@ -27,7 +27,7 @@ current_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 if not DEVELOP:
     dataset_config_path = os.path.join("data", "neural_data", frd_win, "dataset_config.json")
     batch_size = 32
-    EPOCHS = 100
+    EPOCHS = 300
 
 elif DEVELOP:
     print('Dev Mode')
