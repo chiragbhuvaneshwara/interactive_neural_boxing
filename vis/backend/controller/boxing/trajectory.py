@@ -173,8 +173,8 @@ class Trajectory:
 
     def compute_future_wrist_trajectory(self, desired_right_punch_target, desired_left_punch_target,
                                         right_shoulder_pos, left_shoulder_pos, right_wr_lp, left_wr_lp, root_position,
-                                        root_rotation,
-                                        traj_reached):
+                                        root_rotation,):
+                                        # traj_reached):
         """
         Performs blending of the future trajectory for predicted trajectory info passed in.
         :param desired_right_punch_target: np.array(3), local space
@@ -217,7 +217,7 @@ class Trajectory:
                 start = len(traj_pos) - tr_reached['f']
                 end = len(traj_pos)
                 step = 1
-                threshold = 0.15
+                threshold = 0.2
                 # print(hand, "rev:", [i for i in range(start, end, step)])
             trajs_reached = []
             count = 1
@@ -338,7 +338,6 @@ class Trajectory:
                 no_punch_mode = True
             else:
                 punch_frames += 1
-                print("hand", punch_frames_half_comp)
 
             # else:
             #     desired_punch_target = _loc_to_glob(

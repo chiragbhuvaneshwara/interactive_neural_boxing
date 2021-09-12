@@ -14,11 +14,11 @@ app = Flask(__name__)
 
 frd = 1
 window_wrist = math.ceil(5 / frd)
-window_root = math.ceil(6 / frd)
-epochs = 100
+window_root = math.ceil(5 / frd)
+epochs = 1000
 
-# DATASET_OUTPUT_BASE_PATH = os.path.join("data", "neural_data", )
-DATASET_OUTPUT_BASE_PATH = os.path.join("data", "neural_data", "dev")
+DATASET_OUTPUT_BASE_PATH = os.path.join("data", "neural_data", )
+# DATASET_OUTPUT_BASE_PATH = os.path.join("data", "neural_data", "dev")
 
 frd_win = 'fr_' + str(frd) + '_tr_' + str(window_root) + "_" + str(window_wrist)
 controller_in_out_dir = os.path.join("backend", "controller", "controller_in_out")
@@ -28,9 +28,10 @@ all_models_path = os.path.join("train", "models", "mann_tf2_v2")
 # trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-08-04_17-39-31", "epochs",
 #                                  "epoch_99")  # 1, 5, 5 min gating inputs + traj root dirs ==> full traj
 ###################################################################################################
-
-trained_base_path = os.path.join("train/models/mann_tf2_v2/dev/fr_1_tr_6_5_ep_2/2021-09-09_14-10-39", "epochs",
-                                 "epoch_1")
+trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-09-11_20-00-40", "epochs",
+                                 "epoch_999")  # 1, 5, 5 min gating inputs + traj root dirs ==> full traj
+# trained_base_path = os.path.join("train/models/mann_tf2_v2/dev/fr_1_tr_6_5_ep_2/2021-09-09_14-10-39", "epochs",
+#                                  "epoch_1")
 target_file = os.path.join(trained_base_path, 'saved_model')
 x_mean, y_mean = load_binary(os.path.join(trained_base_path, "means", "Xmean.bin")), \
                  load_binary(os.path.join(trained_base_path, "means", "Ymean.bin"))

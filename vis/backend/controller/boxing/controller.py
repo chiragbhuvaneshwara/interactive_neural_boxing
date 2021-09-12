@@ -132,7 +132,8 @@ class BoxingController:
         self.traj.compute_future_wrist_trajectory(right_p_target, left_p_target, right_shoulder_lp, left_shoulder_lp,
                                                   # self.traj.compute_future_wrist_trajectory(right_p_target_local, left_p_target_local, right_shoulder_lp, left_shoulder_lp,
                                                   right_wrist_lp, left_wrist_lp,
-                                                  self.char.root_position, self.char.root_rotation, traj_reached)
+                                                  # self.char.root_position, self.char.root_rotation, traj_reached)
+                                                  self.char.root_position, self.char.root_rotation)
 
         # self.traj.compute_future_root_trajectory(self.target_dir, self.facing_dir, self.target_vel)
         self.traj.compute_future_root_trajectory(self.target_dir, direction, self.target_vel)
@@ -205,6 +206,7 @@ class BoxingController:
         self.char.reset(start_location, start_orientation)
         self.traj.reset(start_location, start_orientation, start_direction)
         self.__initialize()
+        self.eval_df = pd.DataFrame(columns=self.eval_column_names)
         print('###################################')
         print('RESET DONE')
         print('###################################')
@@ -264,7 +266,7 @@ class BoxingController:
         pm = self.char.compute_punch_metrics(hand, punch_target)
         return pm
 
-    def eval_values(self, record=False, save=False):
+    def eval_values(self, record=False, save=False, save_path=None):
         if record:
             c = self.char
             t = self.traj
@@ -280,7 +282,8 @@ class BoxingController:
             # self.eval_df = pd.concat([self.eval_df, eval_df_new_row], ignore_index=True)
 
         elif save:
-            self.eval_df.to_csv("eval.csv")
+            assert save_path is not None
+            self.eval_df.to_csv(save_path)
 
     def __initialize(self, init_type="mean", init_tr_wrist=True):
         """
