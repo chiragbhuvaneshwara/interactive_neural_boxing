@@ -79,7 +79,6 @@ def get_gating_indices(x_ids, joint_ids, traj_window_root, traj_window_wrist):
     # and the desired velocity of the character
     # TODO: try not to include punch targets
     # TODO: increase traj window for walking
-    # TODO: label walking and not walking
     gating_ids = [
         root_pos_tr_ids,
         root_dirs_tr_ids,

@@ -108,29 +108,6 @@ class FeatureExtractor:
         self.left_wrist_pos_no_punch = None
         self.right_wrist_pos_no_punch = None
 
-    def reset_computations(self):
-        """
-        Resets computation buffers (__forwards, __root_rotations, __local_positions, __local_velocities).
-        Useful, if global_rotations are changed.
-        """
-        # TODO Check
-        self.__forwards = []
-        self.__root_rotations = []
-        self.__local_positions, self.__local_velocities = [], []
-
-    def copy(self):
-        """
-        Produces a copy of the current handler.
-        :return FeatureExtractor
-        """
-        # TODO Check
-        copy_feature_extractor = FeatureExtractor(self.bvh_file_path, self.window_root, self.window_wrist,
-                                                  self.to_meters, self.__ref_dir, self.shoulder_joints,
-                                                  self.hip_joints, self.foot_left, self.foot_right, self.head,
-                                                  self.hand_left, self.hand_right, self.num_traj_sampling_pts_root)
-        copy_feature_extractor.__global_positions = np.array(self.__global_positions)
-        return copy_feature_extractor
-
     def set_neuron_parameters(self):
         """
         Sets the joint ids to axis neuron motion capture suit's skeleton. Not yet tested.
@@ -293,28 +270,6 @@ class FeatureExtractor:
             self.__forwards = forward / np.sqrt((forward ** 2).sum(axis=-1))[..., np.newaxis]
         return self.__forwards
 
-    # TODO: Verify functioning for dir head: global head pos not guaranteed to point across
-    #  Is head dir reqd? Doesnt forward dir represent the same info for the data you have
-    def get_head_directions(self):
-        """
-        Computes head facing directions. Results are stored internally to reduce future computation time.
-
-        :return forward_dirs (np.array(n_frames, 3))
-        """
-        if len(self.__dir_head) == 0:
-            head_j = self.joint_id_map['Head']
-            global_positions = np.array(self.__global_positions)
-
-            across = (global_positions[:, head_j])
-            across = across / np.sqrt((across ** 2).sum(axis=-1))[..., np.newaxis]
-
-            """ Smooth Forward Direction """
-            direction_filterwidth = 20
-            dir_head = filters.gaussian_filter1d(
-                np.cross(across, np.array([[0, 1, 0]])), direction_filterwidth, axis=0, mode='nearest')
-            self.__dir_head = dir_head / np.sqrt((dir_head ** 2).sum(axis=-1))[..., np.newaxis]
-        return self.__dir_head
-
     def get_root_rotations(self):
         """
         Returns root rotations. Results are stored internally to reduce future computation time.
@@ -395,7 +350,6 @@ class FeatureExtractor:
 
             i = 0
             while i < len(punch_labels):
-                # TODO Check if this line is still required
                 next_target = np.array([0.0, 0.0, 0.0])
 
                 if punch_labels[i] == 0.0:
@@ -562,7 +516,6 @@ class FeatureExtractor:
         global_positions = np.array(self.__global_positions)
 
         forward = self.get_forward_directions()
-        # head_directions = self.get_head_directions()
 
         ####### Already rotated ########
         # root_vel = np.squeeze(self.get_root_velocity())
@@ -596,7 +549,6 @@ class FeatureExtractor:
         # head_pos = np.array(
         #     global_positions[start_from:end_at_root:step_wrist, self.head]
         #     - global_positions[frame:frame + 1, 0])
-        # headdirs = np.array(head_directions[start_from:end_at_root:step_wrist])
 
         # Setting y to zero in root so that traj of wrist and head are at correct height
         global_positions[:, 0, 1] = 0
@@ -689,7 +641,7 @@ class FeatureExtractor:
                     self.right_wrist_pos_no_punch = {'start': start, 'end': end}
 
         return_items = [root_pos, root_vels, root_dirs,
-                        # head_pos, headdirs,
+                        # head_pos,
                         right_wrist_pos, right_wrist_vels, right_punch_labels,
                         left_wrist_pos, left_wrist_vels, left_punch_labels
                         ]

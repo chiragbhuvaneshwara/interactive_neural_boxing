@@ -61,7 +61,6 @@ def prepare_input_data(frame_num, handler, col_demarcation_finished=True):
     @return:
     x_curr_frame: list, one datapoint of the neural network input data
     """
-    # TODO Add docstring after simplifying inputs i.e after moving all these input vars inside the handler
 
     punch_labels = handler.punch_labels_binary
     punch_target = handler.punch_targets
@@ -103,16 +102,19 @@ def prepare_input_data(frame_num, handler, col_demarcation_finished=True):
         x_root_pos_tr,  # local wrt r in mid frame
         x_root_vels_tr,
         x_root_dirs_tr,
-        x_right_wrist_pos_tr,  # local wrt r in mid frame (TODO then wrt wrist in mid frame)
-        x_left_wrist_pos_tr,  # local wrt r in mid frame (TODO then wrt wrist in mid frame)
+        #############
+        # TODO then wrt wrist in mid frame i.e. subtract mid traj wrist pos from wrist traj vectors)
+        x_right_wrist_pos_tr,  # local wrt r in mid frame
+        x_left_wrist_pos_tr,  # local wrt r in mid frame
+        #############
         x_right_wrist_vels_tr,
         x_left_wrist_vels_tr,
         # x_right_punch_labels_tr,
         # x_left_punch_labels_tr,
-        x_right_punch_labels,  # TODO:Janis said remove
-        x_left_punch_labels,  # TODO:Janis said remove
-        x_right_punch_target,  # local wrt r in mid frame                                   #TODO:Janis said remove
-        x_left_punch_target,  # local wrt r in mid frame                                   #TODO:Janis said remove
+        x_right_punch_labels,
+        x_left_punch_labels,
+        x_right_punch_target,  # local wrt r in mid frame
+        x_left_punch_target,  # local wrt r in mid frame
         x_local_pos,
         x_local_vel
     ]
@@ -182,7 +184,6 @@ def prepare_output_data(frame_num, handler, col_demarcation_finished=True):
     # Taking i because length of phase is l and length of dphase is l-1
     # y_punch_dphase = punch_dphase[i].ravel()
 
-    # TODO You have changed foot contacts from l, r to r, l. Ensure that controller can process r, l
     y_right_foot_contacts = handler.foot_contacts[handler.foot_right['a']][frame_num]
     y_left_foot_contacts = handler.foot_contacts[handler.foot_left['a']][frame_num]
     # y_foot_contacts = np.concatenate([feet_r[i], feet_l[i]], axis=-1)
@@ -193,14 +194,14 @@ def prepare_output_data(frame_num, handler, col_demarcation_finished=True):
         y_root_pos_tr,
         y_root_vels_tr,
         y_root_dirs_tr,
-        y_right_punch_labels,  # TODO:Janis said remove
-        y_left_punch_labels,  # TODO:Janis said remove
+        y_right_punch_labels,
+        y_left_punch_labels,
         y_right_wrist_pos_tr,
         y_left_wrist_pos_tr,
         y_right_wrist_vels_tr,
         y_left_wrist_vels_tr,
-        # y_right_punch_labels_tr,                                   #TODO:Janis said remove
-        # y_left_punch_labels_tr,                                   #TODO:Janis said remove
+        # y_right_punch_labels_tr,
+        # y_left_punch_labels_tr,
         y_right_foot_contacts,
         y_left_foot_contacts,
         y_local_pos,
@@ -246,18 +247,18 @@ def process_data(handler: FeatureExtractor, punch_labels_csv_path, frame_rate_di
         handler.load_punch_action_labels(punch_labels_csv_path, frame_rate_divisor=frame_rate_div,
                                          frame_rate_offset=div)
 
-        # TODO Only implemented for action label type tertiary currently. Must do binary labels and phase.
+        # TODO Calc punch targets only works for action label type tertiary currently. Cannot do binary labels and phase
         handler.calculate_punch_targets(space="local")
         handler.calculate_new_forward_dirs()
         handler.get_foot_concats()
 
-        #TODO: Make sure larger among handler.window_root and window_wrist is used both below and in for loop
-        x_col_demarcation_ids, x_col_names = prepare_input_data(handler.window_root, handler,
+        frame_start = handler.window_root if handler.window_root > handler.window_wrist else handler.window_wrist
+        x_col_demarcation_ids, x_col_names = prepare_input_data(frame_start, handler,
                                                                 col_demarcation_finished=False)
-        y_col_demarcation_ids, y_col_names = prepare_output_data(handler.window_root, handler,
+        y_col_demarcation_ids, y_col_names = prepare_output_data(frame_start, handler,
                                                                  col_demarcation_finished=False)
 
-        for i in range(handler.window_root, handler.n_frames - handler.window_root - 1, 1):
+        for i in range(frame_start, handler.n_frames - frame_start - 1, 1):
             if i % 50 == 0:
                 print('Frames processed: ', i)
                 if develop:

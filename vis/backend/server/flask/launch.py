@@ -15,7 +15,7 @@ app = Flask(__name__)
 frd = 1
 window_wrist = math.ceil(5 / frd)
 window_root = math.ceil(5 / frd)
-epochs = 1000
+epochs = 300
 
 DATASET_OUTPUT_BASE_PATH = os.path.join("data", "neural_data", )
 # DATASET_OUTPUT_BASE_PATH = os.path.join("data", "neural_data", "dev")
@@ -28,8 +28,8 @@ all_models_path = os.path.join("train", "models", "mann_tf2_v2")
 # trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-08-04_17-39-31", "epochs",
 #                                  "epoch_99")  # 1, 5, 5 min gating inputs + traj root dirs ==> full traj
 ###################################################################################################
-trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-09-11_20-00-40", "epochs",
-                                 "epoch_999")  # 1, 5, 5 min gating inputs + traj root dirs ==> full traj
+trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-09-11_10-39-44", "epochs",
+                                 "epoch_299")  # 1, 5, 5 min gating inputs + traj root dirs ==> full traj
 # trained_base_path = os.path.join("train/models/mann_tf2_v2/dev/fr_1_tr_6_5_ep_2/2021-09-09_14-10-39", "epochs",
 #                                  "epoch_1")
 target_file = os.path.join(trained_base_path, 'saved_model')
@@ -119,7 +119,7 @@ def fetch_frame():
             label = [0, 1]
 
         punch_target = punch_right_target + punch_left_target
-        bc.pre_render(punch_target, label, dir, facing_dir, traj_reached, space='global')
+        bc.pre_render(punch_target, label, dir, space='global')
         posture = controller_to_posture()
         bc.post_render()
         json_str = json.dumps(posture, default=serialize)
@@ -160,15 +160,22 @@ def set_eval_name():
         exp_duration_indicator = request.args.get("exp_duration_indicator")
         eval_csv_name = "eval_" + "_".join([eval_type, exp_type, exp_duration_indicator]) + ".csv"
 
-        with open(os.path.join(eval_targets_base_path, exp_type + "_punch_targets_left.json")) as json_file:
-            punch_targets_left = json.load(json_file)
-        with open(os.path.join(eval_targets_base_path, exp_type + "_punch_targets_right.json")) as json_file:
-            punch_targets_right = json.load(json_file)
+        if eval_type == "punch":
+            with open(os.path.join(eval_targets_base_path, exp_type + "_punch_targets_left.json")) as json_file:
+                punch_targets_left = json.load(json_file)
+            with open(os.path.join(eval_targets_base_path, exp_type + "_punch_targets_right.json")) as json_file:
+                punch_targets_right = json.load(json_file)
 
-        punch_targets = {
-            "left": punch_targets_left,
-            "right": punch_targets_right
-        }
+            punch_targets = {
+                "left": punch_targets_left,
+                "right": punch_targets_right
+            }
+
+        else:
+            return {
+                "left": [],
+                "right": []
+            }
 
         return json.dumps(punch_targets, default=serialize)
 

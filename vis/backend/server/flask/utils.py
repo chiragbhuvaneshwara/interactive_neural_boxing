@@ -1,7 +1,6 @@
 import numpy as np
 
 
-# TODO: Proper documentation explaining each parameter
 class TPosture(object):
     """
     Class to send posture information to Unity frontend.
@@ -129,7 +128,6 @@ def build_zero_posture(base_controller, position_str="position", num_traj_pts_ro
     for bone in zp:
         children = [c for c in bone["children"]]
 
-        # TODO: Why pass "position" as position_str? Can be static. Change and test working.
         position = np.array([float(bone[position_str][0]), float(bone[position_str][1]), float(bone[position_str][2])])
         if "local" in position_str:
             position = position / 100

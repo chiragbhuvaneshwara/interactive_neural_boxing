@@ -54,7 +54,7 @@ BVH_PATH = os.path.join(INPUT_BASE_PATH, "mocap", "hq", "processed")
 FRAME_RATE_DIV = 1
 FORWARD_DIR = np.array([0.0, 0.0, 1.0])
 
-TR_WINDOW_WRIST = math.ceil(5 / FRAME_RATE_DIV)
+TR_WINDOW_WRIST = math.ceil(10 / FRAME_RATE_DIV)
 TR_WINDOW_ROOT = math.ceil(5 / FRAME_RATE_DIV)
 
 TR_SAMPLES_WRIST = 2 * TR_WINDOW_WRIST

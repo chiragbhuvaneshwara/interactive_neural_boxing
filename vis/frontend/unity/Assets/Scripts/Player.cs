@@ -86,6 +86,7 @@ public partial class Player : MonoBehaviour
         server = new MultiMotionServer();
         this.initializeBones(this.rootBone);
         server.Start();
+        exp_duration = -1;
         leftTrajReached = 0;
         rightTrajReached = 0;
         createTrajVisObjs("root", Color.black, num_traj_pts_root);

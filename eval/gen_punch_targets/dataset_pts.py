@@ -38,7 +38,7 @@ def process_data(handler: FeatureExtractor, punch_labels_csv_path, frame_rate_di
         handler.load_punch_action_labels(punch_labels_csv_path, frame_rate_divisor=frame_rate_div,
                                          frame_rate_offset=div)
 
-        # TODO Only implemented for action label type tertiary currently. Must do binary labels and phase.
+        # calculate_punch_targets Only implemented for action label type tertiary currently
         handler.calculate_punch_targets(space="local")
 
         for i in range(handler.window_root, handler.n_frames - handler.window_root - 1, 1):

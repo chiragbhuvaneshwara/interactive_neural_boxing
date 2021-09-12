@@ -110,7 +110,7 @@ class Trajectory:
                input_right_wrist_vels, input_left_wrist_vels, \
             # input_right_labels, input_left_labels
 
-    def compute_future_root_trajectory(self, target_dir, facing_dir, target_vel):
+    def compute_future_root_trajectory(self, target_dir, target_vel):
         """
         Performs blending of the future trajectory for the next target direction and velocity.
 
@@ -148,7 +148,7 @@ class Trajectory:
         for i in range(tr_mid_idx + 1, self.n_frames_tr_win_root):
             self.traj_root_rotations[i] = utils.z_angle(self.traj_root_directions[i])
 
-        tr_root_rots_degrees = [i * 180 / math.pi for i in self.traj_root_rotations]
+        # tr_root_rots_degrees = [i * 180 / math.pi for i in self.traj_root_rotations]
 
     def _update_wrist_traj(self, traj_pos_blend, traj_vels_blend, punch_frames, p_frames_half_comp, traj_reached,
                            punch_half_done,
@@ -172,9 +172,7 @@ class Trajectory:
             self.punch_frames_right = punch_frames
 
     def compute_future_wrist_trajectory(self, desired_right_punch_target, desired_left_punch_target,
-                                        right_shoulder_pos, left_shoulder_pos, right_wr_lp, left_wr_lp, root_position,
-                                        root_rotation,):
-                                        # traj_reached):
+                                        right_shoulder_pos, left_shoulder_pos, right_wr_lp, left_wr_lp, ):
         """
         Performs blending of the future trajectory for predicted trajectory info passed in.
         :param desired_right_punch_target: np.array(3), local space
@@ -183,11 +181,11 @@ class Trajectory:
         :param desired_right_punch_label: np.array(1)
         :param right_shoulder_pos:
         :param left_shoulder_pos:
+        @param left_wr_lp:
+        @param right_wr_lp:
         :return:
-        """
 
-        # TODO blend future traj points blend with the goal i.e. the punch target when the punch target is within a
-        #  certain threshold distance from the shoulder/root of the character
+        """
 
         def _loc_to_glob(lp):
             pos = np.array(lp)
@@ -211,14 +209,12 @@ class Trajectory:
                 start = tr_mid_idx + 1
                 end = len(traj_pos)
                 step = 1
-                threshold = 0.02
-                # print(hand, "fwd:", [i for i in range(start, end)])
+                threshold = 0.09
             if rev_motion:
                 start = len(traj_pos) - tr_reached['f']
                 end = len(traj_pos)
                 step = 1
-                threshold = 0.2
-                # print(hand, "rev:", [i for i in range(start, end, step)])
+                threshold = 0.15
             trajs_reached = []
             count = 1
             for i in range(start, end, step):
@@ -233,20 +229,9 @@ class Trajectory:
                             if tr_reached['r'] == tr_mid_idx - 1:
                                 punch_completed_status = True
 
-                    # if np.linalg.norm(desired_punch_target - traj_pos[i]) < threshold:
-                    #     trajs_reached.append(i)
-                    #     if fwd_motion:
-                    #         tr_reached['f'] += 1
-                    #     elif rev_motion:
-                    #         tr_reached['r'] += 1
-                    #         if tr_reached['r'] == tr_mid_idx - 1:
-                    #             punch_completed = True
                     count += 1
                 elif no_punch_mode:
                     traj_pos[i] = traj_pos[tr_mid_idx]
-
-            # if not no_punch_mode:
-            #     print(hand, tr_reached, trajs_reached)
 
             return traj_pos, tr_reached, punch_completed_status
 
@@ -280,12 +265,10 @@ class Trajectory:
                 traj_pos_blend = np.array(self.traj_left_wrist_pos, dtype=np.float64)
                 wrist_gp = _loc_to_glob(left_wr_lp)
                 traj_vels_blend = np.array(self.traj_left_wrist_vels, dtype=np.float64)
-                # desired_punch_target = _loc_to_glob(desired_left_punch_target)
                 desired_punch_target = desired_left_punch_target
                 # TODO get average local desired_punch_target_reverse from dataset
                 desired_punch_target_reverse = _loc_to_glob(left_shoulder_pos + np.array([0, 0, 0.18]))
                 # desired_punch_target_reverse = _loc_to_glob(left_shoulder_pos)
-                # TODO get global magnitude of
                 traj_reached = self.traj_reached_left_wrist
                 punch_completed = self.punch_completed_left
                 punch_half_completed = self.punch_half_completed_left
@@ -295,9 +278,7 @@ class Trajectory:
                 traj_pos_blend = np.array(self.traj_right_wrist_pos, dtype=np.float64)
                 wrist_gp = _loc_to_glob(right_wr_lp)
                 traj_vels_blend = np.array(self.traj_right_wrist_vels, dtype=np.float64)
-                # desired_punch_target = _loc_to_glob(desired_right_punch_target)
                 desired_punch_target = desired_right_punch_target
-                # desired_punch_target_reverse = _loc_to_glob(right_shoulder_pos + np.array([0, 0, 0.23]))
                 desired_punch_target_reverse = _loc_to_glob(right_shoulder_pos + np.array([0, 0, 0.21]))
                 # desired_punch_target_reverse = _loc_to_glob(right_shoulder_pos)
                 traj_reached = self.traj_reached_right_wrist
@@ -312,7 +293,6 @@ class Trajectory:
             # wrist_pos_avg_diff_g = 0.04
             wrist_pos_avg_diff_g = 0.06
             # wrist_pos_avg_diff_g = 0.08
-            # wrist_gp = traj_pos_blend[tr_mid_idx]
 
             # Reset after punch completed
             if traj_reached['f'] >= tr_mid_idx - 1 and punch_completed is True and punch_frames > 0:
@@ -323,11 +303,11 @@ class Trajectory:
                 punch_completed = False
 
             # Condition to force half punch completed if punch target is not reachable
-            if punch_frames > 25 and not punch_half_completed:
+            if punch_frames >= 25 and not punch_half_completed:
                 traj_reached['f'] = tr_mid_idx - 1
 
             # Condition to force punch completed if shoulder target is not reachable
-            if punch_frames > 50:
+            if punch_frames >= 50:
                 no_punch_mode = True
                 traj_reached['f'] = tr_mid_idx - 1
                 traj_reached['r'] = tr_mid_idx - 1
@@ -338,10 +318,6 @@ class Trajectory:
                 no_punch_mode = True
             else:
                 punch_frames += 1
-
-            # else:
-            #     desired_punch_target = _loc_to_glob(
-            #         _glob_to_loc(desired_punch_target, root_position, root_rotation) + np.array([0, 0, 0.1]))
 
             # Setting up forward and backward punch modes
             if 0 < traj_reached['f'] < tr_mid_idx - 1:
@@ -387,7 +363,6 @@ class Trajectory:
 
             if ((traj_reached_updated["f"] == tr_mid_idx - 1) and (traj_reached_updated[
                                                                        "r"] == 0)) and punch_frames_half_comp == 0:
-                # and (not punch_half_completed)):
                 punch_half_completed = True
                 punch_frames_half_comp = punch_frames
 
@@ -395,14 +370,14 @@ class Trajectory:
                 punch_half_completed = False
 
             if punch_completed:
-                print("----------------", punch_frames, punch_frames_half_comp)
+                print("Punch details (half, full) :", punch_frames_half_comp-1, punch_frames-1)
 
             self._update_wrist_traj(traj_pos_blend, traj_vels_blend, punch_frames, punch_frames_half_comp,
                                     traj_reached_updated,
                                     punch_half_completed, punch_completed, hand)
 
     def step_forward(self, pred_root_vel, pred_fwd_dir, pred_local_wrist_vels, pred_local_wrist_pos, pred_root_pos,
-                     curr_punch_labels, target_dir):
+                     curr_punch_labels):
         """
         Performs a frame-step after rendering
 
@@ -412,14 +387,6 @@ class Trajectory:
         Returns:
             [type_in] -- [description]
         """
-
-        def _limit_pred_dir(dir_axis):
-
-            if dir_axis > 1:
-                dir_axis = 1
-            elif dir_axis < -1:
-                dir_axis = -1
-            return dir_axis
 
         pred_root_vel = np.array(pred_root_vel)
         pred_fwd_dir = np.array(pred_fwd_dir)
@@ -465,14 +432,15 @@ class Trajectory:
         pred_fwd_dir_x, pred_fwd_dir_z = pred_fwd_dir[0], pred_fwd_dir[1]
         rotational_vel = math.atan2(pred_fwd_dir_x, pred_fwd_dir_z)
 
+        #TODO enable or disable rotations
         self.traj_root_directions[idx] = utils.rot_around_z_3d(self.traj_root_directions[idx],
-                                                               rotational_vel)
+                                                               0)
+                                                               # rotational_vel)
+
         self.traj_root_rotations[idx] = utils.z_angle(self.traj_root_directions[idx])
 
         idx = self.median_idx_wrist
         right_wr_lp, left_wr_lp = pred_local_wrist_pos
-        # right_wr_gp = _convert_wrist_lp_to_gp(right_wr_lp + np.array((0, 0, 0.185044)), arm="right")
-        # left_wr_gp = _convert_wrist_lp_to_gp(left_wr_lp + np.array((0, 0, 0.185044)), arm="left")
         right_wr_gp = _convert_wrist_lp_to_gp(right_wr_lp, arm="right")
         left_wr_gp = _convert_wrist_lp_to_gp(left_wr_lp, arm="left")
         right_wr_v, left_wr_v = pred_local_wrist_vels
@@ -502,7 +470,6 @@ class Trajectory:
         Arguments:
             prediction {np.array(4 * (6 * 2))} -- vector containing the network output regarding future trajectory positions and directions
         """
-        # These predictions from the neural network are only for the trajectory points considered for the neural network
         prediction = list(prediction)
 
         def _smooth_predictions(pred_arr, root=True):
@@ -529,7 +496,6 @@ class Trajectory:
                 combo_idxs_2.append((i // tr_step) + (
                     1 if i < (n_frames - n_tr_samples + 1) else 0) - half_pred_window)
 
-            # weights = np.tile(np.array(weights).reshape(len(weights), 1), pred_arr.shape[1])
             weights = np.array(weights).reshape(len(weights), 1)
             a = np.array([pred_arr[i] for i in combo_idxs_1])
             b = np.array([pred_arr[i] for i in combo_idxs_2])
