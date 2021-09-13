@@ -29,7 +29,8 @@ def get_gating_indices(x_ids, joint_ids, traj_window_root, traj_window_wrist):
         return [i for i in range(column_demarcation_ids[key][0], column_demarcation_ids[key][1])]
 
     def _get_past_curr_future_ids(sequence, multiplier, tr_window):
-        sequence = sequence[:multiplier] + sequence[tr_window*multiplier:(tr_window+1)*multiplier] + sequence[-multiplier:]
+        sequence = sequence[:multiplier] + sequence[tr_window * multiplier:(tr_window + 1) * multiplier] + sequence[
+                                                                                                           -multiplier:]
         return sequence
 
     right_wrist_velocities_tr_ids = _generate_id_sequence(x_ids, 'x_right_wrist_vels_tr')
@@ -59,15 +60,15 @@ def get_gating_indices(x_ids, joint_ids, traj_window_root, traj_window_wrist):
     f_r_a_id = joint_ids["RightAnkle"] * 3
     f_l_a_id = joint_ids["LeftAnkle"] * 3
     foot_ankle_velocities_ids = _generate_id_sequence(x_ids, 'x_local_vel')[f_r_a_id: f_r_a_id + 3] + \
-                                       _generate_id_sequence(x_ids, 'x_local_vel')[f_l_a_id: f_l_a_id + 3]
+                                _generate_id_sequence(x_ids, 'x_local_vel')[f_l_a_id: f_l_a_id + 3]
     foot_ankle_pos_ids = _generate_id_sequence(x_ids, 'x_local_pos')[f_r_a_id: f_r_a_id + 3] + \
-                                _generate_id_sequence(x_ids, 'x_local_pos')[f_l_a_id: f_l_a_id + 3]
+                         _generate_id_sequence(x_ids, 'x_local_pos')[f_l_a_id: f_l_a_id + 3]
     f_r_t_id = joint_ids["RightToe"] * 3
     f_l_t_id = joint_ids["LeftToe"] * 3
     foot_toes_velocities_ids = _generate_id_sequence(x_ids, 'x_local_vel')[f_r_t_id: f_r_t_id + 3] + \
-                                       _generate_id_sequence(x_ids, 'x_local_vel')[f_l_t_id: f_l_t_id + 3]
+                               _generate_id_sequence(x_ids, 'x_local_vel')[f_l_t_id: f_l_t_id + 3]
     foot_toes_pos_ids = _generate_id_sequence(x_ids, 'x_local_pos')[f_r_t_id: f_r_t_id + 3] + \
-                                _generate_id_sequence(x_ids, 'x_local_pos')[f_l_t_id: f_l_t_id + 3]
+                        _generate_id_sequence(x_ids, 'x_local_pos')[f_l_t_id: f_l_t_id + 3]
     w_r_id = joint_ids["RightWrist"] * 3
     w_l_id = joint_ids["LeftWrist"] * 3
     wrist_end_effector_velocities_ids = _generate_id_sequence(x_ids, 'x_local_vel')[w_r_id: w_r_id + 3] + \
@@ -150,7 +151,8 @@ def train_boxing_data(data_config_path, output_dir, num_expert_nodes=6, epochs=3
     input_dim = X.shape[1]
     output_dim = Y.shape[1]
 
-    learning_rate = tf.keras.experimental.CosineDecayRestarts(0.0001, 10 * (len(X) // batchsize))
+    # TODO experiment with network params to make loss curve steeper
+    learning_rate = tf.keras.experimental.CosineDecayRestarts(0.001, 10 * (len(X) // batchsize))
     optimizer = tf.keras.optimizers.Adam(learning_rate)
 
     training_details = {
