@@ -159,7 +159,11 @@ def train_boxing_data(data_config_path, output_dir, num_expert_nodes=6, epochs=3
         "num_experts": num_expert_nodes,
         "gating_variables": gating_variable_names,
         "num_data_pts": X.shape[0],
-        "learning_rate": type(learning_rate).__name__,
+        "learning_rate": {
+            "name": type(learning_rate).__name__,
+            "initial_rate": learning_rate.initial_learning_rate,
+            "first_decay_steps": learning_rate.first_decay_steps
+        },
         "optimizer": type(optimizer).__name__,
         "loss": mse_loss_variable_gating.__name__,
         "dataset_config": dataset_config,
