@@ -52,7 +52,7 @@ for TR_WINDOW_ROOT in ALL_TR_WINS_ROOT:
         if not DEVELOP:
             dataset_config_path = os.path.join("data", "neural_data", EXP_NAME, frd_win, "dataset_config.json")
             batch_size = 32
-            EPOCHS = 300
+            EPOCHS = 150
 
         elif DEVELOP:
             print('Dev Mode')
