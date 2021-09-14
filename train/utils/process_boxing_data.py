@@ -152,7 +152,7 @@ def train_boxing_data(data_config_path, output_dir, num_expert_nodes=6, epochs=3
     output_dim = Y.shape[1]
 
     # TODO experiment with network params to make loss curve steeper
-    learning_rate = tf.keras.experimental.CosineDecayRestarts(0.0008, 10 * (len(X) // batchsize))
+    learning_rate = tf.keras.experimental.CosineDecayRestarts(0.001, 10 * (len(X) // batchsize))
     optimizer = tf.keras.optimizers.Adam(learning_rate)
 
     training_details = {
