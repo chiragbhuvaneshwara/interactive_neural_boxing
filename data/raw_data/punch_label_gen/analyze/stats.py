@@ -39,7 +39,6 @@ def gen_punch_stats(data_directory):
     names = list(map(retrieve_name, punch_count_print))
     punch_stats = []
 
-    print('\n')
     for i, p_count in enumerate(punch_count_print):
         p_count = np.array(p_count)
 

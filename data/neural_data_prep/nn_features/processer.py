@@ -45,7 +45,6 @@ def prepare_col_demarcation_ids(**args):
         col_names.extend(col_names_subset)
         start = end
 
-    print('\n')
     print('col names len: ', len(col_names))
 
     return col_demarcation_ids, col_names
@@ -239,7 +238,6 @@ def process_data(handler: FeatureExtractor, punch_labels_csv_path, frame_rate_di
     x, y = [], []
 
     for div in range(frame_rate_div):
-        print('\n')
         print('Processing Blender csv data %s' % frame_rate_div, div)
         handler.set_awinda_parameters()  # set the skeleton parameters by manually checking the bvh files
         # Loading Bvh file into memory
@@ -259,15 +257,16 @@ def process_data(handler: FeatureExtractor, punch_labels_csv_path, frame_rate_di
                                                                  col_demarcation_finished=False)
 
         for i in range(frame_start, handler.n_frames - frame_start - 1, 1):
-            if i % 50 == 0:
-                print('Frames processed: ', i)
-                if develop:
-                    break
+            if i % 1000 == 0:
+                print('Frames processed (%): ', round((i * 100) / (handler.n_frames - frame_start - 1)))
+            if i == 100 and develop:
+                break
             x_curr_frame = prepare_input_data(i, handler)
             x.append(np.hstack(x_curr_frame))
 
             y_curr_frame = prepare_output_data(i, handler)
             y.append(np.hstack(y_curr_frame))
+        print('Frames processed (%): ', 100)
 
     if gen_data_config:
         dataset_config = {
@@ -336,7 +335,6 @@ def process_folder(bvh_path, punch_labels_path, frame_rate_division, forward_dir
         punch_labels_files = [punch_labels_files[0]]
 
     for b_f, p_f in zip(bvh_files, punch_labels_files):
-        print('\n')
         print(b_f, '\n', p_f)
         handler = FeatureExtractor(b_f, traj_window_root, traj_window_wrist, forward_dir=forward_direction,
                                    num_traj_sampling_pts_root=num_tr_sampling_pts_root,

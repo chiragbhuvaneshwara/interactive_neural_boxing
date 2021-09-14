@@ -191,3 +191,4 @@ def train_boxing_data(data_config_path, output_dir, num_expert_nodes=6, epochs=3
         json.dump(training_details, f, indent=4)
 
     print("Training completed. Models stored in: \n", output_dir)
+    print(learning_rate.first_decay_steps)
