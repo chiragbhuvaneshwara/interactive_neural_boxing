@@ -69,7 +69,7 @@ def get_punch_accuracy_closest_to_target(df, hand):
 
 
 def get_foot_skating(df):
-
+    df = df.copy()
     foot_skating = []
     for foot in ["right", "left"]:
         cols_out = [foot.capitalize() + "Toe_positions" + "_" + str(i) for i in range(3)]
@@ -80,9 +80,35 @@ def get_foot_skating(df):
             curr_fs = curr_disp * (2 - 2 ** ((vals[i + 1, 1] + vals[i, 1]) / 2 / 0.033))
             fs.append(curr_fs)
 
+        # Appending 0 to ensure fs len is same as col len i.e. assuming displacement 0 for last data point (frame)
+        fs.append(0)
+        df[foot.capitalize() + "Foot_skating"] = fs
         foot_skating.append(fs)
 
-    return fs
+    return df, fs
+
+
+def get_path_error(df):
+    def _get_proj_x_on_y(x, y):
+        proj = y * np.dot(x, y) / np.dot(y, y)
+        return proj
+
+    df = df.copy()
+    cols_out = ["Hips_positions" + "_" + str(i) for i in range(0, 3, 2)]
+    out = df[cols_out].values
+    zaxis = np.array([0, 1])
+
+    target = []
+    for o in out:
+        curr_projection = _get_proj_x_on_y(o, zaxis)
+        target.append(curr_projection)
+
+    target = np.array(target)
+    curr_pe = ((out - target) ** 2).mean(axis=1)
+
+    df["Path_MSE"] = curr_pe
+
+    return df, curr_pe
 
 
 frd = 1
@@ -100,12 +126,6 @@ trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-09-11_20
 model_id = trained_base_path.split(os.sep)[-3]
 
 eval_save_path = os.path.join("eval", "saved", "controller")
-
-
-def get_path_error(df):
-    print("Implement path error")
-    pass
-
 
 for model_id in os.listdir(eval_save_path):
     for csv in os.listdir(os.path.join(eval_save_path, model_id, "unity_out")):
@@ -139,11 +159,11 @@ for model_id in os.listdir(eval_save_path):
 
         if "walk" in csv:
             eval_df = pd.read_csv(os.path.join(eval_save_path, model_id, "unity_out", csv))
-            foot_skating = get_foot_skating(eval_df)
-            print(foot_skating)
+            eval_df, foot_skating = get_foot_skating(eval_df)
+            # print(foot_skating)
 
-            path_error = get_path_error(eval_df)
-            # res_path = os.path.join(eval_save_path, model_id, "eval_res")
-            # if not os.path.isdir(res_path):
-            #     os.makedirs(res_path)
-            # eval_df.to_csv(os.path.join(res_path, csv))
+            eval_df, path_error = get_path_error(eval_df)
+            res_path = os.path.join(eval_save_path, model_id, "eval_res")
+            if not os.path.isdir(res_path):
+                os.makedirs(res_path)
+            eval_df.to_csv(os.path.join(res_path, csv))
