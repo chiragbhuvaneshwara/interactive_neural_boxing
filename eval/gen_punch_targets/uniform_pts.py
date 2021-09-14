@@ -22,6 +22,8 @@ NS[0] = NUM_POINTS ** (1 / 3) - 1
 NS[1] = NUM_POINTS ** (1 / 3) - 1
 NS[2] = NUM_POINTS ** (1 / 3) - 1
 
+OFFSET = 0
+
 NG = cube_grid_count(NS)
 print('')
 print('  Number of grid points will be %d' % (NG))
@@ -38,10 +40,10 @@ with open(saved_punch_targets_json) as json_file:
 punch_targets_dataset_right = np.array(punch_data["punch_targets_dataset_right"])
 punch_targets_dataset_left = np.array(punch_data["punch_targets_dataset_left"])
 
-xR, yR, zR = utils.get_mins_maxs(punch_targets_dataset_left)
+xR, yR, zR = utils.get_mins_maxs(punch_targets_dataset_left, OFFSET)
 uniform_punch_targets = gen_uniform_punch_targets(xR, yR, zR, uniform_targets_save_path, "left")
 utils.plot_punch_targets(uniform_punch_targets, xR, yR, zR, uniform_targets_plots_save_path, "left", "uniform")
 
-xR, yR, zR = utils.get_mins_maxs(punch_targets_dataset_right)
+xR, yR, zR = utils.get_mins_maxs(punch_targets_dataset_right, OFFSET)
 uniform_punch_targets = gen_uniform_punch_targets(xR, yR, zR, uniform_targets_save_path, "right")
 utils.plot_punch_targets(uniform_punch_targets, xR, yR, zR, uniform_targets_plots_save_path, "right", "uniform")
