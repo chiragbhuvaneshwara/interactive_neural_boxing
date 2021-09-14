@@ -1,3 +1,6 @@
+import math
+import os
+
 import pandas as pd
 import numpy as np
 
@@ -65,26 +68,82 @@ def get_punch_accuracy_closest_to_target(df, hand):
     return df_wr_closest_to_target
 
 
-eval_df = pd.read_csv("eval.csv")
-eval_df, mse_per_frame = get_mse_per_frame(eval_df, "RightWrist_positions", "punch_target_right", "right")
-eval_df, mse_per_frame = get_mse_per_frame(eval_df, "LeftWrist_positions", "punch_target_left", "left")
+def get_foot_skating(df):
 
-eval_df, l2_per_frame = get_l2norm_per_frame(eval_df, "RightWrist_positions", "punch_target_right", "right")
-eval_df, l2_per_frame = get_l2norm_per_frame(eval_df, "LeftWrist_positions", "punch_target_left", "left")
+    foot_skating = []
+    for foot in ["right", "left"]:
+        cols_out = [foot.capitalize() + "Toe_positions" + "_" + str(i) for i in range(3)]
+        vals = df[cols_out].values
+        fs = []
+        for i in range(len(vals) - 1):
+            curr_disp = ((vals[i + 1, 0] - vals[i, 0]) ** 2 + (vals[i + 1, 2] - vals[i, 2]) ** 2) ** 0.5
+            curr_fs = curr_disp * (2 - 2 ** ((vals[i + 1, 1] + vals[i, 1]) / 2 / 0.033))
+            fs.append(curr_fs)
 
-eval_right_per_punch_df = get_mse_per_punch(eval_df, "right")
-eval_left_per_punch_df = get_mse_per_punch(eval_df, "left")
-eval_df["mse_per_punch" + "_" + "right"] = eval_right_per_punch_df["mse_per_punch" + "_" + "right"]
-eval_df["mse_per_punch" + "_" + "left"] = eval_left_per_punch_df["mse_per_punch" + "_" + "left"]
-eval_df.fillna(0, inplace=True)
-eval_df = eval_df.loc[:, ~eval_df.columns.str.contains('^Unnamed')]
+        foot_skating.append(fs)
 
-eval_df["punch_accuracy" + "_" + "right"] = eval_df["l2norm_per_frame" + "_" + "right"].apply(
-    lambda x: True if x < 0.02 else False)
-eval_df["punch_accuracy" + "_" + "left"] = eval_df["l2norm_per_frame" + "_" + "left"].apply(
-    lambda x: True if x < 0.02 else False)
-print(eval_df)
-print(eval_df.punch_accuracy_right.value_counts())
-print(eval_df.punch_accuracy_left.value_counts())
+    return fs
 
-eval_df.to_csv("eval_res.csv")
+
+frd = 1
+window_wrist = math.ceil(5 / frd)
+window_root = math.ceil(5 / frd)
+epochs = 1000
+
+DATASET_OUTPUT_BASE_PATH = os.path.join("data", "neural_data", )
+# DATASET_OUTPUT_BASE_PATH = os.path.join("data", "neural_data", "dev")
+
+frd_win = 'fr_' + str(frd) + '_tr_' + str(window_root) + "_" + str(window_wrist)
+frd_win_epochs = frd_win + '_ep_' + str(epochs)
+all_models_path = os.path.join("train", "models", "mann_tf2_v2")
+trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-09-11_20-00-40")
+model_id = trained_base_path.split(os.sep)[-3]
+
+eval_save_path = os.path.join("eval", "saved", "controller")
+
+
+def get_path_error(df):
+    print("Implement path error")
+    pass
+
+
+for model_id in os.listdir(eval_save_path):
+    for csv in os.listdir(os.path.join(eval_save_path, model_id, "unity_out")):
+        if "punch" in csv:
+            eval_df = pd.read_csv(os.path.join(eval_save_path, model_id, "unity_out", csv))
+            eval_df, mse_per_frame = get_mse_per_frame(eval_df, "RightWrist_positions", "punch_target_right", "right")
+            eval_df, mse_per_frame = get_mse_per_frame(eval_df, "LeftWrist_positions", "punch_target_left", "left")
+
+            eval_df, l2_per_frame = get_l2norm_per_frame(eval_df, "RightWrist_positions", "punch_target_right", "right")
+            eval_df, l2_per_frame = get_l2norm_per_frame(eval_df, "LeftWrist_positions", "punch_target_left", "left")
+
+            eval_right_per_punch_df = get_mse_per_punch(eval_df, "right")
+            eval_left_per_punch_df = get_mse_per_punch(eval_df, "left")
+            eval_df["mse_per_punch" + "_" + "right"] = eval_right_per_punch_df["mse_per_punch" + "_" + "right"]
+            eval_df["mse_per_punch" + "_" + "left"] = eval_left_per_punch_df["mse_per_punch" + "_" + "left"]
+            eval_df.fillna(0, inplace=True)
+            eval_df = eval_df.loc[:, ~eval_df.columns.str.contains('^Unnamed')]
+
+            eval_df["punch_accuracy" + "_" + "right"] = eval_df["l2norm_per_frame" + "_" + "right"].apply(
+                lambda x: True if x < 0.02 else False)
+            eval_df["punch_accuracy" + "_" + "left"] = eval_df["l2norm_per_frame" + "_" + "left"].apply(
+                lambda x: True if x < 0.02 else False)
+            print(eval_df)
+            print(eval_df.punch_accuracy_right.value_counts())
+            print(eval_df.punch_accuracy_left.value_counts())
+
+            res_path = os.path.join(eval_save_path, model_id, "eval_res")
+            if not os.path.isdir(res_path):
+                os.makedirs(res_path)
+            eval_df.to_csv(os.path.join(res_path, csv))
+
+        if "walk" in csv:
+            eval_df = pd.read_csv(os.path.join(eval_save_path, model_id, "unity_out", csv))
+            foot_skating = get_foot_skating(eval_df)
+            print(foot_skating)
+
+            path_error = get_path_error(eval_df)
+            # res_path = os.path.join(eval_save_path, model_id, "eval_res")
+            # if not os.path.isdir(res_path):
+            #     os.makedirs(res_path)
+            # eval_df.to_csv(os.path.join(res_path, csv))
