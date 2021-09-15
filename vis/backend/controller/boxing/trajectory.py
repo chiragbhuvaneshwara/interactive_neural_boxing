@@ -60,8 +60,8 @@ class Trajectory:
         self.punch_half_completed_right = False
 
         self.foot_drifting = np.zeros(3)
-        self.blend_bias = 2.0
-        # self.blend_bias = 10.0  # adjust bias 0.5 to fit to dataset and responsivity (larger value -> more responsive)
+        # self.blend_bias = 2.0
+        self.blend_bias = 10.0  # adjust bias 0.5 to fit to dataset and responsivity (larger value -> more responsive)
         self.punch_frames_left = 0
         self.punch_frames_right = 0
         self.punch_frames_left_half_comp = 0
@@ -149,6 +149,7 @@ class Trajectory:
             self.traj_root_rotations[i] = utils.z_angle(self.traj_root_directions[i])
 
         # tr_root_rots_degrees = [i * 180 / math.pi for i in self.traj_root_rotations]
+        # print(self.traj_root_directions)
 
     def _update_wrist_traj(self, traj_pos_blend, traj_vels_blend, punch_frames, p_frames_half_comp, traj_reached,
                            punch_half_done,
@@ -424,8 +425,10 @@ class Trajectory:
 
         root_tr_update = _curr_frame_update(pred_root_vel, xz_to_x0yz=True)
         self.traj_root_pos[idx] = root_gp
-        self.traj_root_pos[idx] = self.traj_root_pos[idx] + root_tr_update + \
-                                  self.foot_drifting.reshape(1, len(self.foot_drifting))
+        self.traj_root_pos[idx] = self.traj_root_pos[idx] + root_tr_update
+        # TODO: Needed to disable foot_drifting addition to enable better stepping
+        # self.traj_root_pos[idx] = self.traj_root_pos[idx] + root_tr_update + \
+        #                           self.foot_drifting.reshape(1, len(self.foot_drifting))
         self.traj_root_vels[idx] = utils.glm_mix(self.traj_root_vels[idx], root_tr_update, 0.9)
 
         pred_fwd_dir = pred_fwd_dir.ravel()
@@ -526,13 +529,13 @@ class Trajectory:
         pred_rdir_tr = _smooth_predictions(pred_rdir_tr.reshape(half_pred_window_root, self.n_dims - 1))
         pred_rdir_tr = np.array([utils.normalize(utils.xz_to_x0yz(i)) for i in pred_rdir_tr])
 
-        self.traj_root_directions[self.median_idx_root + 1:] = self.convert_local_to_global(
-            pred_rdir_tr, arg_type="dir")
+        # self.traj_root_directions[self.median_idx_root + 1:] = self.convert_local_to_global(
+        #     pred_rdir_tr, arg_type="dir")
 
-        pred_r_rot = np.array(
-            [utils.z_angle(self.traj_root_directions[i]) for i in
-             range(self.median_idx_root + 1, self.n_frames_tr_win_root)])
-        self.traj_root_rotations[self.median_idx_root + 1:] = pred_r_rot
+        # pred_r_rot = np.array(
+        #     [utils.z_angle(self.traj_root_directions[i]) for i in
+        #      range(self.median_idx_root + 1, self.n_frames_tr_win_root)])
+        # self.traj_root_rotations[self.median_idx_root + 1:] = pred_r_rot
 
         median_idx_wrist = self.median_idx_wrist
         half_pred_window_wrist = self.median_idx_wrist // self.traj_step_wrist
@@ -621,7 +624,7 @@ class Trajectory:
         self.traj_root_rotations = np.zeros(self.n_frames_tr_win_root)
         # TODO control rotations using these dirs
         # self.traj_root_directions = np.array([start_direction] * self.n_frames_tr_win_root)
-        self.traj_root_directions = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win_root)
+        self.traj_root_directions = np.array([[0.0, 0.0, 1.0]] * self.n_frames_tr_win_root)
 
         ### Trajectory info of the hand
         # Wrist positions contain all 3 components
