@@ -27,7 +27,7 @@ current_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 if not DEVELOP:
     dataset_config_path = os.path.join("data", "neural_data", frd_win, "dataset_config.json")
     batch_size = 32
-    EPOCHS = 1000
+    EPOCHS = 150
 
 elif DEVELOP:
     print('Dev Mode')
