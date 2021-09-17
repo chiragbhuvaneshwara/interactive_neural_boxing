@@ -86,6 +86,9 @@ public partial class Player : MonoBehaviour
         server = new MultiMotionServer();
         this.initializeBones(this.rootBone);
         server.Start();
+        var tr_pts = server.GetNumTrajPts();
+        num_traj_pts_root = tr_pts["root"];
+        num_traj_pts_wrist = tr_pts["wrist"];
         exp_duration = -1;
         leftTrajReached = 0;
         rightTrajReached = 0;
@@ -321,7 +324,7 @@ public partial class Player : MonoBehaviour
                 }
                 else
                 {
-                    exp_duration = 30 * 60;
+                    exp_duration = 30 * 10;
                 }
                 int exp_duration_indicator = exp_duration;
 

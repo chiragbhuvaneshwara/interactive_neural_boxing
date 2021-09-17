@@ -248,6 +248,9 @@ class FeatureExtractor:
         self.__global_positions = global_positions[frame_rate_offset::frame_rate_divisor]
         self.n_frames, self.n_joints, _ = self.__global_positions.shape
 
+    def get_glob_pos(self):
+        return self.__global_positions
+
     def get_forward_directions(self):
         """
         Computes forward directions. Results are stored internally to reduce future computation time.

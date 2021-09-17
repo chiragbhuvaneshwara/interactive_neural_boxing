@@ -302,8 +302,17 @@ namespace MultiMosiServer
             {
                 this.posture = this.getZeroPosture();
             }
+        }
 
+        public Dictionary<string, int> GetNumTrajPts()
+        {
+            Dictionary<string, int> tr_wins = new Dictionary<string, int>();
+            string tr_win_str = GetJsonStr("get_num_tr_pts");
+            var jsonData = (JObject)JsonConvert.DeserializeObject(tr_win_str);
+            tr_wins.Add("wrist", jsonData["wrist"].Value<int>());
+            tr_wins.Add("root", jsonData["root"].Value<int>());
 
+            return tr_wins;
         }
 
         private TVector3 vec2Tvec(Vector3 x)

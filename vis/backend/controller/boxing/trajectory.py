@@ -61,7 +61,8 @@ class Trajectory:
 
         self.foot_drifting = np.zeros(3)
         # self.blend_bias = 2.0
-        self.blend_bias = 10.0  # adjust bias 0.5 to fit to dataset and responsivity (larger value -> more responsive)
+        self.blend_bias = 1.5  # adjust bias 0.5 to fit to dataset and responsivity (larger value -> more responsive)
+        # self.blend_bias = 10  # adjust bias 0.5 to fit to dataset and responsivity (larger value -> more responsive)
         self.punch_frames_left = 0
         self.punch_frames_right = 0
         self.punch_frames_left_half_comp = 0
@@ -531,7 +532,7 @@ class Trajectory:
 
         # self.traj_root_directions[self.median_idx_root + 1:] = self.convert_local_to_global(
         #     pred_rdir_tr, arg_type="dir")
-
+        #
         # pred_r_rot = np.array(
         #     [utils.z_angle(self.traj_root_directions[i]) for i in
         #      range(self.median_idx_root + 1, self.n_frames_tr_win_root)])

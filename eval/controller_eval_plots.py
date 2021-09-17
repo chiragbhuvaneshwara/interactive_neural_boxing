@@ -112,16 +112,17 @@ def get_path_error(df):
     return df, curr_pe
 
 
-# EXP_NAME = "root_tr_exp"
-EXP_NAME = "wrist_tr_exp"
+EXP_NAME = "root_tr_exp"
 eval_save_path = os.path.join("eval", "saved", "controller", EXP_NAME)
 
+mse_per_frame = []
+mse_per_punch = []
 for model_id in os.listdir(eval_save_path):
     if "." not in model_id:
-        for csv in os.listdir(os.path.join(eval_save_path, model_id, "unity_out")):
+        for csv in os.listdir(os.path.join(eval_save_path, model_id, "eval_res")):
             print(csv)
             if "punch" in csv:
-                eval_df = pd.read_csv(os.path.join(eval_save_path, model_id, "unity_out", csv))
+                eval_df = pd.read_csv(os.path.join(eval_save_path, model_id, "eval_res", csv))
                 eval_df, mse_per_frame = get_mse_per_frame(eval_df, "RightWrist_positions", "punch_target_right",
                                                            "right")
                 eval_df, mse_per_frame = get_mse_per_frame(eval_df, "LeftWrist_positions", "punch_target_left", "left")

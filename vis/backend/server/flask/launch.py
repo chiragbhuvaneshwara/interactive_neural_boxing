@@ -15,7 +15,7 @@ app = Flask(__name__)
 frd = 1
 window_wrist = math.ceil(5 / frd)
 window_root = math.ceil(5 / frd)
-epochs = 300
+epochs = 100
 
 DATASET_OUTPUT_BASE_PATH = os.path.join("data", "neural_data", )
 # DATASET_OUTPUT_BASE_PATH = os.path.join("data", "neural_data", "dev")
@@ -25,11 +25,11 @@ controller_in_out_dir = os.path.join("backend", "controller", "controller_in_out
 frd_win_epochs = frd_win + '_ep_' + str(epochs)
 all_models_path = os.path.join("train", "models", "mann_tf2_v2")
 ###################################################################################################
-# trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-08-04_17-39-31", "epochs",
-#                                  "epoch_99")  # 1, 5, 5 min gating inputs + traj root dirs ==> full traj
+trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-08-04_17-39-31", "epochs",
+                                 "epoch_99")  # 1, 5, 5 min gating inputs + traj root dirs ==> full traj
 ###################################################################################################
-trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-09-11_10-39-44", "epochs",
-                                 "epoch_299")  # 1, 5, 5 min gating inputs + traj root dirs ==> full traj
+# trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-09-11_20-00-40", "epochs",
+#                                  "epoch_999")  # 1, 5, 5 min gating inputs + traj root dirs ==> full traj
 # trained_base_path = os.path.join("train/models/mann_tf2_v2/dev/fr_1_tr_6_5_ep_2/2021-09-09_14-10-39", "epochs",
 #                                  "epoch_1")
 target_file = os.path.join(trained_base_path, 'saved_model')
@@ -50,8 +50,13 @@ mann = load_mann(os.path.join(trained_base_path, "saved_model"))
 dataset_config_path = os.path.join(DATASET_OUTPUT_BASE_PATH, frd_win, "dataset_config.json")
 dataset_config_path = os.path.join(dataset_config_path)
 
-# eval_save_path = os.path.join(os.sep.join(trained_base_path.split(os.sep)[:-2]), "eval_{n_punches}.csv")
-eval_save_path = os.path.join(os.sep.join(trained_base_path.split(os.sep)[:-2]), "{eval_csv_name}")
+model_id = trained_base_path.split(os.sep)[-3]
+
+# eval_save_path = os.path.join(os.sep.join(trained_base_path.split(os.sep)[:-2]), "{eval_csv_name}")
+eval_save_path = os.path.join("eval", "saved", "controller", model_id, "unity_out")
+if not os.path.isdir(eval_save_path):
+    os.makedirs(eval_save_path)
+eval_save_path = os.path.join(eval_save_path, "{eval_csv_name}")
 eval_targets_base_path = os.path.join("eval", "saved", "targets", "test")
 
 with open(dataset_config_path) as f:
@@ -128,6 +133,13 @@ def fetch_frame():
 
     else:
         print("Problem")
+
+
+@app.route('/get_num_tr_pts', methods=['GET'])
+def get_num_tr_pts():
+    windows = {"wrist": bc.num_traj_samples_wrist,
+               "root": bc.num_traj_samples_root}
+    return json.dumps(windows, default=serialize)
 
 
 @app.route('/set_n_punches_eval/<n_punches>', methods=['POST'])

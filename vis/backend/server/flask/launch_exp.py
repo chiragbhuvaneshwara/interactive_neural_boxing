@@ -12,8 +12,9 @@ from vis.backend.server.flask.utils import *
 print(os.getcwd())
 app = Flask(__name__)
 
-EXP_IDX = 1
+EXP_IDX = 0
 EXP_NAME = "root_tr_exp"
+# EXP_NAME = "wrist_tr_exp"
 
 DATASET_OUTPUT_BASE_PATH = os.path.join("data", "neural_data")
 # DATASET_OUTPUT_BASE_PATH = os.path.join("data", "neural_data", "dev")
@@ -129,6 +130,13 @@ def fetch_frame():
 
     else:
         print("Problem")
+
+
+@app.route('/get_num_tr_pts', methods=['GET'])
+def get_num_tr_pts():
+    windows = {"wrist": bc.num_traj_samples_wrist,
+               "root": bc.num_traj_samples_root}
+    return json.dumps(windows, default=serialize)
 
 
 @app.route('/set_n_punches_eval/<n_punches>', methods=['POST'])

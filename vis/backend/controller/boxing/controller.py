@@ -83,11 +83,11 @@ class BoxingController:
         """
         self.punch_targets = punch_targets
         direction = np.array(dir)
-        self.user_dir = direction[:]
+        # self.user_dir = direction[:]
         # direction = np.array([1,0])
         direction = utils.xz_to_x0yz(direction)
         target_vel_speed = 0.035 * np.linalg.norm(direction)
-        self.target_vel = utils.glm_mix(self.target_vel, target_vel_speed * direction, 0.9)
+        self.target_vel = utils.glm_mix(self.target_vel, target_vel_speed * direction, 0.4)
         target_vel_dir = self.target_dir if utils.euclidian_length(self.target_vel) \
                                             < 1e-05 else utils.normalize(self.target_vel)
         self.target_dir = utils.mix_directions(self.target_dir, target_vel_dir, 0.9)
