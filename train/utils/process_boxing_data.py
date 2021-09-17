@@ -171,7 +171,7 @@ def train_boxing_data(data_config_path, output_dir, num_expert_nodes=6, epochs=3
     }
 
     #TODO Try models with fewer hidden neurons Ex 256
-    network = MANN(input_dim, output_dim, 512, 64, num_expert_nodes, gating_indices, batch_size=batchsize)
+    network = MANN(input_dim, output_dim, 256, 64, num_expert_nodes, gating_indices, batch_size=batchsize)
     network.compile(optimizer=optimizer, loss=mse_loss_variable_gating(num_expert_nodes))
     tensorboard = tf.keras.callbacks.TensorBoard(log_dir=os.path.join(logdir), write_graph=True, write_images=False,
                                                  histogram_freq=0, update_freq="batch")
