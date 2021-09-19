@@ -115,7 +115,7 @@ else:
         dataset_config_path = os.path.join("data", "neural_data", EXP_NAME, frd_win, "dataset_config.json")
         # dataset_config_path = os.path.join("data", "neural_data", frd_win, "dataset_config.json")
         batch_size = 32
-        EPOCHS = 1
+        EPOCHS = 150
 
     elif DEVELOP:
         print('Dev Mode')
