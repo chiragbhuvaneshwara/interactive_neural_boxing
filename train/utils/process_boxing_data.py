@@ -35,18 +35,18 @@ def get_gating_indices(x_ids, joint_ids, traj_window_root, traj_window_wrist):
 
     right_wrist_velocities_tr_ids = _generate_id_sequence(x_ids, 'x_right_wrist_vels_tr')
     left_wrist_velocities_tr_ids = _generate_id_sequence(x_ids, 'x_left_wrist_vels_tr')
-    # right_wrist_velocities_tr_ids = _get_past_curr_future_ids(right_wrist_velocities_tr_ids, 3, traj_window_wrist)
-    # left_wrist_velocities_tr_ids = _get_past_curr_future_ids(left_wrist_velocities_tr_ids, 3, traj_window_wrist)
+    right_wrist_velocities_tr_ids = _get_past_curr_future_ids(right_wrist_velocities_tr_ids, 3, traj_window_wrist)
+    left_wrist_velocities_tr_ids = _get_past_curr_future_ids(left_wrist_velocities_tr_ids, 3, traj_window_wrist)
     wrist_velocities_tr_ids = right_wrist_velocities_tr_ids + left_wrist_velocities_tr_ids
 
     root_velocities_tr_ids = _generate_id_sequence(x_ids, 'x_root_vels_tr')
-    # root_velocities_tr_ids = _get_past_curr_future_ids(root_velocities_tr_ids, 2, traj_window_root)
+    root_velocities_tr_ids = _get_past_curr_future_ids(root_velocities_tr_ids, 2, traj_window_root)
 
     root_dirs_tr_ids = _generate_id_sequence(x_ids, 'x_root_dirs_tr')
-    # root_dirs_tr_ids = _get_past_curr_future_ids(root_dirs_tr_ids, 2, traj_window_root)
+    root_dirs_tr_ids = _get_past_curr_future_ids(root_dirs_tr_ids, 2, traj_window_root)
 
     root_pos_tr_ids = _generate_id_sequence(x_ids, 'x_root_pos_tr')
-    # root_pos_tr_ids = _get_past_curr_future_ids(root_pos_tr_ids, 2, traj_window_root)
+    root_pos_tr_ids = _get_past_curr_future_ids(root_pos_tr_ids, 2, traj_window_root)
 
     # punch_labels_tr_ids = _generate_id_sequence(x_ids, 'x_right_punch_labels_tr') + \
     #                       _generate_id_sequence(x_ids, 'x_left_punch_labels_tr')
@@ -102,7 +102,8 @@ def get_gating_indices(x_ids, joint_ids, traj_window_root, traj_window_wrist):
     return gating_ids, gating_variables
 
 
-def train_boxing_data(data_config_path, output_dir, num_expert_nodes=6, epochs=30, batchsize=32):
+def train_boxing_data(data_config_path, output_dir, learning_rate=0.001, num_hidden_neurons=512, num_expert_nodes=6,
+                      epochs=30, batchsize=32):
     """
     Trains a MANN keras model on supplied boxing data which is processed by neural_data_prep module and is now in
     a format that can be fed into a neural network.
@@ -152,26 +153,28 @@ def train_boxing_data(data_config_path, output_dir, num_expert_nodes=6, epochs=3
     output_dim = Y.shape[1]
 
     # TODO experiment with network params to make loss curve steeper
-    learning_rate = tf.keras.experimental.CosineDecayRestarts(0.001, 10 * (len(X) // batchsize))
+    learning_rate = tf.keras.experimental.CosineDecayRestarts(learning_rate, 10 * (len(X) // batchsize))
     optimizer = tf.keras.optimizers.Adam(learning_rate)
 
     training_details = {
-        "num_experts": num_expert_nodes,
-        "gating_variables": gating_variable_names,
-        "num_data_pts": X.shape[0],
         "learning_rate": {
             "name": type(learning_rate).__name__,
             "initial_rate": learning_rate.initial_learning_rate,
             "first_decay_steps": learning_rate.first_decay_steps
         },
+        "num_experts": num_expert_nodes,
+        "num_hidden_neurons": num_hidden_neurons,
+        "gating_variables": gating_variable_names,
+        "num_data_pts": X.shape[0],
         "optimizer": type(optimizer).__name__,
         "loss": mse_loss_variable_gating.__name__,
         "dataset_config": dataset_config,
         "dataset_config_path": data_config_path,
     }
 
-    #TODO Try models with fewer hidden neurons Ex 256
-    network = MANN(input_dim, output_dim, 400, 64, num_expert_nodes, gating_indices, batch_size=batchsize)
+    # TODO Try models with fewer hidden neurons Ex 256
+    network = MANN(input_dim, output_dim, num_hidden_neurons, 64, num_expert_nodes, gating_indices,
+                   batch_size=batchsize)
     network.compile(optimizer=optimizer, loss=mse_loss_variable_gating(num_expert_nodes))
     tensorboard = tf.keras.callbacks.TensorBoard(log_dir=os.path.join(logdir), write_graph=True, write_images=False,
                                                  histogram_freq=0, update_freq="batch")
