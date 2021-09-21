@@ -14,7 +14,7 @@ SEED = 1234
 os.environ['PYTHONHASHSEED'] = str(SEED)
 np.random.seed(SEED)
 rn.seed(SEED)
-tf.set_random_seed(SEED)
+tf.random.set_seed(SEED)
 
 args_parser = argparse.ArgumentParser()
 args_parser.add_argument("-d", "--develop", help="Run on subset",
