@@ -10,8 +10,10 @@ model_id = args.model_id
 
 # model_id = "fr_1_tr_5_5_ep_300/2021-09-14_10-54-55"
 # model_id = "learning_rate/fr_1_tr_5_5_ep_300/2021-09-14_10-54-55"
-epoch_id = int(model_id.split("/")[0].split("_")[-1]) -1
-# epoch_id = int(model_id.split("/")[1].split("_")[-1])
+try:
+    epoch_id = int(model_id.split("/")[0].split("_")[-1]) - 1
+except:
+    epoch_id = int(model_id.split("/")[1].split("_")[-1]) - 1
 src = "chbh01/train-env-v6:/tf/interactive_neural_boxing/train/models/mann_tf2_v2"
 dest = "/Users/chbh01/Documents/OfflineCodebases/UdS_Thesis/AllInIOneVCS/interactive_neural_boxing/" \
        "interactive_neural_boxing/train/models/mann_tf2_v2"
