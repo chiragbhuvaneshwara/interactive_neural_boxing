@@ -84,7 +84,7 @@ def get_gating_indices(x_ids, joint_ids, traj_window_root, traj_window_wrist):
         root_pos_tr_ids,
         root_dirs_tr_ids,
         wrist_velocities_tr_ids,
-        # punch_target_ids,
+        punch_target_ids,
         wrist_end_effector_velocities_ids,
         current_punch_labels_ids,
         foot_ankle_velocities_ids,
