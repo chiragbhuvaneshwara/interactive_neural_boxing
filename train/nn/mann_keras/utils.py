@@ -47,7 +47,7 @@ def save_network(path, network, x_in_mean, y_out_mean, x_in_std, y_out_std):
     if not os.path.exists(path):
         os.makedirs(path)
 
-    network.save(os.path.join(path, "model"))
+    # network.save(os.path.join(path, "model"))
     tf.saved_model.save(network, os.path.join(path, "saved_model"))
     if not os.path.exists(os.path.join(path, "means")):
         os.makedirs(os.path.join(path, "means"))
