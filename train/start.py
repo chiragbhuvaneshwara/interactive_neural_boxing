@@ -3,8 +3,17 @@ import os
 import shutil
 from datetime import datetime
 import math
-
+import numpy as np
+import random as rn
+import tensorflow as tf
 from train.utils.process_boxing_data import train_boxing_data
+
+SEED = 1234
+os.environ['PYTHONHASHSEED'] = str(SEED)
+np.random.seed(SEED)
+rn.seed(SEED)
+tf.set_random_seed(SEED)
+
 
 args_parser = argparse.ArgumentParser()
 args_parser.add_argument("-d", "--develop", help="Run on subset",
@@ -38,7 +47,7 @@ elif DEVELOP:
         os.mkdir(OUT_BASE_PATH)
     dataset_config_path = os.path.join("data", "neural_data", "dev", frd_win, "dataset_config.json")
     batch_size = 2
-    EPOCHS = 2
+    EPOCHS = 1
     out_dir = os.path.join(OUT_BASE_PATH)
 
 frd_win_epochs = frd_win + '_ep_' + str(EPOCHS)

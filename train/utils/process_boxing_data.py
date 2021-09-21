@@ -195,4 +195,3 @@ def train_boxing_data(data_config_path, output_dir, learning_rate=0.001, num_hid
         json.dump(training_details, f, indent=4)
 
     print("Training completed. Models stored in: \n", output_dir)
-    print(learning_rate.first_decay_steps)

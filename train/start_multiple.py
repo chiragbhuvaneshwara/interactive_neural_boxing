@@ -5,7 +5,16 @@ from datetime import datetime
 import math
 from timeit import default_timer as timer
 
+import numpy as np
+import random as rn
+import tensorflow as tf
 from train.utils.process_boxing_data import train_boxing_data
+
+SEED = 1234
+os.environ['PYTHONHASHSEED'] = str(SEED)
+np.random.seed(SEED)
+rn.seed(SEED)
+tf.set_random_seed(SEED)
 
 args_parser = argparse.ArgumentParser()
 args_parser.add_argument("-d", "--develop", help="Run on subset",
