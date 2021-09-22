@@ -38,6 +38,10 @@ EXP_TYPE = args.exptype
 if EXP_TYPE < 0 or EXP_TYPE > 1:
     raise ValueError("Unsupported value: Currently should be 0 or 1")
 elif EXP_TYPE == 1:
+    best_lr = 0.001
+    best_ng = 8
+    best_nh = 512
+
     FRAME_RATE_DIV = 1
     ALL_TR_WINS_WRIST = args.traj_wrist if args.traj_wrist else [5]
     ALL_TR_WINS_ROOT = args.traj_root if args.traj_root else [5]
@@ -90,7 +94,8 @@ elif EXP_TYPE == 1:
             out_dir = os.path.join(OUT_BASE_PATH, frd_win_epochs, current_timestamp)
 
             train_boxing_data(dataset_config_path, out_dir, epochs=EPOCHS,
-                              batchsize=batch_size)
+                              batchsize=batch_size, learning_rate=best_lr, num_expert_nodes=best_ng,
+                              num_hidden_neurons=best_nh)
             end_time = timer()
             print("Model", current_timestamp, "train time in mins:", round((end_time - start_time) / 60))
 else:
