@@ -31,7 +31,10 @@ args_parser.add_argument("-d", "--develop", help="Run on subset",
                          action="store_true", default=False)
 args_parser.add_argument("-l", "--local", help="Flag indicating remote machine or local machine",
                          action="store_true", default=False)
+args_parser.add_argument("-frd", "--frame_rate_div", type=int, default=1)
 args = args_parser.parse_args()
+
+FRAME_RATE_DIV = args.frame_rate_div
 DEVELOP = args.develop
 LOCAL = args.local
 
@@ -51,7 +54,7 @@ if DEVELOP:
 
 PUNCH_LABELS_PATH = os.path.join(INPUT_BASE_PATH, "punch_label_gen", "punch_label", "tertiary")
 BVH_PATH = os.path.join(INPUT_BASE_PATH, "mocap", "hq", "processed")
-FRAME_RATE_DIV = 1
+# FRAME_RATE_DIV = 1
 FORWARD_DIR = np.array([0.0, 0.0, 1.0])
 
 TR_WINDOW_WRIST = math.ceil(5 / FRAME_RATE_DIV)

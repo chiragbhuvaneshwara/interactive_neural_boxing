@@ -41,9 +41,10 @@ args_parser.add_argument("-n", "--expname", help="Name for the experiment",
                          type=str, required=True)
 args_parser.add_argument("-tr", "--traj_root", nargs="+", type=int)
 args_parser.add_argument("-tw", "--traj_wrist", nargs="+", type=int)
+args_parser.add_argument("-frd", "--frame_rate_div", type=int, default=1)
 args = args_parser.parse_args()
 
-FRAME_RATE_DIV = 1
+FRAME_RATE_DIV = args.frame_rate_div
 ALL_TR_WINS_WRIST = args.traj_wrist if args.traj_wrist else [5]
 ALL_TR_WINS_ROOT = args.traj_root if args.traj_root else [5]
 

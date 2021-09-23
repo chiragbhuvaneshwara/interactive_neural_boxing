@@ -20,11 +20,14 @@ args_parser.add_argument("-d", "--develop", help="Run on subset",
                          action="store_true", default=False)
 args_parser.add_argument("-l", "--local", help="Flag indicating remote machine or local machine",
                          action="store_true", default=False)
+args_parser.add_argument("-frd", "--frame_rate_div", type=int, default=1)
 args = args_parser.parse_args()
+
+FRAME_RATE_DIV = args.frame_rate_div
 DEVELOP = args.develop
 LOCAL = args.local
 
-FRAME_RATE_DIV = 1
+# FRAME_RATE_DIV = 1
 
 TR_WINDOW_WRIST = math.ceil(5 / FRAME_RATE_DIV)
 TR_WINDOW_ROOT = math.ceil(5 / FRAME_RATE_DIV)

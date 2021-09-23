@@ -31,8 +31,10 @@ args_parser.add_argument("-tw", "--traj_wrist", nargs="+", type=int)
 args_parser.add_argument("-lr", "--learning_rate", nargs="+", type=float)
 args_parser.add_argument("-nh", "--num_hidden_neurons", nargs="+", type=int)
 args_parser.add_argument("-ng", "--num_gating_experts", nargs="+", type=int)
+args_parser.add_argument("-frd", "--frame_rate_div", type=int, default=1)
 args = args_parser.parse_args()
 
+FRAME_RATE_DIV = args.frame_rate_div
 EXP_TYPE = args.exptype
 
 if EXP_TYPE < 0 or EXP_TYPE > 1:
@@ -42,7 +44,7 @@ elif EXP_TYPE == 1:
     best_ng = 8
     best_nh = 512
 
-    FRAME_RATE_DIV = 1
+    # FRAME_RATE_DIV = 1
     ALL_TR_WINS_WRIST = args.traj_wrist if args.traj_wrist else [5]
     ALL_TR_WINS_ROOT = args.traj_root if args.traj_root else [5]
 
@@ -114,7 +116,7 @@ else:
     DEVELOP = args.develop
     LOCAL = args.local
 
-    FRAME_RATE_DIV = 1
+    # FRAME_RATE_DIV = 1
     TR_WINDOW_WRIST = math.ceil(5 / FRAME_RATE_DIV)
     TR_WINDOW_ROOT = math.ceil(5 / FRAME_RATE_DIV)
     OUT_BASE_PATH = os.path.join("train", "models", "mann_tf2_v2")
