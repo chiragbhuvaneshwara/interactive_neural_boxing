@@ -17,12 +17,12 @@ class Trajectory:
         self.n_tr_samples_wrist = data_configuration['num_traj_samples_wrist']  # 10
         self.traj_step_root = data_configuration['traj_step_root']  # 5
         self.traj_step_wrist = data_configuration['traj_step_wrist']  # 5
-        self.left_wrist_pos_avg_diff = np.array(data_configuration['left_wrist_pos_avg_diff']).ravel()
-        self.right_wrist_pos_avg_diff = np.array(data_configuration['right_wrist_pos_avg_diff']).ravel()
-        self.left_wrist_pos_avg_diff_gp = np.array(data_configuration['left_wrist_pos_avg_diff']).ravel()
-        self.right_wrist_pos_avg_diff_gp = np.array(data_configuration['right_wrist_pos_avg_diff']).ravel()
-        self.left_wrist_pos_no_punch_dist = data_configuration['left_wrist_no_punch']
-        self.right_wrist_pos_no_punch_dist = data_configuration['right_wrist_no_punch']
+        # self.left_wrist_pos_avg_diff = np.array(data_configuration['left_wrist_pos_avg_diff']).ravel()
+        # self.right_wrist_pos_avg_diff = np.array(data_configuration['right_wrist_pos_avg_diff']).ravel()
+        # self.left_wrist_pos_avg_diff_gp = np.array(data_configuration['left_wrist_pos_avg_diff']).ravel()
+        # self.right_wrist_pos_avg_diff_gp = np.array(data_configuration['right_wrist_pos_avg_diff']).ravel()
+        # self.left_wrist_pos_no_punch_dist = data_configuration['left_wrist_no_punch']
+        # self.right_wrist_pos_no_punch_dist = data_configuration['right_wrist_no_punch']
 
         # 10 * 5 = 50fps trajectory window
         self.n_frames_tr_win_root = self.n_tr_samples_root * self.traj_step_root

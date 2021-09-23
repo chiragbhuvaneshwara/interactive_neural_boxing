@@ -270,11 +270,11 @@ def process_data(handler: FeatureExtractor, punch_labels_csv_path, frame_rate_di
 
     if gen_data_config:
         dataset_config = {
-            "left_wrist_pos_avg_diff": handler.left_wrist_pos_avg_diff_punch.tolist(),
-            "right_wrist_pos_avg_diff": handler.right_wrist_pos_avg_diff_punch.tolist(),
+            # "left_wrist_pos_avg_diff": handler.left_wrist_pos_avg_diff_punch.tolist(),
+            # "right_wrist_pos_avg_diff": handler.right_wrist_pos_avg_diff_punch.tolist(),
 
-            "left_wrist_no_punch": {k: v.tolist() for k, v in handler.left_wrist_pos_no_punch.items()},
-            "right_wrist_no_punch": {k: v.tolist() for k, v in handler.right_wrist_pos_no_punch.items()},
+            # "left_wrist_no_punch": {k: v.tolist() for k, v in handler.left_wrist_pos_no_punch.items()},
+            # "right_wrist_no_punch": {k: v.tolist() for k, v in handler.right_wrist_pos_no_punch.items()},
 
             "frame_rate_div": frame_rate_div,
             "forward_dir": list(forward_dir),
