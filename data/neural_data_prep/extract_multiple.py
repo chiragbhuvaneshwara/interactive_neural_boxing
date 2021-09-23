@@ -48,8 +48,10 @@ FRAME_RATE_DIV = args.frame_rate_div
 ALL_TR_WINS_WRIST = args.traj_wrist if args.traj_wrist else [5]
 ALL_TR_WINS_ROOT = args.traj_root if args.traj_root else [5]
 
-ALL_TR_WINS_WRIST = list(set([math.ceil(tr / FRAME_RATE_DIV) for tr in ALL_TR_WINS_WRIST]))
-ALL_TR_WINS_ROOT = list(set([math.ceil(tr / FRAME_RATE_DIV) for tr in ALL_TR_WINS_ROOT]))
+# ALL_TR_WINS_WRIST = list(set([math.ceil(tr / FRAME_RATE_DIV) for tr in ALL_TR_WINS_WRIST]))
+# ALL_TR_WINS_ROOT = list(set([math.ceil(tr / FRAME_RATE_DIV) for tr in ALL_TR_WINS_ROOT]))
+ALL_TR_WINS_WRIST = list(set(ALL_TR_WINS_WRIST))
+ALL_TR_WINS_ROOT = list(set(ALL_TR_WINS_ROOT))
 
 EXP_NAME = args.expname
 EXP_TYPE = args.exptype
