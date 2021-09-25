@@ -15,8 +15,11 @@ class Trajectory:
         self.bone_map = data_configuration["bone_map"]
         self.n_tr_samples_root = data_configuration['num_traj_samples_root']  # 10
         self.n_tr_samples_wrist = data_configuration['num_traj_samples_wrist']  # 10
-        self.traj_step_root = data_configuration['traj_step_root']  # 5
-        self.traj_step_wrist = data_configuration['traj_step_wrist']  # 5
+        # TODO: (DONE) Replace in below code self.traj_step_root and self.traj_step_wrist to frame rate div
+        # self.traj_step_root = data_configuration['traj_step_root']  # 5
+        # self.traj_step_wrist = data_configuration['traj_step_wrist']  # 5
+        self.traj_step_root = data_configuration['frame_rate_div']  # 5
+        self.traj_step_wrist = data_configuration['frame_rate_div']  # 5
         # self.left_wrist_pos_avg_diff = np.array(data_configuration['left_wrist_pos_avg_diff']).ravel()
         # self.right_wrist_pos_avg_diff = np.array(data_configuration['right_wrist_pos_avg_diff']).ravel()
         # self.left_wrist_pos_avg_diff_gp = np.array(data_configuration['left_wrist_pos_avg_diff']).ravel()
@@ -335,7 +338,8 @@ class Trajectory:
 
             # Compute motion towards punch target
             if fwd:
-                pos_step_g = utils.normalize(desired_punch_target - wrist_gp) * wrist_pos_avg_diff_g
+                # pos_step_g = utils.normalize(desired_punch_target - wrist_gp) * wrist_pos_avg_diff_g
+                pos_step_g = (desired_punch_target - wrist_gp) * wrist_pos_avg_diff_g
                 traj_pos_blend, traj_reached_updated, punch_completed = _tr_update_pos_g(wrist_gp, traj_pos_blend,
                                                                                          tr_mid_idx,
                                                                                          desired_punch_target,

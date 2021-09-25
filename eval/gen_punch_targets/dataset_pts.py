@@ -121,7 +121,6 @@ except FileNotFoundError:
     with open(save_punch_targets_json, 'w') as f:
         json.dump(punch_data, f)
 
-
 with open(os.path.join(save_test_path, "dataset_punch_targets_" + "right" + ".json"), 'w') as f:
     json.dump(punch_targets_dataset_right.tolist(), f)
 xR, yR, zR = utils.get_mins_maxs(punch_targets_dataset_right, offset=0)
@@ -140,3 +139,48 @@ print("y range : ", yR)
 print("z range : ", zR)
 
 utils.plot_punch_targets(punch_targets_dataset_left, xR, yR, zR, save_punch_targets_plot_path, "left", "dataset")
+
+
+def get_bins(min_max):
+    d = min_max[1] - min_max[0]
+    num_bins = 5
+    step = d / num_bins
+    bins = [round(min_max[0] + step * i, 2) for i in range(num_bins)]
+    return np.array(bins)
+
+
+def get_binned_arr(arr, arr_min_max):
+    bins = get_bins(arr_min_max)
+    bin_idx = np.digitize(arr, bins)
+
+    binned_arr = []
+    for idx in bin_idx:
+        binned_arr.append(bins[idx - 1])
+    binned_arr = np.array(binned_arr)
+    return binned_arr, bin_idx
+
+# xBins = get_bins(xR)
+# bin_idx = np.digitize(punch_targets_dataset_left[:, 0], xBins)
+#
+# binned_arr = []
+# for idx in bin_idx:
+#     binned_arr.append(xBins[idx-1])
+# binned_arr = np.array(binned_arr)
+# print(binned_arr)
+
+# xVals, xBinIdxs = get_binned_arr(punch_targets_dataset_left[:, 0], xR)
+# yVals, yBinIdxs = get_binned_arr(punch_targets_dataset_right[:, 1], yR)
+# zVals, zBinIdxs = get_binned_arr(punch_targets_dataset_right[:, 2], zR)
+#
+# mat = []
+# for i in range(len(xBinIdxs)):
+#     row = []
+#     for j in range(len(yBinIdxs)):
+#
+#         row.append()
+#     mat.append(row)
+#
+#
+# print()
+
+

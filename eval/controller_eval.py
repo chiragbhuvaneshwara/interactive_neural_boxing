@@ -185,15 +185,22 @@ def plot_mse_per_punch_slice(eval_df, hand, avg_punch, res_path, csv, plot_avg=T
 
 
 # EXP_NAME = "root_tr_exp"
-EXP_NAME = "wrist_tr_exp"
+EXP_NAME = "wrist_tr_exp_fr_1"
 eval_save_path = os.path.join("eval", "saved", "controller", EXP_NAME)
 
 AVG_PUNCH_DURATION_DATA = 26  # 26 frames (check data/raw_data/punch_label_gen/analyze/stats.py)
-
+punch_summary = {}
+walk_summary = {}
 for model_id in os.listdir(eval_save_path):
+
     if "." not in model_id:
         for csv in os.listdir(os.path.join(eval_save_path, model_id, "unity_out")):
-            print("\n", csv)
+            print("\n", model_id, csv)
+            # all_punch_average_mse = {}
+            # all_punch_accuracy = {}
+            # all_walk_average_path_error = {}
+            # all_walk_average_foot_skating = {}
+
             if "punch" in csv:
                 eval_df = pd.read_csv(os.path.join(eval_save_path, model_id, "unity_out", csv))
                 eval_df, mse_per_frame = get_mse_per_frame(eval_df, "RightWrist_positions", "punch_target_right",
@@ -233,6 +240,8 @@ for model_id in os.listdir(eval_save_path):
                 if not os.path.isdir(res_path):
                     os.makedirs(res_path)
 
+                punch_accuracy = []
+                average_mse = []
                 for hand in ["right", "left"]:
                     plot_mse_per_punch_slice(eval_df, hand, AVG_PUNCH_DURATION_DATA, res_path, csv, plot_avg=True,
                                              less_than=True)
@@ -241,18 +250,21 @@ for model_id in os.listdir(eval_save_path):
                     plot_mse_per_punch_slice(eval_df, hand, AVG_PUNCH_DURATION_DATA, res_path, csv, plot_avg=False,
                                              less_than=False)
 
-                # sliced_mse_per_punch = slice_mse_per_punch(eval_df, "right")
-                # fig = plt.figure()
-                # ax = plt.axes()
-                # plt.title("MSE levels over punch")
-                # plt.xlabel("Frames")
-                # plt.ylabel("MSE")
-                # for mse_slice in sliced_mse_per_punch:
-                #     plt.plot(range(1, len(mse_slice) + 1), mse_slice)
-                # plt.savefig(os.path.join(res_path, csv.split(".")[0] + ".png"))
-                # plt.close(fig)
+                    total_num_punches_per_hand = int(csv.split("_")[-1].split(".")[0])
+                    sliced_mse_per_punch, p_acc_per_frame = slice_mse_per_punch(eval_df, hand)
 
-            if "walk" in csv:
+                    avg_mse = np.mean([np.mean(a) for a in sliced_mse_per_punch])
+                    average_mse.append(avg_mse)
+
+                    p_acc = (np.sum(p_acc_per_frame) / total_num_punches_per_hand) * 100
+                    punch_accuracy.append(p_acc)
+
+                average_mse.append(np.mean(average_mse))
+                punch_accuracy.append(np.mean(punch_accuracy))
+
+                punch_summary[model_id + "_" + csv] = average_mse + punch_accuracy
+
+            elif "walk" in csv:
                 eval_df = pd.read_csv(os.path.join(eval_save_path, model_id, "unity_out", csv))
                 eval_df, foot_skating = get_foot_skating(eval_df)
                 # print(foot_skating)
@@ -262,3 +274,18 @@ for model_id in os.listdir(eval_save_path):
                 if not os.path.isdir(res_path):
                     os.makedirs(res_path)
                 eval_df.to_csv(os.path.join(res_path, csv))
+
+                avg_foot_skating = np.mean(foot_skating)
+                avg_path_error = np.mean(path_error)
+
+                walk_summary[model_id + "_" + csv] = [avg_path_error, avg_foot_skating]
+
+if len(punch_summary.values()) > 0:
+    punch_summary_df = pd.DataFrame.from_dict(punch_summary, orient='index',
+                                              columns=["Avg MSE right", "Avg MSE left", "Avg MSE overall",
+                                                       "Accuracy right", "Accuracy left", "Accuracy overall"])
+    punch_summary_df.to_csv(os.path.join(eval_save_path, "punch_summary.csv"))
+if len(walk_summary.values()) > 0:
+    walk_summary_df = pd.DataFrame.from_dict(walk_summary, orient='index',
+                                             columns=["Avg path error", "Avg foot skating"])
+    walk_summary_df.to_csv(os.path.join(eval_save_path, "walk_summary.csv"))

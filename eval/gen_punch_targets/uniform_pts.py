@@ -16,7 +16,7 @@ def gen_uniform_punch_targets(x_range, y_range, z_range, save_path, hand):
     return punch_targets
 
 
-NUM_POINTS = 125
+NUM_POINTS = 5**3
 NS = np.zeros(3, dtype=np.int32);
 NS[0] = NUM_POINTS ** (1 / 3) - 1
 NS[1] = NUM_POINTS ** (1 / 3) - 1

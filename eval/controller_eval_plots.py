@@ -120,7 +120,7 @@ mse_per_punch = []
 for model_id in os.listdir(eval_save_path):
     if "." not in model_id:
         for csv in os.listdir(os.path.join(eval_save_path, model_id, "eval_res")):
-            print(csv)
+            print("\n", csv)
             if "punch" in csv:
                 eval_df = pd.read_csv(os.path.join(eval_save_path, model_id, "eval_res", csv))
                 eval_df, mse_per_frame = get_mse_per_frame(eval_df, "RightWrist_positions", "punch_target_right",
@@ -146,6 +146,7 @@ for model_id in os.listdir(eval_save_path):
                 # print(eval_df)
                 print(eval_df.punch_accuracy_right.value_counts())
                 print(eval_df.punch_accuracy_left.value_counts())
+                print("##############")
 
                 res_path = os.path.join(eval_save_path, model_id, "eval_res")
                 if not os.path.isdir(res_path):

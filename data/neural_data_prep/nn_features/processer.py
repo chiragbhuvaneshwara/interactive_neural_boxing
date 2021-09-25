@@ -283,6 +283,8 @@ def process_data(handler: FeatureExtractor, punch_labels_csv_path, frame_rate_di
 
             "num_traj_samples_root": handler.num_traj_sampling_pts_root,
             "num_traj_samples_wrist": handler.num_traj_sampling_pts_wrist,
+
+            # TODO: No need for traj_step_root and traj_step_wrist as functionality is being covered by frame_rate_div. So fix these steps to 1 ie hard code to 1
             "traj_step_root": handler.traj_step_root,
             "traj_step_wrist": handler.traj_step_wrist,
             "num_joints": len(handler.joint_id_map.keys()),

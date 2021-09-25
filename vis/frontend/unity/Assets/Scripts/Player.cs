@@ -14,7 +14,6 @@ public partial class Player : MonoBehaviour
 
     private bool leftMousePressed;
     private bool rightMousePressed;
-    private bool midMousePressed;
 
     private List<float> facing_dir = new List<float> { 0, 1 };
 
@@ -282,8 +281,8 @@ public partial class Player : MonoBehaviour
 
         if (Input.GetMouseButton(0) || leftMousePressed)
         {
-            //if (Input.GetMouseButton(0))
-                //Debug.Break();
+            if (Input.GetMouseButton(0))
+                Debug.Break();
 
             leftMousePressed = true;
             var punch_completed_status = server.ManagedUpdate("left", dir, facing_dir, leftTrajReached, false);
@@ -305,11 +304,6 @@ public partial class Player : MonoBehaviour
                 rightMousePressed = false;
             }
         }
-        else if (Input.GetMouseButton(2))
-        {
-            midMousePressed = true;
-            midMousePressed = false;
-        }
         else
         {
             string[] eval_exp_input = evaluation_type.ToString().Split('_');
@@ -320,7 +314,7 @@ public partial class Player : MonoBehaviour
             {
                 if (eval_type == "punch")
                 {
-                    exp_duration = 8 * 2;
+                    exp_duration = 64 * 2;
                 }
                 else
                 {

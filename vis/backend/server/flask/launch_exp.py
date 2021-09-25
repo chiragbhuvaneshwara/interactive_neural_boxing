@@ -13,8 +13,8 @@ print(os.getcwd())
 app = Flask(__name__)
 
 EXP_IDX = 0
-EXP_NAME = "root_tr_exp"
-# EXP_NAME = "wrist_tr_exp"
+# EXP_NAME = "root_tr_exp"
+EXP_NAME = "wrist_tr_exp_fr_1"
 
 DATASET_OUTPUT_BASE_PATH = os.path.join("data", "neural_data")
 # DATASET_OUTPUT_BASE_PATH = os.path.join("data", "neural_data", "dev")
@@ -44,7 +44,7 @@ norm = {
 }
 
 mann = load_mann(os.path.join(trained_base_path, "saved_model"))
-
+model_config_path = os.path.join(os.sep.join(trained_base_path.split(os.sep)[:-2]), "network_config.json")
 dataset_config_path = os.path.join(DATASET_OUTPUT_BASE_PATH, frd_win, "dataset_config.json")
 dataset_config_path = os.path.join(dataset_config_path)
 
@@ -58,6 +58,11 @@ eval_targets_base_path = os.path.join("eval", "saved", "targets", "test")
 
 with open(dataset_config_path) as f:
     dataset_configuration = json.load(f)
+
+with open(model_config_path) as f:
+    model_configuration = json.load(f)
+
+dataset_configuration["num_gating_experts"] = model_configuration["expert_nodes"]
 
 bc = BoxingController(mann, dataset_configuration, norm)
 zp = build_zero_posture(bc, num_traj_pts_root=dataset_configuration["num_traj_samples_root"],

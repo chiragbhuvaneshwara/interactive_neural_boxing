@@ -15,6 +15,7 @@
   * Experiment 2:
     * ``python -m data.neural_data_prep.extract_multiple -e 1 -n wrist_tr_exp_fr_1 -tr 5 -tw 5 6 7 8 9 10``
     * ``python -m data.neural_data_prep.extract_multiple -e 1 -n wrist_tr_exp_fr_2 -tr 5 -tw 6 7 8 9 10 -fr 2``
+    * ``python -m data.neural_data_prep.extract_multiple -e 1 -n wrist_tr_exp_fr_3 -tr 5 -tw 5 7 8 9 -fr 3``
 * Single dataset:
   * ``python -m data.neural_data_prep.extract -d -l``
 
@@ -31,6 +32,7 @@ Flags: -d for dev mode and -l for local machine development
   * Experiment 2:
     * ``python -m train.start_multiple -e 1 -n wrist_tr_exp_fr_1 -tr 5 -tw 5 6 7 8 9 10``
     * ``python -m train.start_multiple -e 1 -n wrist_tr_exp_fr_2 -tr 5 -tw 6 7 8 9 10 -fr 2``
+    * ``python -m train.start_multiple -e 1 -n wrist_tr_exp_fr_3 -tr 5 -tw 5 7 8 9 -fr 3``
 * Train Single Model:
   * ``python -m train.start -d -l``
 

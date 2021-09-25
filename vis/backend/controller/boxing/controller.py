@@ -27,14 +27,18 @@ class BoxingController:
         self.traj_window_root = data_config["traj_window_root"]
         self.num_traj_samples_wrist = data_config["num_traj_samples_wrist"]
         self.num_traj_samples_root = data_config["num_traj_samples_root"]
-        self.traj_step_root = data_config["traj_step_root"]
-        self.traj_step_wrist = data_config["traj_step_wrist"]
+        # TODO: (DONE) Replace in below code self.traj_step_root and self.traj_step_wrist to frame rate div
+        # self.traj_step_root = data_configuration['traj_step_root']  # 5
+        # self.traj_step_wrist = data_configuration['traj_step_wrist']  # 5
+        self.traj_step_root = data_config['frame_rate_div']  # 5
+        self.traj_step_wrist = data_config['frame_rate_div']  # 5
         self.zero_posture = data_config["zero_posture"]
         self.bone_map = data_config["bone_map"]
         self.in_col_demarcation_ids = data_config["col_demarcation_ids"][0]
         self.out_col_demarcation_ids = data_config["col_demarcation_ids"][1]
         self.in_col_names = data_config["col_names"][0]
         self.out_col_names = data_config["col_names"][1]
+        self.num_gating_experts = data_config["num_gating_experts"]
 
         input_data = np.array([0.0] * self.xdim)
         out_data = np.array([0.0] * self.ydim)
@@ -151,7 +155,7 @@ class BoxingController:
 
         # 5. Predict: Get MANN Output
         input_data = self.input.data.reshape(1, len(self.input.data))
-        output_data = self.network.forward_pass(self.network, input_data, self.norm)
+        output_data = self.network.forward_pass(self.network, input_data, self.norm, self.num_gating_experts)
         if np.isnan(output_data).any():
             raise Exception('Nans found in: ', np.argwhere(np.isnan(output_data)), '\n Input: ', input_data)
 
