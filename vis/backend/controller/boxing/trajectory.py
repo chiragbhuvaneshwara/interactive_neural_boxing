@@ -502,7 +502,10 @@ class Trajectory:
                 weights.append(weight)
                 combo_idxs_1.append(i // tr_step - half_pred_window)
                 combo_idxs_2.append((i // tr_step) + (
-                    1 if i < (n_frames - n_tr_samples + 1) else 0) - half_pred_window)
+                    1 if i < (n_frames - n_tr_samples) else 0) - half_pred_window)
+
+            # TODO Fix above loop and no need for below postprocessing fix
+            combo_idxs_2 = [i if i <= combo_idxs_2[-1] else combo_idxs_2[-1] for i in combo_idxs_2]
 
             weights = np.array(weights).reshape(len(weights), 1)
             a = np.array([pred_arr[i] for i in combo_idxs_1])
