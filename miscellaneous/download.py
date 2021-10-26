@@ -14,7 +14,7 @@ try:
     epoch_id = int(model_id.split("/")[0].split("_")[-1]) - 1
 except:
     epoch_id = int(model_id.split("/")[1].split("_")[-1]) - 1
-src = "chbh01/train-env-v6:/tf/interactive_neural_boxing/train/models/mann_tf2_v2"
+src = "chbh01/train-env-v7:/tf/interactive_neural_boxing/train/models/mann_tf2_v2"
 dest = "/Users/chbh01/Documents/OfflineCodebases/UdS_Thesis/AllInIOneVCS/interactive_neural_boxing/" \
        "interactive_neural_boxing/train/models/mann_tf2_v2"
 

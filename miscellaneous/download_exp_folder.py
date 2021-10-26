@@ -12,7 +12,7 @@ exp_dir = args.exp_dir
 # model_id = "fr_1_tr_5_5_ep_300/2021-09-14_10-54-55"
 # model_id = "learning_rate/fr_1_tr_5_5_ep_300/2021-09-14_10-54-55"
 # epoch_id = int(model_id.split("/")[1].split("_")[-1])
-src = "chbh01/train-env-v6:/tf/interactive_neural_boxing/train/models/mann_tf2_v2"
+src = "chbh01/train-env-v7:/tf/interactive_neural_boxing/train/models/mann_tf2_v2"
 dest = "/Users/chbh01/Documents/OfflineCodebases/UdS_Thesis/AllInIOneVCS/interactive_neural_boxing/" \
        "interactive_neural_boxing/train/models/mann_tf2_v2"
 REMOTE_SRC = "/tf/interactive_neural_boxing/train/models/mann_tf2_v2"
@@ -20,7 +20,7 @@ EXP_DIR = os.path.join(REMOTE_SRC, exp_dir)
 
 
 def get_dirs(curr_dir):
-    p = subprocess.Popen(("kubectl exec train-env-v6 -- ls " + curr_dir).split(" "), stdout=subprocess.PIPE,
+    p = subprocess.Popen(("kubectl exec train-env-v7 -- ls " + curr_dir).split(" "), stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
     out, err = p.communicate()
     out = out.decode("utf-8")
