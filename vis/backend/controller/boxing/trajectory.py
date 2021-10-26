@@ -130,7 +130,10 @@ class Trajectory:
         tr_mid_idx = self.median_idx_root
         for i in range(tr_mid_idx + 1, len(trajectory_positions_blend)):
             # adjust bias 0.5 to fit to dataset and responsivity (larger value -> more responsive)
-            scale_pos = 1.0 - pow(1.0 - (i - tr_mid_idx) / (1.0 * tr_mid_idx), self.blend_bias)
+
+            # TODO : Finalize which bias value to use 
+            # scale_pos = 1.0 - pow(1.0 - (i - tr_mid_idx) / (1.0 * tr_mid_idx), self.blend_bias)
+            scale_pos = 1.0 - pow(1.0 - (i - tr_mid_idx) / (1.0 * tr_mid_idx), 0.5)
 
             # ith pos = i-1 th pos + combo of curr velocity and user requested velocity
             trajectory_positions_blend[i] = trajectory_positions_blend[i - 1] + \
@@ -336,6 +339,7 @@ class Trajectory:
                 fwd = False
                 rev = True
 
+            # TODO this method should apply the interpolation to all the points maintained in the trajectory class
             # Compute motion towards punch target
             if fwd:
                 # pos_step_g = utils.normalize(desired_punch_target - wrist_gp) * wrist_pos_avg_diff_g
@@ -353,7 +357,8 @@ class Trajectory:
 
             # Compute motion towards shoulder target
             if rev:
-                pos_step_rev_g = utils.normalize(desired_punch_target_reverse - wrist_gp) * wrist_pos_avg_diff_g
+                # pos_step_rev_g = utils.normalize(desired_punch_target_reverse - wrist_gp) * wrist_pos_avg_diff_g
+                pos_step_rev_g = (desired_punch_target_reverse - wrist_gp) * wrist_pos_avg_diff_g
                 traj_pos_blend, traj_reached_updated_rev, punch_completed = _tr_update_pos_g(wrist_gp, traj_pos_blend,
                                                                                              tr_mid_idx,
                                                                                              desired_punch_target_reverse,
@@ -376,7 +381,7 @@ class Trajectory:
                 punch_half_completed = False
 
             if punch_completed:
-                print("Punch details (half, full) :", punch_frames_half_comp-1, punch_frames-1)
+                print("Punch details (half, full) :", punch_frames_half_comp - 1, punch_frames - 1)
 
             self._update_wrist_traj(traj_pos_blend, traj_vels_blend, punch_frames, punch_frames_half_comp,
                                     traj_reached_updated,
@@ -440,10 +445,10 @@ class Trajectory:
         pred_fwd_dir_x, pred_fwd_dir_z = pred_fwd_dir[0], pred_fwd_dir[1]
         rotational_vel = math.atan2(pred_fwd_dir_x, pred_fwd_dir_z)
 
-        #TODO enable or disable rotations
+        # TODO enable or disable rotations
         self.traj_root_directions[idx] = utils.rot_around_z_3d(self.traj_root_directions[idx],
                                                                0)
-                                                               # rotational_vel)
+        # rotational_vel)
 
         self.traj_root_rotations[idx] = utils.z_angle(self.traj_root_directions[idx])
 

@@ -90,7 +90,11 @@ class BoxingController:
         # self.user_dir = direction[:]
         # direction = np.array([1,0])
         direction = utils.xz_to_x0yz(direction)
-        target_vel_speed = 0.035 * np.linalg.norm(direction)
+        # target_vel_speed = 0.035 * np.linalg.norm(direction)
+        # TODO Finalize one of the below values for target_vel_speed
+        # target_vel_speed = 0.02 * np.linalg.norm(direction)
+        target_vel_speed = 0.015 * np.linalg.norm(direction)
+        # target_vel_speed = 0.005 * np.linalg.norm(direction)
         self.target_vel = utils.glm_mix(self.target_vel, target_vel_speed * direction, 0.4)
         target_vel_dir = self.target_dir if utils.euclidian_length(self.target_vel) \
                                             < 1e-05 else utils.normalize(self.target_vel)
@@ -274,6 +278,10 @@ class BoxingController:
                 + [t.punch_completed_right, t.punch_completed_left]
                 + [t.punch_frames_right, t.punch_frames_left]
             ]
+
+            if t.punch_completed_left or t.punch_completed_right:
+                self.reset()
+
             eval_df_new_row = pd.DataFrame(new_row, columns=self.eval_column_names)
             self.eval_df = self.eval_df.append(eval_df_new_row, ignore_index=True)
 
