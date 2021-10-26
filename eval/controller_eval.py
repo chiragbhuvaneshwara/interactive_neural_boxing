@@ -141,6 +141,31 @@ def slice_mse_per_punch(df, hand):
     return sliced_mse_per_punch, punch_accurate
 
 
+def slice_l2norm_per_punch(df, hand):
+    df = df.copy()
+    cols_out = ["l2norm_per_frame" + "_" + hand, "punch_accuracy" + "_" + hand]
+    col_frames = ["punch_frames" + "_" + hand]
+    df_per_punch = df.loc[(df['punch_complete' + "_" + hand] == False) &
+                          (df['punch_frames' + "_" + hand] != 0),
+                          cols_out + col_frames]
+    start_end = np.diff((np.diff(df_per_punch.index) == 1) + 0, prepend=0, append=0)
+    start_idx = np.where(start_end == 1)
+    end_idx = np.where(start_end == -1)
+    start_idx = [int(i) for i in start_idx[0]]
+    end_idx = [int(i) for i in end_idx[0]]
+
+    sliced_l2_per_punch = []
+    punch_accurate = []
+    for i in range(len(start_idx)):
+        out = df_per_punch["l2norm_per_frame" + "_" + hand].values[start_idx[i]:end_idx[i] + 1]
+        p_acc = df_per_punch["punch_accuracy" + "_" + hand].values[start_idx[i]:end_idx[i] + 1]
+        p_acc = True if True in p_acc else False
+        sliced_l2_per_punch.append(out)
+        punch_accurate.append(p_acc)
+
+    return sliced_l2_per_punch, punch_accurate
+
+
 def plot_mse_per_punch_slice(eval_df, hand, avg_punch, res_path, csv, plot_avg=True, less_than=True):
     sliced_mse_per_punch, p_acc = slice_mse_per_punch(eval_df, hand)
     fig = plt.figure()
@@ -149,17 +174,17 @@ def plot_mse_per_punch_slice(eval_df, hand, avg_punch, res_path, csv, plot_avg=T
 
     if plot_avg and less_than:
         plt.title("MSE levels over average punch duration")
-        fname = "less_than_avg_" + csv.split(".")[0] + ".png"
+        fname = "mse_less_than_avg_" + csv.split(".")[0] + ".png"
 
     elif plot_avg and not less_than:
         plt.title("MSE levels over maximum allowed punch duration")
-        fname = "greater_than_avg_" + csv.split(".")[0] + ".png"
+        fname = "mse_greater_than_avg_" + csv.split(".")[0] + ".png"
         plt.axvline(x=avg_punch, label='avg_punch_duration = {}'.format(avg_punch), color="blue", ls='--')
         # place legend outside
         plt.legend()
     else:
         plt.title("MSE levels over all punch durations")
-        fname = "all_" + csv.split(".")[0] + ".png"
+        fname = "mse_all_" + csv.split(".")[0] + ".png"
         plt.axvline(x=avg_punch, label='avg_punch_duration = {}'.format(avg_punch), color="blue", ls='--')
         # place legend outside
         plt.legend()
@@ -184,17 +209,79 @@ def plot_mse_per_punch_slice(eval_df, hand, avg_punch, res_path, csv, plot_avg=T
     plt.close("all")
 
 
-# EXP_NAME = "root_tr_exp"
-EXP_NAME = "wrist_tr_exp_fr_1"
+def plot_l2_per_punch_slice(eval_df, hand, avg_punch, res_path, csv, plot_avg=True, less_than=True):
+    sliced_mse_per_punch, p_acc = slice_l2norm_per_punch(eval_df, hand)
+    fig = plt.figure()
+    # ax = plt.axes()
+    # plt.figure(figsize=(20, 7))
+
+    if plot_avg and less_than:
+        plt.title("L2 norm levels over average punch duration")
+        fname = "l2_less_than_avg_" + csv.split(".")[0] + ".png"
+
+    elif plot_avg and not less_than:
+        plt.title("L2 norm over maximum allowed punch duration")
+        fname = "l2_greater_than_avg_" + csv.split(".")[0] + ".png"
+        plt.axvline(x=avg_punch, label='avg_punch_duration = {}'.format(avg_punch), color="blue", ls='--')
+        # place legend outside
+        plt.legend()
+    else:
+        plt.title("L2 norm over all punch durations")
+        fname = "l2_all_" + csv.split(".")[0] + ".png"
+        plt.axvline(x=avg_punch, label='avg_punch_duration = {}'.format(avg_punch), color="blue", ls='--')
+        # place legend outside
+        plt.legend()
+
+    plt.xlabel("Frames")
+    plt.ylabel("L2 norm")
+    for i, mse_slice in enumerate(sliced_mse_per_punch):
+        if p_acc[i] == True:
+            color = "green"
+        else:
+            color = "red"
+
+        if len(mse_slice) <= avg_punch and plot_avg and less_than:
+            plt.plot(range(1, len(mse_slice) + 1), mse_slice, color=color)
+        elif len(mse_slice) > avg_punch and plot_avg and not less_than:
+            plt.plot(range(1, len(mse_slice) + 1), mse_slice, color=color)
+
+        elif not plot_avg and not less_than:
+            plt.plot(range(1, len(mse_slice) + 1), mse_slice, color=color)
+
+    plt.savefig(os.path.join(res_path, fname))
+    plt.close("all")
+
+
+def plot_path_error(path_error, res_path):
+    fig = plt.figure()
+
+    plt.title("MSE path error over full test walk duration")
+    fname = "walk_path_error_" + csv.split(".")[0] + ".png"
+    plt.axhline(y=round(np.mean(path_error), 2), label='Avg Path Error = {}'.format(round(np.mean(path_error), 2)),
+                color="blue", ls='--')
+    # place legend outside
+    plt.legend()
+
+    plt.xlabel("Time in seconds")
+    plt.ylabel("MSE path error")
+    plt.plot(range(1, len(path_error) + 1), path_error)
+
+    plt.savefig(os.path.join(res_path, fname))
+    plt.close("all")
+
+
+EXP_NAME = "root_tr_exp_fr_2"
+# EXP_NAME = "wrist_tr_exp_fr_1"
+# EXP_NAME = "wrist_tr_exp_fr_2_copy_rm"
 eval_save_path = os.path.join("eval", "saved", "controller", EXP_NAME)
 
 AVG_PUNCH_DURATION_DATA = 26  # 26 frames (check data/raw_data/punch_label_gen/analyze/stats.py)
 punch_summary = {}
 walk_summary = {}
-for model_id in os.listdir(eval_save_path):
+for model_id in sorted(os.listdir(eval_save_path)):
 
     if "." not in model_id:
-        for csv in os.listdir(os.path.join(eval_save_path, model_id, "unity_out")):
+        for csv in sorted(os.listdir(os.path.join(eval_save_path, model_id, "unity_out"))):
             print("\n", model_id, csv)
             # all_punch_average_mse = {}
             # all_punch_accuracy = {}
@@ -203,6 +290,7 @@ for model_id in os.listdir(eval_save_path):
 
             if "punch" in csv:
                 eval_df = pd.read_csv(os.path.join(eval_save_path, model_id, "unity_out", csv))
+                eval_df, foot_skating = get_foot_skating(eval_df)
                 eval_df, mse_per_frame = get_mse_per_frame(eval_df, "RightWrist_positions", "punch_target_right",
                                                            "right")
                 eval_df, mse_per_frame = get_mse_per_frame(eval_df, "LeftWrist_positions", "punch_target_left", "left")
@@ -212,10 +300,10 @@ for model_id in os.listdir(eval_save_path):
                 eval_df, l2_per_frame = get_l2norm_per_frame(eval_df, "LeftWrist_positions", "punch_target_left",
                                                              "left")
 
-                eval_right_per_punch_df = get_mse_per_punch(eval_df, "right")
-                eval_left_per_punch_df = get_mse_per_punch(eval_df, "left")
-                eval_df["mse_per_punch" + "_" + "right"] = eval_right_per_punch_df["mse_per_punch" + "_" + "right"]
-                eval_df["mse_per_punch" + "_" + "left"] = eval_left_per_punch_df["mse_per_punch" + "_" + "left"]
+                # eval_right_per_punch_df = get_mse_per_punch(eval_df, "right")
+                # eval_left_per_punch_df = get_mse_per_punch(eval_df, "left")
+                # eval_df["mse_per_punch" + "_" + "right"] = eval_right_per_punch_df["mse_per_punch" + "_" + "right"]
+                # eval_df["mse_per_punch" + "_" + "left"] = eval_left_per_punch_df["mse_per_punch" + "_" + "left"]
                 eval_df.fillna(0, inplace=True)
                 eval_df = eval_df.loc[:, ~eval_df.columns.str.contains('^Unnamed')]
 
@@ -250,6 +338,13 @@ for model_id in os.listdir(eval_save_path):
                     plot_mse_per_punch_slice(eval_df, hand, AVG_PUNCH_DURATION_DATA, res_path, csv, plot_avg=False,
                                              less_than=False)
 
+                    plot_l2_per_punch_slice(eval_df, hand, AVG_PUNCH_DURATION_DATA, res_path, csv, plot_avg=True,
+                                            less_than=True)
+                    plot_l2_per_punch_slice(eval_df, hand, AVG_PUNCH_DURATION_DATA, res_path, csv, plot_avg=True,
+                                            less_than=False)
+                    plot_l2_per_punch_slice(eval_df, hand, AVG_PUNCH_DURATION_DATA, res_path, csv, plot_avg=False,
+                                            less_than=False)
+
                     total_num_punches_per_hand = int(csv.split("_")[-1].split(".")[0])
                     sliced_mse_per_punch, p_acc_per_frame = slice_mse_per_punch(eval_df, hand)
 
@@ -261,8 +356,9 @@ for model_id in os.listdir(eval_save_path):
 
                 average_mse.append(np.mean(average_mse))
                 punch_accuracy.append(np.mean(punch_accuracy))
-
-                punch_summary[model_id + "_" + csv] = average_mse + punch_accuracy
+                # TODO compute average or median of MSE when punches are accurate
+                avg_foot_skating = np.mean(foot_skating)
+                punch_summary[model_id + "_" + csv] = average_mse + punch_accuracy + [avg_foot_skating]
 
             elif "walk" in csv:
                 eval_df = pd.read_csv(os.path.join(eval_save_path, model_id, "unity_out", csv))
@@ -270,10 +366,16 @@ for model_id in os.listdir(eval_save_path):
                 # print(foot_skating)
 
                 eval_df, path_error = get_path_error(eval_df)
-                res_path = os.path.join(eval_save_path, model_id, "eval_res")
+                res_path = os.path.join(eval_save_path, model_id, "eval_res", "csv")
                 if not os.path.isdir(res_path):
                     os.makedirs(res_path)
                 eval_df.to_csv(os.path.join(res_path, csv))
+
+                res_path = os.path.join(eval_save_path, model_id, "eval_res", "plots")
+                if not os.path.isdir(res_path):
+                    os.makedirs(res_path)
+
+                plot_path_error(path_error, res_path)
 
                 avg_foot_skating = np.mean(foot_skating)
                 avg_path_error = np.mean(path_error)
@@ -283,7 +385,8 @@ for model_id in os.listdir(eval_save_path):
 if len(punch_summary.values()) > 0:
     punch_summary_df = pd.DataFrame.from_dict(punch_summary, orient='index',
                                               columns=["Avg MSE right", "Avg MSE left", "Avg MSE overall",
-                                                       "Accuracy right", "Accuracy left", "Accuracy overall"])
+                                                       "Accuracy right", "Accuracy left", "Accuracy overall",
+                                                       "Average Foot Skating"])
     punch_summary_df.to_csv(os.path.join(eval_save_path, "punch_summary.csv"))
 if len(walk_summary.values()) > 0:
     walk_summary_df = pd.DataFrame.from_dict(walk_summary, orient='index',
