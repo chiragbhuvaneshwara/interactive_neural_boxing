@@ -131,7 +131,7 @@ class Trajectory:
         for i in range(tr_mid_idx + 1, len(trajectory_positions_blend)):
             # adjust bias 0.5 to fit to dataset and responsivity (larger value -> more responsive)
 
-            # TODO : Finalize which bias value to use 
+            # TODO : Finalize which bias value to use
             # scale_pos = 1.0 - pow(1.0 - (i - tr_mid_idx) / (1.0 * tr_mid_idx), self.blend_bias)
             scale_pos = 1.0 - pow(1.0 - (i - tr_mid_idx) / (1.0 * tr_mid_idx), 0.5)
 
