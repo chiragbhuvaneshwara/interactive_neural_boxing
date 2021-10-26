@@ -22,8 +22,6 @@ class TPosture(object):
         self.traj = trajectory
 
 
-# TODO Better naming in sync with the visualization i.e TBone ==> Bone, TVector3 to Vector3 etc but TPosture must remain
-#  TPosture as it actually makes sense. But the TPosture class is later used as general purpose Posture. So can change it too.
 class TBone(object):
     """
     Class to encapsulate the information associated with each bone. To be utilized as part of posture class.

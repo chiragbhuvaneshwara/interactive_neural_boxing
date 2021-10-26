@@ -62,4 +62,7 @@ for j, foot in enumerate(["right", "left"]):
     # fs.append(0)
     foot_skating[foot] = np.mean(fs)
 
+# TODO: Compute velocity for stepping
+# TODO: Figure out which foot_skating is used in eval and delete either dataset_foot_skating_gp.py or
+#  dataset_foot_skating_lp.py
 print(foot_skating)

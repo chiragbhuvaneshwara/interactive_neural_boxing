@@ -7,6 +7,7 @@ import numpy as np
 plt.style.use('seaborn-whitegrid')
 
 
+# TODO: move functions to separate file
 def get_mse_per_frame(df, col_str_1, col_str_2, hand, save=True, per_punch=False):
     out = df.filter(regex=col_str_1).values
     target = df.filter(regex=col_str_2).values
@@ -67,6 +68,7 @@ def get_punch_accuracy_closest_to_target(df, hand):
     df_wr_closest_to_target = df.iloc[idx_wr_closest_to_target]
     # df_wr_closest_to_target = df.loc[:, cols_out + cols_target + col_mse_per_frame]
 
+    # TODO: Compare with punch accuracy 0.15, 0.3 and 0.45 ==> 0.15m is average size of human head
     df_wr_closest_to_target["punch_accuracy_" + hand] = df_wr_closest_to_target[col_mse_per_frame].apply(
         lambda x: x < 0.15)
 
@@ -251,7 +253,7 @@ def plot_l2_per_punch_slice(eval_df, hand, avg_punch, res_path, csv, plot_avg=Tr
     plt.savefig(os.path.join(res_path, fname))
     plt.close("all")
 
-
+# TODO: Corrrect path error in plot by projecting points onto Z axis and blending them
 def plot_path_error(path_error, res_path):
     fig = plt.figure()
 
@@ -357,10 +359,13 @@ for model_id in sorted(os.listdir(eval_save_path)):
                 average_mse.append(np.mean(average_mse))
                 punch_accuracy.append(np.mean(punch_accuracy))
                 # TODO compute average or median of MSE when punches are accurate
+                # TODO compute average foot skating during punching
                 avg_foot_skating = np.mean(foot_skating)
                 punch_summary[model_id + "_" + csv] = average_mse + punch_accuracy + [avg_foot_skating]
 
             elif "walk" in csv:
+                # TODO: Compute velocity for stepping
+                # TODO: Compute distance covered during entire walk test
                 eval_df = pd.read_csv(os.path.join(eval_save_path, model_id, "unity_out", csv))
                 eval_df, foot_skating = get_foot_skating(eval_df)
                 # print(foot_skating)
@@ -392,3 +397,6 @@ if len(walk_summary.values()) > 0:
     walk_summary_df = pd.DataFrame.from_dict(walk_summary, orient='index',
                                              columns=["Avg path error", "Avg foot skating"])
     walk_summary_df.to_csv(os.path.join(eval_save_path, "walk_summary.csv"))
+
+# TODO either save dfs as latex here or create new script that generates the latex directly by looking through all
+#  folders called "exp_x"

@@ -15,7 +15,6 @@ class Trajectory:
         self.bone_map = data_configuration["bone_map"]
         self.n_tr_samples_root = data_configuration['num_traj_samples_root']  # 10
         self.n_tr_samples_wrist = data_configuration['num_traj_samples_wrist']  # 10
-        # TODO: (DONE) Replace in below code self.traj_step_root and self.traj_step_wrist to frame rate div
         # self.traj_step_root = data_configuration['traj_step_root']  # 5
         # self.traj_step_wrist = data_configuration['traj_step_wrist']  # 5
         self.traj_step_root = data_configuration['frame_rate_div']  # 5
@@ -274,7 +273,6 @@ class Trajectory:
                 wrist_gp = _loc_to_glob(left_wr_lp)
                 traj_vels_blend = np.array(self.traj_left_wrist_vels, dtype=np.float64)
                 desired_punch_target = desired_left_punch_target
-                # TODO get average local desired_punch_target_reverse from dataset
                 desired_punch_target_reverse = _loc_to_glob(left_shoulder_pos + np.array([0, 0, 0.18]))
                 # desired_punch_target_reverse = _loc_to_glob(left_shoulder_pos)
                 traj_reached = self.traj_reached_left_wrist
@@ -339,7 +337,6 @@ class Trajectory:
                 fwd = False
                 rev = True
 
-            # TODO this method should apply the interpolation to all the points maintained in the trajectory class
             # Compute motion towards punch target
             if fwd:
                 # pos_step_g = utils.normalize(desired_punch_target - wrist_gp) * wrist_pos_avg_diff_g
@@ -436,7 +433,7 @@ class Trajectory:
         root_tr_update = _curr_frame_update(pred_root_vel, xz_to_x0yz=True)
         self.traj_root_pos[idx] = root_gp
         self.traj_root_pos[idx] = self.traj_root_pos[idx] + root_tr_update
-        # TODO: Needed to disable foot_drifting addition to enable better stepping
+        # TODO: Check. Previously needed to disable foot_drifting addition to enable better stepping
         # self.traj_root_pos[idx] = self.traj_root_pos[idx] + root_tr_update + \
         #                           self.foot_drifting.reshape(1, len(self.foot_drifting))
         self.traj_root_vels[idx] = utils.glm_mix(self.traj_root_vels[idx], root_tr_update, 0.9)
@@ -445,7 +442,7 @@ class Trajectory:
         pred_fwd_dir_x, pred_fwd_dir_z = pred_fwd_dir[0], pred_fwd_dir[1]
         rotational_vel = math.atan2(pred_fwd_dir_x, pred_fwd_dir_z)
 
-        # TODO enable or disable rotations
+        # TODO Check if enabling or disabling rotations leads to models with better eval metrics
         self.traj_root_directions[idx] = utils.rot_around_z_3d(self.traj_root_directions[idx],
                                                                0)
         # rotational_vel)
@@ -635,7 +632,6 @@ class Trajectory:
         self.traj_root_pos = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win_root)
         self.traj_root_vels = np.array([[0.0, 0.0, 0.0]] * self.n_frames_tr_win_root)
         self.traj_root_rotations = np.zeros(self.n_frames_tr_win_root)
-        # TODO control rotations using these dirs
         # self.traj_root_directions = np.array([start_direction] * self.n_frames_tr_win_root)
         self.traj_root_directions = np.array([[0.0, 0.0, 1.0]] * self.n_frames_tr_win_root)
 

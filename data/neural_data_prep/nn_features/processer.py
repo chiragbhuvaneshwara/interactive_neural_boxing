@@ -102,7 +102,6 @@ def prepare_input_data(frame_num, handler, col_demarcation_finished=True):
         x_root_vels_tr,
         x_root_dirs_tr,
         #############
-        # TODO then wrt wrist in mid frame i.e. subtract mid traj wrist pos from wrist traj vectors)
         x_right_wrist_pos_tr,  # local wrt r in mid frame
         x_left_wrist_pos_tr,  # local wrt r in mid frame
         #############

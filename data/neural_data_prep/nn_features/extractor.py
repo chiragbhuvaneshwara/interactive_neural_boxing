@@ -112,7 +112,7 @@ class FeatureExtractor:
         """
         Sets the joint ids to axis neuron motion capture suit's skeleton. Not yet tested.
         """
-        self.shoulder_joints = {'r': 13, 'l': 36}  # TODO Check which is right and left
+        self.shoulder_joints = {'r': 13, 'l': 36}
         self.hip_joints = {'r': 1, 'l': 4}
         self.foot_left = {'a': 6, 't': 6}
         self.foot_right = {'a': 3, 't': 3}

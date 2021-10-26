@@ -12,6 +12,10 @@ from vis.backend.server.flask.utils import *
 print(os.getcwd())
 app = Flask(__name__)
 
+# TODO: Recompute punch metrics for all models
+# TODO: Recompute walk metrics for all models
+# TODO: New stepping experiment with 20 frames stepping and 20 frames no stepping
+
 EXP_IDX = 0
 EXP_NAME = "root_tr_exp_fr_2"
 # EXP_NAME = "wrist_tr_exp_fr_2"

@@ -27,7 +27,6 @@ class BoxingController:
         self.traj_window_root = data_config["traj_window_root"]
         self.num_traj_samples_wrist = data_config["num_traj_samples_wrist"]
         self.num_traj_samples_root = data_config["num_traj_samples_root"]
-        # TODO: (DONE) Replace in below code self.traj_step_root and self.traj_step_wrist to frame rate div
         # self.traj_step_root = data_configuration['traj_step_root']  # 5
         # self.traj_step_wrist = data_configuration['traj_step_wrist']  # 5
         self.traj_step_root = data_config['frame_rate_div']  # 5

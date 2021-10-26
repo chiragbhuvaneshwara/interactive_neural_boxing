@@ -78,8 +78,6 @@ def get_gating_indices(x_ids, joint_ids, traj_window_root, traj_window_wrist):
     # foot end effector velocities,
     # the current action variables
     # and the desired velocity of the character
-    # TODO: try not to include punch targets
-    # TODO: increase traj window for walking
     gating_ids = [
         root_pos_tr_ids,
         root_dirs_tr_ids,
@@ -152,7 +150,6 @@ def train_boxing_data(data_config_path, output_dir, learning_rate=0.001, num_hid
     input_dim = X.shape[1]
     output_dim = Y.shape[1]
 
-    # TODO experiment with network params to make loss curve steeper
     learning_rate = tf.keras.experimental.CosineDecayRestarts(learning_rate, 10 * (len(X) // batchsize))
     optimizer = tf.keras.optimizers.Adam(learning_rate)
 
@@ -172,7 +169,6 @@ def train_boxing_data(data_config_path, output_dir, learning_rate=0.001, num_hid
         "dataset_config_path": data_config_path,
     }
 
-    # TODO Try models with fewer hidden neurons Ex 256
     network = MANN(input_dim, output_dim, num_hidden_neurons, 64, num_expert_nodes, gating_indices,
                    batch_size=batchsize)
     network.compile(optimizer=optimizer, loss=mse_loss_variable_gating(num_expert_nodes))
