@@ -29,7 +29,7 @@ all_models_path = os.path.join("train", "models", "mann_tf2_v2")
 #                                 "epoch_99")  # 1, 5, 5 min gating inputs + traj root dirs ==> full traj
 ###################################################################################################
 # trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-09-17_08-35-10", "epochs",
-trained_base_path = os.path.join(all_models_path, "learning_rate_input_similar_to_Janis_walking", frd_win_epochs, "2021-09-19_11-35-20", "epochs",
+trained_base_path = os.path.join(all_models_path, frd_win_epochs, "2021-09-18_08-54-12", "epochs",
                                  "epoch_149")
 # trained_base_path = os.path.join("train/models/mann_tf2_v2/dev/fr_1_tr_5_5_ep_1/2021-09-21_08-05-21/epochs/epoch_0")
 target_file = os.path.join(trained_base_path, 'saved_model')

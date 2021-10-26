@@ -13,8 +13,9 @@ print(os.getcwd())
 app = Flask(__name__)
 
 EXP_IDX = 0
-# EXP_NAME = "root_tr_exp"
-EXP_NAME = "wrist_tr_exp_fr_1"
+EXP_NAME = "root_tr_exp_fr_2"
+# EXP_NAME = "wrist_tr_exp_fr_2"
+# EXP_NAME = "wrist_tr_exp_fr_3"
 
 DATASET_OUTPUT_BASE_PATH = os.path.join("data", "neural_data")
 # DATASET_OUTPUT_BASE_PATH = os.path.join("data", "neural_data", "dev")
@@ -29,6 +30,7 @@ epoch_id = "epoch_" + str(149)
 trained_base_path = os.path.join(all_models_path, frd_win_epochs, model_id, "epochs",
                                  epoch_id)
 ###################################################################################################
+print(trained_base_path)
 
 target_file = os.path.join(trained_base_path, 'saved_model')
 x_mean, y_mean = load_binary(os.path.join(trained_base_path, "means", "Xmean.bin")), \
@@ -71,7 +73,7 @@ zp = build_zero_posture(bc, num_traj_pts_root=dataset_configuration["num_traj_sa
 
 n_punches_eval = 0
 eval_csv_name = ""
-
+print(trained_base_path)
 
 def controller_to_posture():
     """
@@ -240,11 +242,8 @@ def evaluation_values(action):
         elif action == "save":
 
             pm = {}
-            # global n_punches_eval
             global eval_csv_name
-            # bc.eval_values(save=True, save_path=eval_save_path.format(n_punches=str(n_punches_eval)))
             bc.eval_values(save=True, save_path=eval_save_path.format(eval_csv_name=eval_csv_name))
-            # n_punches_eval = 0
             eval_csv_name = ""
 
             pm["saved"] = True
@@ -265,6 +264,7 @@ def get_zero_posture():
     if request.method == 'GET':
         posture = controller_to_posture()
         bc.reset([0, 0, 0], 0.0, [0, 0, 1])
+        print(trained_base_path)
         return json.dumps(posture, default=serialize)
 
     else:
