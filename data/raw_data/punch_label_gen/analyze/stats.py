@@ -122,4 +122,7 @@ if __name__ == '__main__':
     INPUT_BASE_PATH = os.path.join("data", "raw_data")
     data_dir = os.path.join(INPUT_BASE_PATH, "punch_label_gen", "punch_label", "tertiary")
     # data_dir = os.path.join(INPUT_BASE_PATH, "punch_label_gen", "punch_label", "binary")
-    gen_punch_stats(data_dir, plot=True)
+    punch_stats = gen_punch_stats(data_dir, plot=True)
+    print(punch_stats)
+    p_df = pd.DataFrame(punch_stats)
+    print(p_df.to_latex(index=False))

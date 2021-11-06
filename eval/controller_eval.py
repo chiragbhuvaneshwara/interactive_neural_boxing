@@ -52,7 +52,7 @@ def get_mse_per_punch(df, hand):
     return df_per_punch
 
 
-def get_punch_accuracy_closest_to_target(df, hand):
+def get_punch_accuracy_closest_to_target(df, hand, p_acc_threshold):
     df = df.copy()
     cols_out = [hand.capitalize() + "Wrist_positions" + "_" + str(i) for i in range(3)]
     cols_target = ["punch_target" + "_" + hand + "_" + str(i) for i in range(3)]
@@ -70,7 +70,7 @@ def get_punch_accuracy_closest_to_target(df, hand):
 
     # TODO: Compare with punch accuracy 0.15, 0.3 and 0.45 ==> 0.15m is average size of human head
     df_wr_closest_to_target["punch_accuracy_" + hand] = df_wr_closest_to_target[col_mse_per_frame].apply(
-        lambda x: x < 0.15)
+        lambda x: x < p_acc_threshold)
 
     return df_wr_closest_to_target
 
@@ -211,7 +211,7 @@ def plot_mse_per_punch_slice(eval_df, hand, avg_punch, res_path, csv, plot_avg=T
     plt.close("all")
 
 
-def plot_l2_per_punch_slice(eval_df, hand, avg_punch, res_path, csv, plot_avg=True, less_than=True):
+def plot_l2_per_punch_slice(eval_df, hand, avg_punch, res_path, csv, p_acc_threshold, plot_avg=True, less_than=True):
     sliced_mse_per_punch, p_acc = slice_l2norm_per_punch(eval_df, hand)
     fig = plt.figure()
     # ax = plt.axes()
@@ -224,15 +224,17 @@ def plot_l2_per_punch_slice(eval_df, hand, avg_punch, res_path, csv, plot_avg=Tr
     elif plot_avg and not less_than:
         plt.title("L2 norm over maximum allowed punch duration")
         fname = "l2_greater_than_avg_" + csv.split(".")[0] + ".png"
-        plt.axvline(x=avg_punch, label='avg_punch_duration = {}'.format(avg_punch), color="blue", ls='--')
-        # place legend outside
-        plt.legend()
+        # plt.axvline(x=avg_punch, label='avg_punch_duration = {}'.format(avg_punch), color="blue", ls='--')
+        # # place legend outside
+        # plt.legend()
     else:
         plt.title("L2 norm over all punch durations")
         fname = "l2_all_" + csv.split(".")[0] + ".png"
-        plt.axvline(x=avg_punch, label='avg_punch_duration = {}'.format(avg_punch), color="blue", ls='--')
-        # place legend outside
-        plt.legend()
+        # plt.axvline(x=avg_punch, label='avg_punch_duration = {}'.format(avg_punch), color="blue", ls='--')
+        # plt.axhline(y=p_acc_threshold, label='punch accuracy threshold = {}'.format(p_acc_threshold), color="yellow",
+        #             ls='--')
+        # # place legend outside
+        # plt.legend()
 
     plt.xlabel("Frames")
     plt.ylabel("L2 norm")
@@ -250,16 +252,28 @@ def plot_l2_per_punch_slice(eval_df, hand, avg_punch, res_path, csv, plot_avg=Tr
         elif not plot_avg and not less_than:
             plt.plot(range(1, len(mse_slice) + 1), mse_slice, color=color)
 
+    plt.axvline(x=avg_punch, label='avg punch duration = {}'.format(avg_punch), color="blue", ls='--', linewidth=4)
+    plt.axhline(y=p_acc_threshold, label='punch accuracy threshold = {}'.format(p_acc_threshold), color="black",
+                ls=':', linewidth=4)
+    # place legend outside
+    plt.legend(loc="upper right", fancybox=True, frameon=True, framealpha=1.0)
+    # plt.legend(bbox_to_anchor=(0.75, 0.75))
+
     plt.savefig(os.path.join(res_path, fname))
     plt.close("all")
+
 
 # TODO: Corrrect path error in plot by projecting points onto Z axis and blending them
 def plot_path_error(path_error, res_path):
     fig = plt.figure()
-
-    plt.title("MSE path error over full test walk duration")
+    title_addon = ""
+    if "forward" in csv:
+        title_addon = "forward"
+    elif "backward" in csv:
+        title_addon = "backward"
+    plt.title("MSE path error over full test "+title_addon+" walk duration")
     fname = "walk_path_error_" + csv.split(".")[0] + ".png"
-    plt.axhline(y=round(np.mean(path_error), 2), label='Avg Path Error = {}'.format(round(np.mean(path_error), 2)),
+    plt.axhline(y=round(np.mean(path_error), 4), label='Avg Path Error = {}'.format(round(np.mean(path_error), 4)),
                 color="blue", ls='--')
     # place legend outside
     plt.legend()
@@ -272,12 +286,16 @@ def plot_path_error(path_error, res_path):
     plt.close("all")
 
 
-EXP_NAME = "root_tr_exp_fr_2"
+EXP_NAME = "root_tr_exp_fr_2"  # 10 models
+# EXP_NAME = "root_tr_exp_fr_3"  # 1 models
+# EXP_NAME = "root_tr_exp_fr_4"  # 2 models
 # EXP_NAME = "wrist_tr_exp_fr_1"
-# EXP_NAME = "wrist_tr_exp_fr_2_copy_rm"
+# EXP_NAME = "wrist_tr_exp_fr_2"
+# EXP_NAME = "wrist_tr_exp_fr_3"
 eval_save_path = os.path.join("eval", "saved", "controller", EXP_NAME)
 
 AVG_PUNCH_DURATION_DATA = 26  # 26 frames (check data/raw_data/punch_label_gen/analyze/stats.py)
+PUNCH_ACC_THRESHOLD = 0.15
 punch_summary = {}
 walk_summary = {}
 for model_id in sorted(os.listdir(eval_save_path)):
@@ -309,8 +327,8 @@ for model_id in sorted(os.listdir(eval_save_path)):
                 eval_df.fillna(0, inplace=True)
                 eval_df = eval_df.loc[:, ~eval_df.columns.str.contains('^Unnamed')]
 
-                eval_right_p_acc_df = get_punch_accuracy_closest_to_target(eval_df, "right")
-                eval_left_p_acc_df = get_punch_accuracy_closest_to_target(eval_df, "left")
+                eval_right_p_acc_df = get_punch_accuracy_closest_to_target(eval_df, "right", PUNCH_ACC_THRESHOLD)
+                eval_left_p_acc_df = get_punch_accuracy_closest_to_target(eval_df, "left", PUNCH_ACC_THRESHOLD)
                 eval_df["punch_accuracy" + "_" + "right"] = eval_right_p_acc_df["punch_accuracy" + "_" + "right"]
                 eval_df["punch_accuracy" + "_" + "left"] = eval_left_p_acc_df["punch_accuracy" + "_" + "left"]
                 eval_df.fillna(False, inplace=True)
@@ -340,14 +358,17 @@ for model_id in sorted(os.listdir(eval_save_path)):
                     plot_mse_per_punch_slice(eval_df, hand, AVG_PUNCH_DURATION_DATA, res_path, csv, plot_avg=False,
                                              less_than=False)
 
-                    plot_l2_per_punch_slice(eval_df, hand, AVG_PUNCH_DURATION_DATA, res_path, csv, plot_avg=True,
+                    plot_l2_per_punch_slice(eval_df, hand, AVG_PUNCH_DURATION_DATA, res_path, csv, PUNCH_ACC_THRESHOLD,
+                                            plot_avg=True,
                                             less_than=True)
-                    plot_l2_per_punch_slice(eval_df, hand, AVG_PUNCH_DURATION_DATA, res_path, csv, plot_avg=True,
+                    plot_l2_per_punch_slice(eval_df, hand, AVG_PUNCH_DURATION_DATA, res_path, csv, PUNCH_ACC_THRESHOLD,
+                                            plot_avg=True,
                                             less_than=False)
-                    plot_l2_per_punch_slice(eval_df, hand, AVG_PUNCH_DURATION_DATA, res_path, csv, plot_avg=False,
+                    plot_l2_per_punch_slice(eval_df, hand, AVG_PUNCH_DURATION_DATA, res_path, csv, PUNCH_ACC_THRESHOLD,
+                                            plot_avg=False,
                                             less_than=False)
 
-                    total_num_punches_per_hand = int(csv.split("_")[-1].split(".")[0])
+                    total_num_punches_per_hand = int(csv.split("_")[-1].split(".")[0]) / 2
                     sliced_mse_per_punch, p_acc_per_frame = slice_mse_per_punch(eval_df, hand)
 
                     avg_mse = np.mean([np.mean(a) for a in sliced_mse_per_punch])
@@ -361,7 +382,12 @@ for model_id in sorted(os.listdir(eval_save_path)):
                 # TODO compute average or median of MSE when punches are accurate
                 # TODO compute average foot skating during punching
                 avg_foot_skating = np.mean(foot_skating)
-                punch_summary[model_id + "_" + csv] = average_mse + punch_accuracy + [avg_foot_skating]
+
+                wrist_tr = int(model_id.split("_ep")[0].split("_tr_5_")[1]) * 2
+                frame_skip = int(model_id.split("fr_")[1].split("_tr_")[0])
+                wrist_tr = wrist_tr * frame_skip
+
+                punch_summary[model_id] = [wrist_tr, frame_skip] + average_mse + punch_accuracy + [avg_foot_skating]
 
             elif "walk" in csv:
                 # TODO: Compute velocity for stepping
@@ -385,18 +411,27 @@ for model_id in sorted(os.listdir(eval_save_path)):
                 avg_foot_skating = np.mean(foot_skating)
                 avg_path_error = np.mean(path_error)
 
-                walk_summary[model_id + "_" + csv] = [avg_path_error, avg_foot_skating]
+                root_tr = int(model_id.split("_5_ep")[0].split("_tr_")[1])*2
+                frame_skip = int(model_id.split("fr_")[1].split("_tr_")[0])
+                root_tr = root_tr * frame_skip
+
+                walk_summary[model_id] = [root_tr, frame_skip, avg_path_error, avg_foot_skating]
 
 if len(punch_summary.values()) > 0:
     punch_summary_df = pd.DataFrame.from_dict(punch_summary, orient='index',
-                                              columns=["Avg MSE right", "Avg MSE left", "Avg MSE overall",
+                                              columns=["# frames in wrist trajectory", "Frame skip",
+                                                       "Avg MSE per punch right", "Avg MSE per punch left",
+                                                       "Avg MSE per punch overall",
                                                        "Accuracy right", "Accuracy left", "Accuracy overall",
                                                        "Average Foot Skating"])
     punch_summary_df.to_csv(os.path.join(eval_save_path, "punch_summary.csv"))
+    print(punch_summary_df.round(4).to_latex(index=False))
 if len(walk_summary.values()) > 0:
     walk_summary_df = pd.DataFrame.from_dict(walk_summary, orient='index',
-                                             columns=["Avg path error", "Avg foot skating"])
+                                             columns=["# frames in root trajectory", "Frame skip", "Avg path error",
+                                                      "Avg foot skating"])
     walk_summary_df.to_csv(os.path.join(eval_save_path, "walk_summary.csv"))
+    print(walk_summary_df.round(4).to_latex(index=False))
 
 # TODO either save dfs as latex here or create new script that generates the latex directly by looking through all
 #  folders called "exp_x"

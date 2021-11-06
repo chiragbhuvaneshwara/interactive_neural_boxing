@@ -95,10 +95,19 @@ def cube_grid_display(xv, xg, filename, hand, plot_type):
     ax.set_ylabel('X axis (lateral direction)')
     ax.set_xlabel('Z axis (forward direction)')
     ax.set_zlabel('Y axis')
-    ax.set_title(plot_type.capitalize() + "_" + hand.capitalize() + ' Punch targets')
+    ax.set_title(plot_type.capitalize() + " " + hand.lower() + ' punch targets')
     ax.grid(True)
     # ax.axis ( 'equal' )
     plt.savefig(filename)
+
+    fig.patch.set_visible(False)
+    ax.axis('off')
+    ax.title.set_visible(False)
+    plt.savefig(filename.split(".png")[0]+"_no_bg.png", transparent=True)
+
+    # with open('test.png', 'wb') as outfile:
+    #     fig.canvas.print_png(outfile)
+
     # plt.show ( )
 
     plt.clf()
