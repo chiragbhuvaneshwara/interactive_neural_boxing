@@ -102,8 +102,8 @@ def prepare_input_data(frame_num, handler, col_demarcation_finished=True):
         x_root_vels_tr,
         x_root_dirs_tr,
         #############
-        # x_right_wrist_pos_tr,  # local wrt r in mid frame
-        # x_left_wrist_pos_tr,  # local wrt r in mid frame
+        x_right_wrist_pos_tr,  # local wrt r in mid frame
+        x_left_wrist_pos_tr,  # local wrt r in mid frame
         #############
         # x_right_wrist_vels_tr,
         # x_left_wrist_vels_tr,
@@ -194,8 +194,8 @@ def prepare_output_data(frame_num, handler, col_demarcation_finished=True):
         y_root_dirs_tr,
         y_right_punch_labels,
         y_left_punch_labels,
-        # y_right_wrist_pos_tr,
-        # y_left_wrist_pos_tr,
+        y_right_wrist_pos_tr,
+        y_left_wrist_pos_tr,
         # y_right_wrist_vels_tr,
         # y_left_wrist_vels_tr,
         # y_right_punch_labels_tr,
