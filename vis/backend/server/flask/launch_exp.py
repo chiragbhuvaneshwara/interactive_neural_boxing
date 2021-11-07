@@ -26,8 +26,8 @@ EXP_IDX = 0
 # EXP_NAME = "root_tr_exp_fr_7"  # 1 models
 # EXP_NAME = "root_tr_exp_fr_8"  # 1 models
 # EXP_NAME = "root_tr_exp_fr_9"  # 1 models
-EXP_NAME = "root_tr_exp_fr_10"  # 1 models
-# EXP_NAME = "wrist_tr_exp_fr_1"  # 10 models ==> model with tr 1 not working. 0,2,3,4,5,6,7,8,9
+# EXP_NAME = "root_tr_exp_fr_10"  # 1 models
+EXP_NAME = "wrist_tr_exp_fr_1"  # 10 models ==> model with tr 1 not working. 0,2,3,4,5,6,7,8,9
 # EXP_NAME = "wrist_tr_exp_fr_2"  # 5 models ==> 0,1,2,3,4
 # EXP_NAME = "wrist_tr_exp_fr_3"  # 4 models ==> 0,1,2,3
 

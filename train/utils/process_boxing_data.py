@@ -33,11 +33,11 @@ def get_gating_indices(x_ids, joint_ids, traj_window_root, traj_window_wrist):
                                                                                                            -multiplier:]
         return sequence
 
-    right_wrist_velocities_tr_ids = _generate_id_sequence(x_ids, 'x_right_wrist_vels_tr')
-    left_wrist_velocities_tr_ids = _generate_id_sequence(x_ids, 'x_left_wrist_vels_tr')
+    # right_wrist_velocities_tr_ids = _generate_id_sequence(x_ids, 'x_right_wrist_vels_tr')
+    # left_wrist_velocities_tr_ids = _generate_id_sequence(x_ids, 'x_left_wrist_vels_tr')
     # right_wrist_velocities_tr_ids = _get_past_curr_future_ids(right_wrist_velocities_tr_ids, 3, traj_window_wrist)
     # left_wrist_velocities_tr_ids = _get_past_curr_future_ids(left_wrist_velocities_tr_ids, 3, traj_window_wrist)
-    wrist_velocities_tr_ids = right_wrist_velocities_tr_ids + left_wrist_velocities_tr_ids
+    # wrist_velocities_tr_ids = right_wrist_velocities_tr_ids + left_wrist_velocities_tr_ids
 
     root_velocities_tr_ids = _generate_id_sequence(x_ids, 'x_root_vels_tr')
     # root_velocities_tr_ids = _get_past_curr_future_ids(root_velocities_tr_ids, 2, traj_window_root)
@@ -81,7 +81,7 @@ def get_gating_indices(x_ids, joint_ids, traj_window_root, traj_window_wrist):
     gating_ids = [
         root_pos_tr_ids,
         root_dirs_tr_ids,
-        wrist_velocities_tr_ids,
+        # wrist_velocities_tr_ids,
         punch_target_ids,
         wrist_end_effector_velocities_ids,
         current_punch_labels_ids,

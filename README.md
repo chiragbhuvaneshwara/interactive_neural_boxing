@@ -73,6 +73,8 @@ Flags: -d for dev mode and -l for local machine development
     * ``python -m train.start_multiple -e 1 -n wrist_tr_exp_fr_1 -tr 5 -tw 1 2 3 4``
     * ``python -m train.start_multiple -e 1 -n wrist_tr_exp_fr_2 -tr 5 -tw 1 2 3 4 5 -fr 2``
     * ``python -m train.start_multiple -e 1 -n wrist_tr_exp_fr_3 -tr 5 -tw 1 2 3 4 6 10 -fr 3``
+  * Experiment 3:
+    * ``python -m train.start -frd 3``
 * Train Single Model:
   * ``python -m train.start -d -l``
 
