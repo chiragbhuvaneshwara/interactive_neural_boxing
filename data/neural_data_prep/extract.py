@@ -32,11 +32,13 @@ args_parser.add_argument("-d", "--develop", help="Run on subset",
 args_parser.add_argument("-l", "--local", help="Flag indicating remote machine or local machine",
                          action="store_true", default=False)
 args_parser.add_argument("-frd", "--frame_rate_div", type=int, default=1)
+args_parser.add_argument("-n", "--exp_name", type=str, default="")
 args = args_parser.parse_args()
 
 FRAME_RATE_DIV = args.frame_rate_div
 DEVELOP = args.develop
 LOCAL = args.local
+LABEL = args.exp_name
 
 if LOCAL:
     print('Local machine dev')
@@ -69,7 +71,7 @@ TR_SAMPLES_ROOT = 2 * TR_WINDOW_ROOT
 
 x_train, y_train, dataset_config = process_folder(BVH_PATH, PUNCH_LABELS_PATH, FRAME_RATE_DIV, FORWARD_DIR,
                                                   TR_WINDOW_ROOT, TR_WINDOW_WRIST, TR_SAMPLES_ROOT, TR_SAMPLES_WRIST, DEVELOP)
-frd_win = 'fr_' + str(FRAME_RATE_DIV) + '_tr_' + str(TR_WINDOW_ROOT) + "_" + str(TR_WINDOW_WRIST)
+frd_win = 'fr_' + str(FRAME_RATE_DIV) + '_tr_' + str(TR_WINDOW_ROOT) + "_" + str(TR_WINDOW_WRIST) + "_" + LABEL
 setup_output_dir(OUTPUT_BASE_PATH, frd_win)
 out_dir = os.path.join(OUTPUT_BASE_PATH, frd_win)
 

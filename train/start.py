@@ -21,11 +21,13 @@ args_parser.add_argument("-d", "--develop", help="Run on subset",
 args_parser.add_argument("-l", "--local", help="Flag indicating remote machine or local machine",
                          action="store_true", default=False)
 args_parser.add_argument("-frd", "--frame_rate_div", type=int, default=1)
+args_parser.add_argument("-n", "--exp_name", type=str, default="")
 args = args_parser.parse_args()
 
 FRAME_RATE_DIV = args.frame_rate_div
 DEVELOP = args.develop
 LOCAL = args.local
+LABEL = args.exp_name
 
 # FRAME_RATE_DIV = 1
 
@@ -35,7 +37,7 @@ TR_WINDOW_WRIST = 7
 TR_WINDOW_ROOT = 5
 OUT_BASE_PATH = os.path.join("train", "models", "mann_tf2_v2")
 ############################################
-frd_win = 'fr_' + str(FRAME_RATE_DIV) + '_tr_' + str(TR_WINDOW_ROOT) + "_" + str(TR_WINDOW_WRIST)
+frd_win = 'fr_' + str(FRAME_RATE_DIV) + '_tr_' + str(TR_WINDOW_ROOT) + "_" + str(TR_WINDOW_WRIST) + "_" + LABEL
 current_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 if not DEVELOP:
