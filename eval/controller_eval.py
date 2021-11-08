@@ -286,12 +286,13 @@ def plot_path_error(path_error, res_path):
     plt.close("all")
 
 
-EXP_NAME = "root_tr_exp_fr_2"  # 10 models
+# EXP_NAME = "root_tr_exp_fr_2"  # 10 models
 # EXP_NAME = "root_tr_exp_fr_3"  # 1 models
 # EXP_NAME = "root_tr_exp_fr_4"  # 2 models
 # EXP_NAME = "wrist_tr_exp_fr_1_in_thesis_doc"
 # EXP_NAME = "wrist_tr_exp_fr_2_in_thesis_doc"
 # EXP_NAME = "wrist_tr_exp_fr_3_in_thesis_doc"
+EXP_NAME = "ablation_study_exp"
 eval_save_path = os.path.join("eval", "saved", "controller", EXP_NAME)
 
 AVG_PUNCH_DURATION_DATA = 26  # 26 frames (check data/raw_data/punch_label_gen/analyze/stats.py)
@@ -383,11 +384,11 @@ for model_id in sorted(os.listdir(eval_save_path)):
                 # TODO compute average foot skating during punching
                 avg_foot_skating = np.mean(foot_skating)
 
-                wrist_tr = int(model_id.split("_ep")[0].split("_tr_5_")[1]) * 2
-                frame_skip = int(model_id.split("fr_")[1].split("_tr_")[0])
-                wrist_tr = wrist_tr * frame_skip
+                # wrist_tr = int(model_id.split("_ep")[0].split("_tr_5_")[1]) * 2
+                # frame_skip = int(model_id.split("fr_")[1].split("_tr_")[0])
+                # wrist_tr = wrist_tr * frame_skip
 
-                punch_summary[model_id] = [wrist_tr, frame_skip] + average_mse + punch_accuracy + [avg_foot_skating]
+                punch_summary[model_id] = [3*2*7, 7] + average_mse + punch_accuracy + [avg_foot_skating]
 
             elif "walk" in csv:
                 # TODO: Compute velocity for stepping
@@ -426,6 +427,7 @@ if len(punch_summary.values()) > 0:
                                                        "Average Foot Skating"])
     punch_summary_df.to_csv(os.path.join(eval_save_path, "punch_summary.csv"))
     print(punch_summary_df.round(4).to_latex(index=False))
+    print(punch_summary_df.round(4).to_latex(index=True))
 if len(walk_summary.values()) > 0:
     walk_summary_df = pd.DataFrame.from_dict(walk_summary, orient='index',
                                              columns=["# frames in root trajectory", "Frame skip", "Avg path error",

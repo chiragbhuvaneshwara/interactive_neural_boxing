@@ -554,18 +554,18 @@ class Trajectory:
         self.traj_right_wrist_pos[median_idx_wrist + 1:] = self.convert_local_to_global(pred_rwp_tr, arg_type='pos',
                                                                                         arm="right")
 
-        pred_rwv_tr = _smooth_predictions(pred_rwv_tr.reshape(half_pred_window_wrist, self.n_dims), root=False)
-        self.traj_right_wrist_vels[median_idx_wrist + 1:] = self.convert_local_to_global(pred_rwv_tr,
-                                                                                         arg_type='vels',
-                                                                                         arm="right")
+        # pred_rwv_tr = _smooth_predictions(pred_rwv_tr.reshape(half_pred_window_wrist, self.n_dims), root=False)
+        # self.traj_right_wrist_vels[median_idx_wrist + 1:] = self.convert_local_to_global(pred_rwv_tr,
+        #                                                                                  arg_type='vels',
+        #                                                                                  arm="right")
 
         pred_lwp_tr = _smooth_predictions(pred_lwp_tr.reshape(half_pred_window_wrist, self.n_dims), root=False)
         self.traj_left_wrist_pos[median_idx_wrist + 1:] = self.convert_local_to_global(pred_lwp_tr, arg_type='pos',
                                                                                        arm="left")
-        pred_lwv_tr = _smooth_predictions(pred_lwv_tr.reshape(half_pred_window_wrist, self.n_dims), root=False)
-        self.traj_left_wrist_vels[median_idx_wrist + 1:] = self.convert_local_to_global(pred_lwv_tr,
-                                                                                        arg_type='vels',
-                                                                                        arm="left")
+        # pred_lwv_tr = _smooth_predictions(pred_lwv_tr.reshape(half_pred_window_wrist, self.n_dims), root=False)
+        # self.traj_left_wrist_vels[median_idx_wrist + 1:] = self.convert_local_to_global(pred_lwv_tr,
+        #                                                                                 arg_type='vels',
+        #                                                                                 arm="left")
 
     def convert_global_to_local(self, arr_in, root_pos, root_rot, arg_type='pos', arm=None):
         arr_copy = np.array(arr_in)

@@ -137,7 +137,7 @@ class MANNOutput(object):
         rv_tr = self.get_root_vel_traj()
         rd_tr = self.get_root_dir_traj()
         rwp_tr, lwp_tr = self.get_wrist_pos_traj()
-        rwv_tr, lwv_tr = self.get_wrist_vels_traj()
+        rwv_tr, lwv_tr = [], []
         # rpunch_tr, lpunch_tr = self.get_punch_labels_traj()
 
         return rp_tr, rv_tr, rd_tr, rwp_tr, lwp_tr, rwv_tr, lwv_tr, \

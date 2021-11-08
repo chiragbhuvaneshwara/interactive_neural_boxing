@@ -149,7 +149,7 @@ class BoxingController:
         self.input.set_root_vels_tr(root_vels_tr)
         self.input.set_root_dirs_tr(root_dirs_tr)
         self.input.set_wrist_pos_tr(right_wrist_pos_tr, left_wrist_pos_tr)
-        self.input.set_wrist_vels_tr(right_wrist_vels_tr, left_wrist_vels_tr)
+        # self.input.set_wrist_vels_tr(right_wrist_vels_tr, left_wrist_vels_tr)
         # self.input.set_punch_labels_tr(right_labels_tr, left_labels_tr)
 
         # 4. Prepare and Set Joint Input
