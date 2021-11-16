@@ -1,6 +1,6 @@
 import json
 import os
-
+import pandas as pd
 import numpy as np
 
 
@@ -64,5 +64,8 @@ for j, foot in enumerate(["right", "left"]):
 
 # TODO: Compute velocity for stepping
 # TODO: Figure out which foot_skating is used in eval and delete either dataset_foot_skating_gp.py or
-#  dataset_foot_skating_lp.py
-print(foot_skating)
+#  dataset_foot_skating_lp_not_this_one.py
+print("in m", foot_skating)
+
+df = pd.DataFrame.from_dict(foot_skating, orient='index', columns=["foot skating (cm/frame)"])*100
+print(df.round(3).to_latex())

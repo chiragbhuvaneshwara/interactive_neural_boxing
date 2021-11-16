@@ -91,8 +91,8 @@ def gen_punch_stats(data_directory, plot=False):
         plt.savefig("data/raw_data/punch_label_gen/analyze/left_punch_count.png")
         plt.clf()
 
-
-    punch_count_print = [count_r_fwd, count_r_rev, count_l_fwd, count_l_rev, count_r, count_l]
+    count_overall = count_r + count_l
+    punch_count_print = [count_r_fwd, count_r_rev, count_l_fwd, count_l_rev, count_r, count_l, count_overall]
     names = list(map(retrieve_name, punch_count_print))
     punch_stats = []
 
