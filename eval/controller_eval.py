@@ -303,10 +303,11 @@ def plot_path_error(path_error, res_path):
 
 # EXP_NAME = "root_tr_exp_fr_2"  # 10 models
 # EXP_NAME = "root_tr_exp_fr_3"  # 1 models
-EXP_NAME = "root_tr_exp_fr_4"  # 2 models
+# EXP_NAME = "root_tr_exp_fr_4"  # 2 models
 # EXP_NAME = "wrist_tr_exp_fr_1"
 # EXP_NAME = "wrist_tr_exp_fr_2"
 # EXP_NAME = "wrist_tr_exp_fr_3"
+EXP_NAME = "ablation_study_exp"
 eval_save_path = os.path.join("eval", "saved", "controller", EXP_NAME)
 
 CONVERT_METRICS_TO_CENTIMETRE = True
