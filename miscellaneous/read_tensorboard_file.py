@@ -72,13 +72,14 @@ elif "num_hidden_neurons" in exp_folder:
     legend_title = "# hidden neurons"
     super_title = "Loss plot for tuning number of hidden neurons"
 
+plt.figure(dpi=1200)
 loss_sns_plot = sns.lineplot(data=df)
 loss_sns_plot.legend_.set_title(legend_title)
 fig = loss_sns_plot.get_figure()
 fig.axes[0].set_ylim([0.04, 0.125])
 # title and labels, setting initial sizes
-fig.suptitle('Loss plot for tuning number of hidden neurons', fontsize="large")
+fig.suptitle(super_title, fontsize="large")
 fig.axes[0].set_xlabel('epochs', fontsize="large")
 fig.axes[0].set_ylabel('MSE loss', fontsize='large')  # relative to plt.rcParams['font.size']
 
-fig.savefig(os.path.join(exp_folder, "loss.png"))
+fig.savefig(os.path.join(exp_folder, "loss.png"), dpi=300)

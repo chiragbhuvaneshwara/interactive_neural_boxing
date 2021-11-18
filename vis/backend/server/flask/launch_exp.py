@@ -16,9 +16,9 @@ app = Flask(__name__)
 # TODO: Recompute walk metrics for all models
 # TODO: New stepping experiment with 20 frames stepping and 20 frames no stepping
 
-EXP_IDX = 0
+EXP_IDX = 8
 # EXP_NAME = "root_tr_exp_fr_1"  # 2 models
-# EXP_NAME = "root_tr_exp_fr_2"  # 10 models
+EXP_NAME = "root_tr_exp_fr_2"  # 10 models
 # EXP_NAME = "root_tr_exp_fr_3"  # 1 models
 # EXP_NAME = "root_tr_exp_fr_4"  # 2 models
 # EXP_NAME = "root_tr_exp_fr_5"  # 3 models
@@ -27,7 +27,7 @@ EXP_IDX = 0
 # EXP_NAME = "root_tr_exp_fr_8"  # 1 models
 # EXP_NAME = "root_tr_exp_fr_9"  # 1 models
 # EXP_NAME = "root_tr_exp_fr_10"  # 1 models
-EXP_NAME = "wrist_tr_exp_fr_1_in_thesis_doc"  # 10 models ==> model with tr 1 not working. 0,2,3,4,5,6,7,8,9
+# EXP_NAME = "wrist_tr_exp_fr_1_in_thesis_doc"  # 10 models ==> model with tr 1 not working. 0,2,3,4,5,6,7,8,9
 # EXP_NAME = "wrist_tr_exp_fr_2_in_thesis_doc"  # 5 models ==> 0,1,2,3,4
 # EXP_NAME = "wrist_tr_exp_fr_3_in_thesis_doc"  # 4 models ==> 0,1,2,3
 

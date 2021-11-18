@@ -75,7 +75,8 @@ def cube_grid_display(xv, xg, filename, hand, plot_type):
     else:
         c = 'g'
         marker = "+"
-    ax.scatter(xg[:, 0], xg[:, 1], xg[:, 2], 'b', c=c, marker=marker)
+    # s = [10 * 4 ** n for n in range(len(xg[:, 0].ravel()))]
+    ax.scatter(xg[:, 0], xg[:, 1], xg[:, 2], 'b', c=c, marker=marker, s=100)
     #
     #  Outline the hexahedron by its edges.
     #

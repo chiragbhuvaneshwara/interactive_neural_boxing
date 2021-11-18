@@ -281,8 +281,8 @@ public partial class Player : MonoBehaviour
 
         if (Input.GetMouseButton(0) || leftMousePressed)
         {
-            if (Input.GetMouseButton(0))
-                Debug.Break();
+            //if (Input.GetMouseButton(0))
+            //    Debug.Break();
 
             leftMousePressed = true;
             var punch_completed_status = server.ManagedUpdate("left", dir, facing_dir, leftTrajReached, false);
@@ -293,8 +293,8 @@ public partial class Player : MonoBehaviour
         }
         else if (Input.GetMouseButton(1) || rightMousePressed)
         {
-            if (Input.GetMouseButton(1))
-                Debug.Break();
+            //if (Input.GetMouseButton(1))
+            //    Debug.Break();
 
             rightMousePressed = true;
             var punch_completed_status = server.ManagedUpdate("right", dir, facing_dir, rightTrajReached, false);

@@ -52,6 +52,15 @@ def get_mse_per_punch(df, hand):
     return df_per_punch
 
 
+def get_avg_mse_punch_closest_to_target(df, hand):
+    df = df.copy()
+    mse_at_targets_df = df.loc[
+        (df['punch_complete' + "_" + hand] == True), ['mse_per_frame_' + hand, 'punch_complete' + "_" + hand]]
+    avg_mse_at_targets = np.mean(mse_at_targets_df['mse_per_frame_' + hand])
+
+    return avg_mse_at_targets
+
+
 def get_punch_accuracy_closest_to_target(df, hand, p_acc_threshold):
     df = df.copy()
     cols_out = [hand.capitalize() + "Wrist_positions" + "_" + str(i) for i in range(3)]
@@ -84,12 +93,18 @@ def get_foot_skating(df):
         fs = []
         for i in range(len(vals) - 1):
             curr_disp = ((vals[i + 1, 0] - vals[i, 0]) ** 2 + (vals[i + 1, 2] - vals[i, 2]) ** 2) ** 0.5
-            curr_fs = curr_disp * (2 - 2 ** ((vals[i + 1, 1] + vals[i, 1]) / 2 / 0.033))
+
+
+            # curr_fs = curr_disp * (2 - 2 ** ((vals[i + 1, 1] + vals[i, 1]) / 2 / 0.033))
+            curr_fs = curr_disp * (2 - 2 ** ((vals[i + 1, 1] + vals[i, 1]) / 2 / HEIGHT_THRESHOLD))
+            # if CONVERT_METRICS_TO_CENTIMETRE:
+            #     curr_fs *= 100
             fs.append(curr_fs)
 
         # Appending 0 to ensure fs len is same as col len i.e. assuming displacement 0 for last data point (frame)
         fs.append(0)
         df[foot.capitalize() + "Foot_skating"] = fs
+
         foot_skating.append(fs)
 
     return df, fs
@@ -271,7 +286,7 @@ def plot_path_error(path_error, res_path):
         title_addon = "forward"
     elif "backward" in csv:
         title_addon = "backward"
-    plt.title("MSE path error over full test "+title_addon+" walk duration")
+    plt.title("MSE path error over full test " + title_addon + " walk duration")
     fname = "walk_path_error_" + csv.split(".")[0] + ".png"
     plt.axhline(y=round(np.mean(path_error), 4), label='Avg Path Error = {}'.format(round(np.mean(path_error), 4)),
                 color="blue", ls='--')
@@ -286,18 +301,36 @@ def plot_path_error(path_error, res_path):
     plt.close("all")
 
 
-EXP_NAME = "root_tr_exp_fr_2"  # 10 models
+# EXP_NAME = "root_tr_exp_fr_2"  # 10 models
 # EXP_NAME = "root_tr_exp_fr_3"  # 1 models
-# EXP_NAME = "root_tr_exp_fr_4"  # 2 models
-# EXP_NAME = "wrist_tr_exp_fr_1_in_thesis_doc"
-# EXP_NAME = "wrist_tr_exp_fr_2_in_thesis_doc"
-# EXP_NAME = "wrist_tr_exp_fr_3_in_thesis_doc"
+EXP_NAME = "root_tr_exp_fr_4"  # 2 models
+# EXP_NAME = "wrist_tr_exp_fr_1"
+# EXP_NAME = "wrist_tr_exp_fr_2"
+# EXP_NAME = "wrist_tr_exp_fr_3"
 eval_save_path = os.path.join("eval", "saved", "controller", EXP_NAME)
+
+CONVERT_METRICS_TO_CENTIMETRE = True
 
 AVG_PUNCH_DURATION_DATA = 26  # 26 frames (check data/raw_data/punch_label_gen/analyze/stats.py)
 PUNCH_ACC_THRESHOLD = 0.15
+HEIGHT_THRESHOLD = 0.033
+if CONVERT_METRICS_TO_CENTIMETRE:
+    PUNCH_ACC_THRESHOLD *= 100
+    HEIGHT_THRESHOLD *= 100
 punch_summary = {}
 walk_summary = {}
+
+
+def convert_df_to_cm(df):
+    # df_cm = df.copy()
+    m_cols_bool_arr = df.columns.str.contains("pos") | df.columns.str.contains("vels") | df.columns.str.contains(
+        "target")
+    all_cols = np.array(df.columns)
+    m_col_names = [all_cols[i] for i in range(len(all_cols)) if m_cols_bool_arr[i] == True]
+    df[m_col_names] = df[m_col_names] * 100
+    return df
+
+
 for model_id in sorted(os.listdir(eval_save_path)):
 
     if "." not in model_id:
@@ -309,7 +342,9 @@ for model_id in sorted(os.listdir(eval_save_path)):
             # all_walk_average_foot_skating = {}
 
             if "punch" in csv:
-                eval_df = pd.read_csv(os.path.join(eval_save_path, model_id, "unity_out", csv))
+                eval_df = pd.read_csv(os.path.join(eval_save_path, model_id, "unity_out", csv), index_col=0)
+                if CONVERT_METRICS_TO_CENTIMETRE:
+                    eval_df = convert_df_to_cm(eval_df)
                 eval_df, foot_skating = get_foot_skating(eval_df)
                 eval_df, mse_per_frame = get_mse_per_frame(eval_df, "RightWrist_positions", "punch_target_right",
                                                            "right")
@@ -371,12 +406,14 @@ for model_id in sorted(os.listdir(eval_save_path)):
                     total_num_punches_per_hand = int(csv.split("_")[-1].split(".")[0]) / 2
                     sliced_mse_per_punch, p_acc_per_frame = slice_mse_per_punch(eval_df, hand)
 
-                    avg_mse = np.mean([np.mean(a) for a in sliced_mse_per_punch])
+                    # avg_mse = np.mean([np.mean(a) for a in sliced_mse_per_punch])
+                    avg_mse = get_avg_mse_punch_closest_to_target(eval_df, hand)
                     average_mse.append(avg_mse)
 
                     p_acc = (np.sum(p_acc_per_frame) / total_num_punches_per_hand) * 100
                     punch_accuracy.append(p_acc)
 
+                # appending overall average
                 average_mse.append(np.mean(average_mse))
                 punch_accuracy.append(np.mean(punch_accuracy))
                 # TODO compute average or median of MSE when punches are accurate
@@ -385,14 +422,16 @@ for model_id in sorted(os.listdir(eval_save_path)):
 
                 wrist_tr = int(model_id.split("_ep")[0].split("_tr_5_")[1]) * 2
                 frame_skip = int(model_id.split("fr_")[1].split("_tr_")[0])
-                wrist_tr = wrist_tr * frame_skip
+                # wrist_tr = wrist_tr * frame_skip
 
                 punch_summary[model_id] = [wrist_tr, frame_skip] + average_mse + punch_accuracy + [avg_foot_skating]
 
             elif "walk" in csv:
                 # TODO: Compute velocity for stepping
                 # TODO: Compute distance covered during entire walk test
-                eval_df = pd.read_csv(os.path.join(eval_save_path, model_id, "unity_out", csv))
+                eval_df = pd.read_csv(os.path.join(eval_save_path, model_id, "unity_out", csv), index_col=0)
+                if CONVERT_METRICS_TO_CENTIMETRE:
+                    eval_df = convert_df_to_cm(eval_df)
                 eval_df, foot_skating = get_foot_skating(eval_df)
                 # print(foot_skating)
 
@@ -411,27 +450,45 @@ for model_id in sorted(os.listdir(eval_save_path)):
                 avg_foot_skating = np.mean(foot_skating)
                 avg_path_error = np.mean(path_error)
 
-                root_tr = int(model_id.split("_5_ep")[0].split("_tr_")[1])*2
+                root_tr = int(model_id.split("_5_ep")[0].split("_tr_")[1]) * 2
                 frame_skip = int(model_id.split("fr_")[1].split("_tr_")[0])
-                root_tr = root_tr * frame_skip
+                # root_tr = root_tr * frame_skip
 
                 walk_summary[model_id] = [root_tr, frame_skip, avg_path_error, avg_foot_skating]
 
+if CONVERT_METRICS_TO_CENTIMETRE:
+    print("################################")
+    print("Converting metrics from m to cm:")
+    print("################################")
+
+
 if len(punch_summary.values()) > 0:
     punch_summary_df = pd.DataFrame.from_dict(punch_summary, orient='index',
-                                              columns=["# frames in wrist trajectory", "Frame skip",
-                                                       "Avg MSE per punch right", "Avg MSE per punch left",
-                                                       "Avg MSE per punch overall",
+                                              columns=["Window size", "Frame skip",
+                                                       "Avg MSE at target right", "Avg MSE at target left",
+                                                       "Avg MSE at target overall",
                                                        "Accuracy right", "Accuracy left", "Accuracy overall",
                                                        "Average Foot Skating"])
     punch_summary_df.to_csv(os.path.join(eval_save_path, "punch_summary.csv"))
-    print(punch_summary_df.round(4).to_latex(index=False))
+
+    print(punch_summary_df.round({
+        "Avg MSE at target right": 2,
+        "Avg MSE at target left": 2,
+        "Avg MSE at target overall": 2,
+        "Accuracy right": 2,
+        "Accuracy left": 2,
+        "Accuracy overall": 2,
+        "Average Foot Skating": 3
+    }).to_latex(index=False))
 if len(walk_summary.values()) > 0:
     walk_summary_df = pd.DataFrame.from_dict(walk_summary, orient='index',
-                                             columns=["# frames in root trajectory", "Frame skip", "Avg path error",
+                                             columns=["Window size", "Frame skip", "Avg path error",
                                                       "Avg foot skating"])
     walk_summary_df.to_csv(os.path.join(eval_save_path, "walk_summary.csv"))
-    print(walk_summary_df.round(4).to_latex(index=False))
+    print(walk_summary_df.round({
+        "Avg path error": 2,
+        "Avg foot skating": 3
+    }).to_latex(index=False))
 
 # TODO either save dfs as latex here or create new script that generates the latex directly by looking through all
 #  folders called "exp_x"
