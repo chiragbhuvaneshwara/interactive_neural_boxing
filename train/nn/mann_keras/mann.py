@@ -167,4 +167,4 @@ class MANN(tf.keras.Model):
         if np.isnan(y_prediction).any():
             raise Exception('Nans found')
 
-        return y_prediction
+        return y_prediction, gating_weights

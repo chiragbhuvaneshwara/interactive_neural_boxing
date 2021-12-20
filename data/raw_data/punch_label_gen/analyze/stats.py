@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
+plt.rcParams.update({'font.size': 14})
 from common.utils import retrieve_name
 
 
@@ -67,28 +67,29 @@ def gen_punch_stats(data_directory, plot=False):
     l_count_dict = {k: v for k, v in zip(l_unique, l_counts)}
 
     if plot:
-        plt.hist(count_r, density=False, bins=60)  # density=False would make counts
+
+        plt.hist(count_r, density=False, bins=60, color ="gold",edgecolor='black', linewidth=1.2)  # density=False would make counts
         plt.ylabel('Num Punches')
         plt.xlabel('Frames')
         plt.title("Count of right punches in dataset")
         plt.xlim(0, 60)
         plt.ylim(0, 40)
-        plt.axvline(sum(count_r)/len(count_r), color='k', linestyle='--', label='Avg right punch ='+str(round(sum(count_r)/len(count_r))))
-        plt.legend()
-        plt.savefig("data/raw_data/punch_label_gen/analyze/right_punch_count.png")
+        plt.axvline(sum(count_r)/len(count_r), color='black', linestyle='--', label='Avg right punch ='+str(round(sum(count_r)/len(count_r)))+ " frames")
+        plt.legend(loc="upper left")
+        plt.savefig("data/raw_data/punch_label_gen/analyze/right_punch_count.png", dpi=300)
         plt.clf()
 
-        plt.hist(count_l, density=False, bins=60)  # density=False would make counts
+        plt.hist(count_l, density=False, bins=60, color="cyan",edgecolor='black', linewidth=1.2)  # density=False would make counts
         plt.ylabel('Num Punches')
         plt.xlabel('Frames')
         plt.title("Count of left punches in dataset")
         plt.xlim(0, 60)
         plt.ylim(0, 40)
 
-        plt.axvline(sum(count_l) / len(count_l), color='k', linestyle='--',
-                    label='Avg left punch =' + str(round(sum(count_l) / len(count_l))))
-        plt.legend()
-        plt.savefig("data/raw_data/punch_label_gen/analyze/left_punch_count.png")
+        plt.axvline(sum(count_l) / len(count_l), color='black', linestyle='--',
+                    label='Avg left punch =' + str(round(sum(count_l) / len(count_l))) + " frames")
+        plt.legend(loc="upper left")
+        plt.savefig("data/raw_data/punch_label_gen/analyze/left_punch_count.png", dpi=300)
         plt.clf()
 
 

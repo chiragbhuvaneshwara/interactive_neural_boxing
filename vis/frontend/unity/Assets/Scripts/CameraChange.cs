@@ -7,6 +7,7 @@ public class CameraChange : MonoBehaviour
     // Define Cams
     public Camera cam1;
     public Camera cam2;
+    public Camera cam3;
 
 
     //Define List of Cameras
@@ -17,6 +18,7 @@ public class CameraChange : MonoBehaviour
         // Add inspector Cameras here
         cameras.Add(cam1);
         cameras.Add(cam2);
+        cameras.Add(cam3);
     }
 
     void Update()
@@ -32,6 +34,11 @@ public class CameraChange : MonoBehaviour
             //Debug.Log("cam2");
             SwapCamera(cam2);
          };
+        if (Input.GetKeyDown(KeyCode.C))
+        {
+            //Debug.Log("cam2");
+            SwapCamera(cam3);
+        };
     }
 
     public void SwapCamera(Camera cam)

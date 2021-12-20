@@ -205,7 +205,7 @@ namespace MultiMosiServer
 
             if (TargetHand == "right")
             {
-                Vector3 l_hand_pos = GameObject.Find("LeftWrist_end").transform.position;
+                //Vector3 l_hand_pos = GameObject.Find("LeftWrist_end").transform.position;
                 var punchTargetTransform = GetPunchTargetTransform();
                 Vector3 target = punchTargetTransform.position;
 
@@ -217,7 +217,7 @@ namespace MultiMosiServer
             }
             else if (TargetHand == "left")
             {
-                Vector3 r_hand_pos = GameObject.Find("RightWrist_end").transform.position;
+                //Vector3 r_hand_pos = GameObject.Find("RightWrist_end").transform.position;
                 var punchTargetTransform = GetPunchTargetTransform();
                 Vector3 target = punchTargetTransform.position;
 
@@ -251,7 +251,7 @@ namespace MultiMosiServer
 
             if (this.target_hand == "right")
             {
-                Vector3 l_hand_pos = GameObject.Find("LeftWrist_end").transform.position;
+                //Vector3 l_hand_pos = GameObject.Find("LeftWrist_end").transform.position;
                 var punchTargetTransform = GetPunchTargetTransform();
                 Vector3 target = punchTargetTransform.position;
 
@@ -263,7 +263,7 @@ namespace MultiMosiServer
             }
             else if (this.target_hand == "left")
             {
-                Vector3 r_hand_pos = GameObject.Find("RightWrist_end").transform.position;
+                //Vector3 r_hand_pos = GameObject.Find("RightWrist_end").transform.position;
                 var punchTargetTransform = GetPunchTargetTransform();
                 Vector3 target = punchTargetTransform.position;
 

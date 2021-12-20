@@ -16,7 +16,10 @@ app = Flask(__name__)
 # TODO: Recompute walk metrics for all models
 # TODO: New stepping experiment with 20 frames stepping and 20 frames no stepping
 
-EXP_IDX = 8
+STORE_GATING_PREDS = False
+
+EXP_IDX = 5
+# EXP_IDX = 1
 # EXP_NAME = "root_tr_exp_fr_1"  # 2 models
 EXP_NAME = "root_tr_exp_fr_2"  # 10 models
 # EXP_NAME = "root_tr_exp_fr_3"  # 1 models
@@ -66,7 +69,8 @@ dataset_config_path = os.path.join(dataset_config_path)
 
 model_id = trained_base_path.split(os.sep)[-3]
 
-eval_save_path = os.path.join("eval", "saved", "controller", EXP_NAME, frd_win_epochs + "_" + model_id, "unity_out")
+# eval_save_path = os.path.join("eval", "saved", "controller", EXP_NAME, frd_win_epochs + "_" + model_id, "unity_out")
+eval_save_path = os.path.join("eval", "saved", "temp", EXP_NAME, frd_win_epochs + "_" + model_id, "unity_out")
 if not os.path.isdir(eval_save_path):
     os.makedirs(eval_save_path)
 eval_save_path = os.path.join(eval_save_path, "{eval_csv_name}")
@@ -143,7 +147,7 @@ def fetch_frame():
             label = [0, 1]
 
         punch_target = punch_right_target + punch_left_target
-        bc.pre_render(punch_target, label, dir, space='global')
+        bc.pre_render(punch_target, label, dir, space='global', store_gating=STORE_GATING_PREDS)
         posture = controller_to_posture()
         bc.post_render()
         json_str = json.dumps(posture, default=serialize)

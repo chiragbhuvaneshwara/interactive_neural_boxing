@@ -318,7 +318,7 @@ public partial class Player : MonoBehaviour
                 }
                 else
                 {
-                    exp_duration = 30 * 10;
+                    exp_duration = 300 * 10;
                 }
                 int exp_duration_indicator = exp_duration;
 

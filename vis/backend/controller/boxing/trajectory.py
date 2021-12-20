@@ -221,7 +221,8 @@ class Trajectory:
                 start = len(traj_pos) - tr_reached['f']
                 end = len(traj_pos)
                 step = 1
-                threshold = 0.15
+                threshold = 0.15  # ==> used to compute doc values
+                # threshold = 0.13
             trajs_reached = []
             count = 1
             for i in range(start, end, step):

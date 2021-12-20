@@ -23,9 +23,9 @@ def get_epoch_loss(filename):
 # for summary in summary_iterator("train/models/mann_tf2_v2/experiment_0/learning_rate/fr_1_tr_5_5_ep_150/2021-09-21_06-33-07/logs/train/events.out.tfevents.1632205990.asr-vm-lasvegas-01.5082.67.v2"):
 #     summary
 #     print(summary)
-exp_folder = "train/models/mann_tf2_v2/experiment_0/learning_rate"
+# exp_folder = "train/models/mann_tf2_v2/experiment_0/learning_rate"
 # exp_folder = "train/models/mann_tf2_v2/experiment_0/num_gating_experts"
-# exp_folder = "train/models/mann_tf2_v2/experiment_0/num_hidden_neurons"
+exp_folder = "train/models/mann_tf2_v2/experiment_0/num_hidden_neurons"
 for exp in [f for f in os.listdir(exp_folder) if os.path.splitext(f)[1] == ""]:
     curr_exp = os.path.join(exp_folder, exp)
 
@@ -76,7 +76,7 @@ plt.figure(dpi=1200)
 loss_sns_plot = sns.lineplot(data=df)
 loss_sns_plot.legend_.set_title(legend_title)
 fig = loss_sns_plot.get_figure()
-fig.axes[0].set_ylim([0.04, 0.125])
+fig.axes[0].set_ylim([0.02, 0.125])
 # title and labels, setting initial sizes
 fig.suptitle(super_title, fontsize="large")
 fig.axes[0].set_xlabel('epochs', fontsize="large")

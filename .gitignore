@@ -121,3 +121,7 @@ eval/saved/targets/test/
 /eval/saved/controller/
 
 *.png
+/vis/frontend/unity/Recordings/
+/eval/saved/temp/
+
+miscellaneous/Gating_Outs/

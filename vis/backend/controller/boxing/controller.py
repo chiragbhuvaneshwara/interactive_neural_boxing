@@ -1,4 +1,7 @@
 """author: Chirag Bhuvaneshwara """
+import json
+import os
+
 import numpy as np
 import pandas as pd
 
@@ -9,6 +12,7 @@ from vis.backend.controller.boxing.mann_input import MANNInput
 from vis.backend.controller.boxing.mann_output import MANNOutput
 from vis.backend.controller import utils
 
+GATING_STORE_LOC = "miscellaneous/Gating_Outs"
 
 class BoxingController:
     """
@@ -69,9 +73,10 @@ class BoxingController:
                                                  ["punch_half_complete_", "punch_complete_", "punch_frames_"] for hand
                                                  in
                                                  ["right", "left"]]
+        self.gating_preds = []
         self.eval_df = pd.DataFrame(columns=self.eval_column_names)
 
-    def pre_render(self, punch_targets, punch_labels, dir, space='local'):
+    def pre_render(self, punch_targets, punch_labels, dir, space='local', store_gating=False):
         """
         This method is called before rendering. It prepares character and trajectory to be rendered.
 
@@ -163,7 +168,13 @@ class BoxingController:
         #################### Pre-Predict#################################
 
         #################### Predict #################################
-        output_data = self.network.forward_pass(self.network, input_data, self.norm, self.num_gating_experts)
+        output_data, gating_weights = self.network.forward_pass(self.network, input_data, self.norm, self.num_gating_experts)
+
+        if store_gating:
+            self.gating_preds.append([float(w) for w in gating_weights])
+            with open(os.path.join(GATING_STORE_LOC, 'gating_data.json'), 'w') as f:
+                json.dump(self.gating_preds, f)
+
         if np.isnan(output_data).any():
             raise Exception('Nans found in: ', np.argwhere(np.isnan(output_data)), '\n Input: ', input_data)
 
@@ -213,6 +224,7 @@ class BoxingController:
         @param start_orientation: float, rotation info in radian
         @param start_direction: np arr(3)
         """
+        self.gating_preds = []
         self.char.reset(start_location, start_orientation)
         self.traj.reset(start_location, start_orientation, start_direction)
         self.__initialize()

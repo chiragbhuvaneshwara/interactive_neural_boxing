@@ -3,7 +3,11 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import matplotlib.patches as mpatches
 
+params = {'mathtext.default': 'regular'}
+plt.rcParams.update({'font.size': 12})
+plt.rcParams.update(params)
 plt.style.use('seaborn-whitegrid')
 
 
@@ -53,10 +57,25 @@ def get_mse_per_punch(df, hand):
 
 
 def get_avg_mse_punch_closest_to_target(df, hand):
+    print(df.punch_accuracy_right.value_counts())
     df = df.copy()
+    # mse_at_targets_df = df.loc[
+    #     (df['punch_complete' + "_" + hand] == True), ['mse_per_frame_' + hand, 'punch_complete' + "_" + hand]]
     mse_at_targets_df = df.loc[
-        (df['punch_complete' + "_" + hand] == True), ['mse_per_frame_' + hand, 'punch_complete' + "_" + hand]]
+        (df['punch_accuracy' + "_" + hand] == True), ['mse_per_frame_' + hand, 'punch_half_complete' + "_" + hand]]
     avg_mse_at_targets = np.mean(mse_at_targets_df['mse_per_frame_' + hand])
+
+    return avg_mse_at_targets
+
+
+def get_avg_l2norm_punch_closest_to_target(df, hand):
+    print(df.punch_accuracy_right.value_counts())
+    df = df.copy()
+    # mse_at_targets_df = df.loc[
+    #     (df['punch_complete' + "_" + hand] == True), ['mse_per_frame_' + hand, 'punch_complete' + "_" + hand]]
+    mse_at_targets_df = df.loc[
+        (df['punch_accuracy' + "_" + hand] == True), ['l2norm_per_frame_' + hand, 'punch_half_complete' + "_" + hand]]
+    avg_mse_at_targets = np.mean(mse_at_targets_df['l2norm_per_frame_' + hand])
 
     return avg_mse_at_targets
 
@@ -94,7 +113,6 @@ def get_foot_skating(df):
         for i in range(len(vals) - 1):
             curr_disp = ((vals[i + 1, 0] - vals[i, 0]) ** 2 + (vals[i + 1, 2] - vals[i, 2]) ** 2) ** 0.5
 
-
             # curr_fs = curr_disp * (2 - 2 ** ((vals[i + 1, 1] + vals[i, 1]) / 2 / 0.033))
             curr_fs = curr_disp * (2 - 2 ** ((vals[i + 1, 1] + vals[i, 1]) / 2 / HEIGHT_THRESHOLD))
             # if CONVERT_METRICS_TO_CENTIMETRE:
@@ -129,6 +147,28 @@ def get_path_error(df):
     curr_pe = ((out - target) ** 2).mean(axis=1)
 
     df["Path_MSE"] = curr_pe
+
+    return df, curr_pe
+
+def get_path_error_l2norm(df):
+    def _get_proj_x_on_y(x, y):
+        proj = y * np.dot(x, y) / np.dot(y, y)
+        return proj
+
+    df = df.copy()
+    cols_out = ["Hips_positions" + "_" + str(i) for i in range(0, 3, 2)]
+    out = df[cols_out].values
+    zaxis = np.array([0, 1])
+
+    target = []
+    for o in out:
+        curr_projection = _get_proj_x_on_y(o, zaxis)
+        target.append(curr_projection)
+
+    target = np.array(target)
+    curr_pe = np.linalg.norm((out - target), axis=1)
+
+    df["Path_l2norm"] = curr_pe
 
     return df, curr_pe
 
@@ -222,7 +262,7 @@ def plot_mse_per_punch_slice(eval_df, hand, avg_punch, res_path, csv, plot_avg=T
         elif not plot_avg and not less_than:
             plt.plot(range(1, len(mse_slice) + 1), mse_slice, color=color)
 
-    plt.savefig(os.path.join(res_path, fname))
+    plt.savefig(os.path.join(res_path, fname), dpi=300)
     plt.close("all")
 
 
@@ -252,7 +292,14 @@ def plot_l2_per_punch_slice(eval_df, hand, avg_punch, res_path, csv, p_acc_thres
         # plt.legend()
 
     plt.xlabel("Frames")
-    plt.ylabel("L2 norm")
+    if CONVERT_METRICS_TO_CENTIMETRE:
+        unit = "cm"
+        plt.ylabel("L2 norm in cm")
+    else:
+        unit = "m"
+        plt.ylabel("L2 norm in m")
+
+    first_acc_inacc = {}
     for i, mse_slice in enumerate(sliced_mse_per_punch):
         if p_acc[i] == True:
             color = "green"
@@ -265,39 +312,101 @@ def plot_l2_per_punch_slice(eval_df, hand, avg_punch, res_path, csv, p_acc_thres
             plt.plot(range(1, len(mse_slice) + 1), mse_slice, color=color)
 
         elif not plot_avg and not less_than:
-            plt.plot(range(1, len(mse_slice) + 1), mse_slice, color=color)
+            h = plt.plot(range(1, len(mse_slice) + 1), mse_slice, color=color)
+            if p_acc[i] == True and len(first_acc_inacc.keys()) < 2:
+                first_acc_inacc["accurate"] = h
+            elif p_acc[i] == False and len(first_acc_inacc.keys()) < 2:
+                first_acc_inacc["inaccurate"] = h
 
-    plt.axvline(x=avg_punch, label='avg punch duration = {}'.format(avg_punch), color="blue", ls='--', linewidth=4)
-    plt.axhline(y=p_acc_threshold, label='punch accuracy threshold = {}'.format(p_acc_threshold), color="black",
-                ls=':', linewidth=4)
+    if len(first_acc_inacc.keys()) > 0:
+        first_acc_inacc[list(first_acc_inacc.keys())[0]] = first_acc_inacc[list(first_acc_inacc.keys())[0]][
+            0].set_label(
+            list(first_acc_inacc.keys())[0]
+        )
+        first_acc_inacc[list(first_acc_inacc.keys())[1]] = first_acc_inacc[list(first_acc_inacc.keys())[1]][
+            0].set_label(
+            list(first_acc_inacc.keys())[1]
+        )
+        # first_acc_inacc[first_acc_inacc.keys()[1]] = first_acc_inacc[first_acc_inacc.keys()[1]].set_label(first_acc_inacc.keys()[1])
+        print(first_acc_inacc)
+
+    avg_punch = np.mean([len(p) for p in sliced_mse_per_punch])
+    # plt.axvline(x=avg_punch, label='avg punch duration = {}'.format(avg_punch), color="blue", ls='--', linewidth=2)
+
+    plt.axhline(y=p_acc_threshold, label='$p_{threshold}$' + '= {} {}'.format(round(p_acc_threshold), unit),
+                color="black",
+                ls=':', linewidth=2)
+    red_patch = mpatches.Patch(color='red', label='Not accurate')
+    blue_patch = mpatches.Patch(color='green', label='Accurate')
+
     # place legend outside
+    # plt.legend(handles=[red_patch, blue_patch], loc="upper right", fancybox=True, frameon=True, framealpha=1.0)
     plt.legend(loc="upper right", fancybox=True, frameon=True, framealpha=1.0)
     # plt.legend(bbox_to_anchor=(0.75, 0.75))
 
-    plt.savefig(os.path.join(res_path, fname))
+    plt.savefig(os.path.join(res_path, fname), dpi=300)
     plt.close("all")
 
 
 # TODO: Corrrect path error in plot by projecting points onto Z axis and blending them
 def plot_path_error(path_error, res_path):
+    if CONVERT_METRICS_TO_CENTIMETRE:
+        unit = "$cm^2$"
+    else:
+        unit = "$m^2$"
+
     fig = plt.figure()
     title_addon = ""
     if "forward" in csv:
         title_addon = "forward"
+        axh_addon = '$SPE_{fwd}$'
     elif "backward" in csv:
         title_addon = "backward"
-    plt.title("MSE path error over full test " + title_addon + " walk duration")
+        axh_addon = '$SPE_{bwd}$'
+
+    plt.title("SPE over full test " + title_addon + " stepping duration")
     fname = "walk_path_error_" + csv.split(".")[0] + ".png"
-    plt.axhline(y=round(np.mean(path_error), 4), label='Avg Path Error = {}'.format(round(np.mean(path_error), 4)),
-                color="blue", ls='--')
+    plt.axhline(y=round(np.mean(path_error), 2),
+                label='{} = {} {}'.format(axh_addon, round(np.mean(path_error), 2), unit),
+                color="black", ls='--')
     # place legend outside
     plt.legend()
-
-    plt.xlabel("Time in seconds")
-    plt.ylabel("MSE path error")
+    plt.ylim(0, 2600)
+    plt.xlabel("Frames")
+    plt.ylabel("Path error per frame in " + unit)
     plt.plot(range(1, len(path_error) + 1), path_error)
 
-    plt.savefig(os.path.join(res_path, fname))
+    plt.savefig(os.path.join(res_path, fname), dpi=300)
+    plt.close("all")
+
+def plot_path_error_l2norm(path_error, res_path):
+    if CONVERT_METRICS_TO_CENTIMETRE:
+        unit = "$cm$"
+    else:
+        unit = "$m$"
+
+    fig = plt.figure()
+    title_addon = ""
+    if "forward" in csv:
+        title_addon = "forward"
+        axh_addon = '$SPE_{fwd}$'
+    elif "backward" in csv:
+        title_addon = "backward"
+        axh_addon = '$SPE_{bwd}$'
+
+    plt.title("SPE over full test " + title_addon + " stepping duration")
+    fname = "walk_path_error_" + csv.split(".")[0] + ".png"
+    plt.axhline(y=round(np.mean(path_error), 2),
+                label='{} = {} {}'.format(axh_addon, round(np.mean(path_error), 2), unit),
+                color="black", ls='--')
+    # place legend outside
+    plt.legend()
+    plt.ylim(0, 400)
+    plt.xlabel("Frames")
+    plt.ylabel("Path error per frame in " + unit)
+    plt.plot(range(1, len(path_error) + 1), path_error)
+
+    plt.savefig(os.path.join(res_path, fname), dpi=300)
     plt.close("all")
 
 
@@ -306,15 +415,19 @@ def plot_path_error(path_error, res_path):
 # EXP_NAME = "root_tr_exp_fr_4"  # 2 models
 # EXP_NAME = "wrist_tr_exp_fr_1"
 # EXP_NAME = "wrist_tr_exp_fr_2"
-# EXP_NAME = "wrist_tr_exp_fr_3"
-EXP_NAME = "ablation_study_exp"
+EXP_NAME = "wrist_tr_exp_fr_3"
+# EXP_NAME = "ablation_study_exp"
 eval_save_path = os.path.join("eval", "saved", "controller", EXP_NAME)
 
+# EXP_NAME = "wrist_tr_exp_fr_3_in_thesis_doc"
+# eval_save_path = os.path.join("eval", "saved", "temp", EXP_NAME)
+
 CONVERT_METRICS_TO_CENTIMETRE = True
+# CONVERT_METRICS_TO_CENTIMETRE = False
 
 AVG_PUNCH_DURATION_DATA = 26  # 26 frames (check data/raw_data/punch_label_gen/analyze/stats.py)
 PUNCH_ACC_THRESHOLD = 0.15
-HEIGHT_THRESHOLD = 0.033
+HEIGHT_THRESHOLD = 0.035
 if CONVERT_METRICS_TO_CENTIMETRE:
     PUNCH_ACC_THRESHOLD *= 100
     HEIGHT_THRESHOLD *= 100
@@ -408,7 +521,11 @@ for model_id in sorted(os.listdir(eval_save_path)):
                     sliced_mse_per_punch, p_acc_per_frame = slice_mse_per_punch(eval_df, hand)
 
                     # avg_mse = np.mean([np.mean(a) for a in sliced_mse_per_punch])
-                    avg_mse = get_avg_mse_punch_closest_to_target(eval_df, hand)
+
+                    # avg_mse = get_avg_mse_punch_closest_to_target(eval_df, hand)
+                    # average_mse.append(avg_mse)
+
+                    avg_mse = get_avg_l2norm_punch_closest_to_target(eval_df, hand)
                     average_mse.append(avg_mse)
 
                     p_acc = (np.sum(p_acc_per_frame) / total_num_punches_per_hand) * 100
@@ -421,11 +538,17 @@ for model_id in sorted(os.listdir(eval_save_path)):
                 # TODO compute average foot skating during punching
                 avg_foot_skating = np.mean(foot_skating)
 
-                wrist_tr = int(model_id.split("_ep")[0].split("_tr_5_")[1]) * 2
-                frame_skip = int(model_id.split("fr_")[1].split("_tr_")[0])
-                # wrist_tr = wrist_tr * frame_skip
+                if EXP_NAME != "ablation_study_exp":
+                    wrist_tr = int(model_id.split("_ep")[0].split("_tr_5_")[1]) * 2
+                    frame_skip = int(model_id.split("fr_")[1].split("_tr_")[0])
+                    # wrist_tr = wrist_tr * frame_skip
 
-                punch_summary[model_id] = [wrist_tr, frame_skip] + average_mse + punch_accuracy + [avg_foot_skating]
+                    punch_summary[model_id] = [wrist_tr, frame_skip] + average_mse + punch_accuracy + [avg_foot_skating]
+                else:
+                    punch_summary[model_id] = [42, 7] + average_mse + punch_accuracy + [avg_foot_skating]
+
+                if model_id == "fr_3_tr_5_7_ep_150_2021-09-24_01-24-00":
+                    eval_df.to_csv(os.path.join(eval_save_path, model_id, "df_with_acc_col_w_14_fs_3.csv"))
 
             elif "walk" in csv:
                 # TODO: Compute velocity for stepping
@@ -436,7 +559,8 @@ for model_id in sorted(os.listdir(eval_save_path)):
                 eval_df, foot_skating = get_foot_skating(eval_df)
                 # print(foot_skating)
 
-                eval_df, path_error = get_path_error(eval_df)
+                # eval_df, path_error = get_path_error(eval_df)
+                eval_df, path_error = get_path_error_l2norm(eval_df)
                 res_path = os.path.join(eval_save_path, model_id, "eval_res", "csv")
                 if not os.path.isdir(res_path):
                     os.makedirs(res_path)
@@ -446,7 +570,8 @@ for model_id in sorted(os.listdir(eval_save_path)):
                 if not os.path.isdir(res_path):
                     os.makedirs(res_path)
 
-                plot_path_error(path_error, res_path)
+                # plot_path_error(path_error, res_path)
+                plot_path_error_l2norm(path_error, res_path)
 
                 avg_foot_skating = np.mean(foot_skating)
                 avg_path_error = np.mean(path_error)
@@ -455,13 +580,14 @@ for model_id in sorted(os.listdir(eval_save_path)):
                 frame_skip = int(model_id.split("fr_")[1].split("_tr_")[0])
                 # root_tr = root_tr * frame_skip
 
-                walk_summary[model_id] = [root_tr, frame_skip, avg_path_error, avg_foot_skating]
+                walk_type = "forward" if "forward" in csv else "backward"
+                idx_name = str(root_tr) + "," + str(frame_skip) + "," + walk_type
+                walk_summary[idx_name] = [root_tr, frame_skip, avg_path_error, avg_foot_skating]
 
 if CONVERT_METRICS_TO_CENTIMETRE:
     print("################################")
     print("Converting metrics from m to cm:")
     print("################################")
-
 
 if len(punch_summary.values()) > 0:
     punch_summary_df = pd.DataFrame.from_dict(punch_summary, orient='index',
@@ -472,7 +598,7 @@ if len(punch_summary.values()) > 0:
                                                        "Average Foot Skating"])
     punch_summary_df.to_csv(os.path.join(eval_save_path, "punch_summary.csv"))
 
-    print(punch_summary_df.round({
+    punch_summary_df_rounded = punch_summary_df.round({
         "Avg MSE at target right": 2,
         "Avg MSE at target left": 2,
         "Avg MSE at target overall": 2,
@@ -480,16 +606,33 @@ if len(punch_summary.values()) > 0:
         "Accuracy left": 2,
         "Accuracy overall": 2,
         "Average Foot Skating": 3
-    }).to_latex(index=False))
+    })
+    print(punch_summary_df_rounded.to_latex(
+        index=False))
+        # index=True))
+
+    punch_summary_df_rounded.to_excel(os.path.join(eval_save_path, "punch_summary.xlsx"))
+
 if len(walk_summary.values()) > 0:
     walk_summary_df = pd.DataFrame.from_dict(walk_summary, orient='index',
                                              columns=["Window size", "Frame skip", "Avg path error",
                                                       "Avg foot skating"])
+    # walk_summary_df = walk_summary_df.groupby(np.arange(len(walk_summary_df))//2).mean()
+    df1 = walk_summary_df[walk_summary_df.index.str.contains("backward")]
+    df2 = walk_summary_df[walk_summary_df.index.str.contains("forward")]
+    df2 = df2.rename(columns={"Avg path error": "SPE fw", "Avg foot skating": "FSE fw"})
+    df1 = df1.rename(columns={"Avg path error": "SPE bw", "Avg foot skating": "FSE bw"})
+    walk_summary_df = pd.merge(df1, df2, on=["Window size", "Frame skip"])
+    walk_summary_df["SPE overall"] = walk_summary_df[['SPE bw', 'SPE fw']].mean(axis=1)
+    walk_summary_df["FSE overall"] = walk_summary_df[['FSE bw', 'FSE fw']].mean(axis=1)
+    walk_summary_df = walk_summary_df[
+        ['Window size', 'Frame skip', 'SPE fw', 'SPE bw', 'SPE overall', 'FSE fw', 'FSE bw', 'FSE overall']]
     walk_summary_df.to_csv(os.path.join(eval_save_path, "walk_summary.csv"))
-    print(walk_summary_df.round({
-        "Avg path error": 2,
-        "Avg foot skating": 3
-    }).to_latex(index=False))
+
+    walk_summary_df_rounded = walk_summary_df.round(2)
+    print(walk_summary_df_rounded.to_latex(index=False))
+
+    walk_summary_df_rounded.to_excel(os.path.join(eval_save_path, "walk_summary.xlsx"))
 
 # TODO either save dfs as latex here or create new script that generates the latex directly by looking through all
 #  folders called "exp_x"

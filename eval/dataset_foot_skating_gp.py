@@ -32,6 +32,10 @@ data_config_path = os.path.join("data", "neural_data", "root_tr_exp", "fr_1_tr_5
 with open(data_config_path) as f:
     dataset_config = json.load(f)
 
+
+
+TO_CM = True
+
 bone_map = dataset_config['bone_map']
 col_demarcation_ids = dataset_config['col_demarcation_ids']
 x_col_ids = col_demarcation_ids[0]
@@ -55,14 +59,19 @@ for j, foot in enumerate(["right", "left"]):
     fs = []
     for i in range(len(vals) - 1):
         curr_disp = ((vals[i + 1, 0] - vals[i, 0]) ** 2 + (vals[i + 1, 2] - vals[i, 2]) ** 2) ** 0.5
-        curr_fs = curr_disp * (2 - 2 ** ((vals[i + 1, 1] + vals[i, 1]) / 2 / 0.033))
+        curr_fs = curr_disp * (2 - 2 ** ((vals[i + 1, 1] + vals[i, 1]) / 2 / 0.035))
         fs.append(curr_fs)
 
     # Appending 0 to ensure fs len is same as col len i.e. assuming displacement 0 for last data point (frame)
     # fs.append(0)
     foot_skating[foot] = np.mean(fs)
+    if TO_CM:
+        foot_skating[foot] *= 100
 
+foot_skating["avg"] = (foot_skating["right"] + foot_skating["left"])/2
 # TODO: Compute velocity for stepping
 # TODO: Figure out which foot_skating is used in eval and delete either dataset_foot_skating_gp.py or
 #  dataset_foot_skating_lp.py
+
+
 print(foot_skating)
