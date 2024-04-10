@@ -1,3 +1,43 @@
+# MSc Thesis: Simulating Fast-Movements with Mixture-of-Expert models
+In this thesis, we hypothesise that a neural model based on the mixture of experts concept
+can be developed to synthesise fast boxing actions interactively. As the primary goal here
+is to synthesise natural-looking motions, a novel boxing dataset consisting of the fast
+actions of punching and stepping is prepared. This is followed by the design of effective
+representations of motion states used to train our neural models that are incorporated
+in a boxing controller system to facilitate user interaction with the neural synthesised
+motions. Our system allows a user to specify the exact target of the punches and the direction of
+the steps to produce motions in the boxing style. This system can synthesise high-quality
+boxing actions despite being trained on limited data. To achieve the best synthesis
+results using such data, several experiments are conducted to determine effective motion
+states for producing more accurate punching and stepping actions. Our experimental
+results show that formulating the motion states by considering the fastness of the boxing
+actions leads to more accurate and natural-looking results for both targeted punching
+and user-directed stepping actions.
+
+**More details in [final presentation slides](thesis_docs/BoxingSynthesis_ThesisDefense_Chirag_Final_Presentation.pdf) and 
+in the [Master Thesis Report](thesis_docs/Master_Thesis_Chirag_print_29Nov_rotated.pdf).**
+
+### Visualization:
+
+**Left punch**![Left punch](imgs/left_p_together.jpg)
+
+
+**Right punch**![Right punch](imgs/right_p_together.jpg)
+
+**Forward movement with boxing posture**![Forward movement with boxing posture](imgs/fwd_mvmnt_annotated.PNG)
+
+
+### Project videos on Youtube:
+
+Overview: https://youtu.be/DlOHiAX3vNk ==> This video contains the visualisation results for the boxing motions synthesised using the mixture-of-experts neural model in my master thesis at Saarland University.
+
+Punch control visualization: https://youtu.be/lG8QBn0-bDI
+
+Unstructured visualization: https://youtu.be/BHrd0D1F61o
+
+
+### Technical Documentation
+
 # Supported Commands
 
 # 1. Data Statistics
