@@ -36,9 +36,9 @@ Punch control visualization: https://youtu.be/lG8QBn0-bDI
 Unstructured visualization: https://youtu.be/BHrd0D1F61o
 
 
-### Technical Documentation
+# Technical Documentation
 
-# Supported Commands
+## Supported Commands
 
 # 1. Data Statistics
 
